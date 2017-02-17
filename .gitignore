@@ -1,0 +1,6 @@
+java/.classpath
+java/.project
+java/.settings
+java/target
+mac/openpnp-capture.xcodeproj/xcuserdata
+mac/openpnp-capture.xcodeproj/project.xcworkspace/xcuserdata
