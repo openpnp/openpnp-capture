@@ -1,5 +1,3 @@
-# openpnp-capture
-
 OpenPnP Capture is a cross platform video capture library with a focus on machine vision. It's goals are:
 
 * Native camera access on Windows, Linux and Mac. Implemented with MediaFoundation, V4L2 and AVFoundation respectively.
