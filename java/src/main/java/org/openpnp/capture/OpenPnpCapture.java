@@ -1,30 +1,48 @@
 package org.openpnp.capture;
-import com.sun.jna.Library;
-import com.sun.jna.Native;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import com.sun.jna.Pointer;
 
 public class OpenPnpCapture {
-    public interface OpenPnpCaptureLibrary extends Library {
-        // Library prefixes
-        // darwin
-        // win32-x86
-        // win32-x86-64
-        // linux-x86
-        // linux-x86-64
+    Pointer context;
 
-        OpenPnpCaptureLibrary INSTANCE = (OpenPnpCaptureLibrary) Native
-                .loadLibrary("openpnp-capture", OpenPnpCaptureLibrary.class);
+    public OpenPnpCapture() {
+        context = OpenPnpCaptureLibrary.INSTANCE.create_context();
+    }
 
-        Pointer create_context();
-        Pointer[] list_devices(Pointer context);
-        void release_context(Pointer context);
+    @Override
+    protected void finalize() throws Throwable {
+        release();
+    }
+    
+    public void release() {
+        if (context != null) {
+            OpenPnpCaptureLibrary.INSTANCE.release_context(context);
+            context = null;
+        }
+    }
+
+    public List<CaptureDevice> listDevices() {
+        List<CaptureDevice> devices = new ArrayList<>();
+        Pointer pDevices = OpenPnpCaptureLibrary.INSTANCE.list_devices(context);
+        Pointer[] paDevices = pDevices.getPointerArray(0);
+        for (Pointer p : paDevices) {
+            CaptureDevice device = new CaptureDevice(p);
+            device.read();
+            devices.add(device);
+        }
+        return devices;
     }
 
     public static void main(String[] args) {
-        Pointer context = OpenPnpCaptureLibrary.INSTANCE.create_context();
-        for (Pointer p : OpenPnpCaptureLibrary.INSTANCE.list_devices(context)) {
-            System.out.println(p);
+        OpenPnpCapture capture = new OpenPnpCapture();
+        for (CaptureDevice device : capture.listDevices()) {
+            System.out.println(device);
         }
-        OpenPnpCaptureLibrary.INSTANCE.release_context(context);
+        capture = null;
+        System.gc();
+        System.runFinalization();
     }
 }

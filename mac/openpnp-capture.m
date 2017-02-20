@@ -10,11 +10,14 @@
 
 capture_context create_context() {
     Context* context = [Context new];
-    return (capture_context) CFBridgingRetain(context);
+    capture_context context_ = (capture_context) CFBridgingRetain(context);
+    NSLog(@"create_context() -> %p", context_);
+    return context_;
 }
 
 void release_context(capture_context context) {
     CFBridgingRelease(context);
+    NSLog(@"release_context(%p)", context);
 }
 
 capture_device** list_devices(capture_context context) {
@@ -34,12 +37,14 @@ capture_device** list_devices(capture_context context) {
     for (int i = 0; i < count; i++) {
         AVCaptureDevice* device = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo][i];
         context_.devices[i] = malloc(sizeof(capture_device));
+        NSLog(@"list_devices(%p) %@ -> %p", context, device.localizedName, context_.devices[i]);
         context_.devices[i]->_internal = (__bridge void *)(device);
         context_.devices[i]->name = device.localizedName.UTF8String;
         context_.devices[i]->unique_id = device.uniqueID.UTF8String;
         context_.devices[i]->manufacturer = device.manufacturer.UTF8String;
         context_.devices[i]->model = device.modelID.UTF8String;
     }
+    NSLog(@"list_devices(%p) -> %p", context, context_.devices);
     return context_.devices;
 }
 
