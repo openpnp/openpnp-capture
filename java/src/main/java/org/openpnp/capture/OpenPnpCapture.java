@@ -1,22 +1,21 @@
 package org.openpnp.capture;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 public class OpenPnpCapture {
     Pointer context;
 
     public OpenPnpCapture() {
-        context = OpenPnpCaptureLibrary.INSTANCE.create_context();
+        PointerByReference context = new PointerByReference();
+        OpenPnpCaptureLibrary.INSTANCE.create_context(context);
+        this.context = context.getValue();
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        release();
-    }
-    
     public void release() {
         if (context != null) {
             OpenPnpCaptureLibrary.INSTANCE.release_context(context);
@@ -25,15 +24,13 @@ public class OpenPnpCapture {
     }
 
     public List<CaptureDevice> listDevices() {
-        List<CaptureDevice> devices = new ArrayList<>();
-        Pointer pDevices = OpenPnpCaptureLibrary.INSTANCE.list_devices(context);
-        Pointer[] paDevices = pDevices.getPointerArray(0);
-        for (Pointer p : paDevices) {
-            CaptureDevice device = new CaptureDevice(p);
-            device.read();
-            devices.add(device);
-        }
-        return devices;
+        PointerByReference pDevices = new PointerByReference();
+        IntByReference devicesLength = new IntByReference();
+        OpenPnpCaptureLibrary.INSTANCE.list_devices(context, pDevices, devicesLength);
+        CaptureDevice device = new CaptureDevice(pDevices.getValue());
+        device.read();
+        CaptureDevice[] devices = (CaptureDevice[]) device.toArray(devicesLength.getValue());
+        return Arrays.asList(devices);
     }
 
     public static void main(String[] args) {
@@ -41,8 +38,6 @@ public class OpenPnpCapture {
         for (CaptureDevice device : capture.listDevices()) {
             System.out.println(device);
         }
-        capture = null;
-        System.gc();
-        System.runFinalization();
+        capture.release();
     }
 }

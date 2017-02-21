@@ -12,15 +12,19 @@
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
         NSLog(@"start");
-        capture_context context = create_context();
-        capture_device** devices = list_devices(context);
-        devices = list_devices(context);
-        devices = list_devices(context);
-        devices = list_devices(context);
-        devices = list_devices(context);
-        for (int i = 0; devices[i]; i++) {
-            NSLog(@"%s, %s, %s, %s\n", devices[i]->unique_id, devices[i]->manufacturer, devices[i]->model, devices[i]->name);
-        }
+        capture_context* context;
+        create_context(&context);
+        
+//        capture_device* devices;
+//        unsigned int devices_length;
+//        list_devices(context, &devices, &devices_length);
+//        list_devices(context, &devices, &devices_length);
+//        list_devices(context, &devices, &devices_length);
+//        list_devices(context, &devices, &devices_length);
+//        for (int i = 0; i < devices_length; i++) {
+//            NSLog(@"%s, %s, %s, %s\n", devices[i].unique_id, devices[i].manufacturer, devices[i].model, devices[i].name);
+//        }
+        
         release_context(context);
         NSLog(@"stop");
     }

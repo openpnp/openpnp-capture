@@ -1,6 +1,11 @@
 #ifndef openpnp_capture_h
 #define openpnp_capture_h
 
+typedef enum _capture_status {
+    CAPTURE_OK = 0,
+    CAPTURE_ERROR = -1
+} capture_status;
+
 /**
  * An opaque type that represents a context for callers to work within. The
  * caller is not expected to know anything about this value.
@@ -19,26 +24,10 @@ typedef struct _capture_device {
     void* _internal;
 } capture_device;
 
-/**
- * Create a new capture context. This is the entry point into the API and is
- * the first thing you should call to interact with it. Store the return value
- * and use it for all future calls.
- */
-capture_context create_context();
+capture_status create_context(capture_context** context);
 
-/**
- * Release a capture_context when you are finished with it. This frees all
- * resources associated with the context, incuding any devices that were
- * listed or opened.
- */
-void release_context(capture_context context);
+capture_status release_context(capture_context* context);
 
-/**
- * Obtain a null terminated list of capture_device pointers. Each pointer
- * represents a capture device attached to the system. Each time this function
- * is called any previous lists returned by it are released and should no
- * longer be used.
- */
-capture_device** list_devices(capture_context context);
+capture_status list_devices(capture_context* context, capture_device** devices, unsigned int* devices_length);
 
 #endif

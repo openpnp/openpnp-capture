@@ -17,3 +17,4 @@ Context class loader classpath. Deployed native libraries may be installed on th
 You may set the system property jna.debug_load=true to make JNA print the steps of its library search to the console.
 
 
+java -jar jnaerator/target/jnaerator-0.13-SNAPSHOT-shaded.jar -library openpnp-capture ~/Projects/openpnp/openpnp-capture/include/openpnp-capture.h -o ~/Desktop -mode Directory -f -runtime JNA
