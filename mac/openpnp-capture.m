@@ -7,76 +7,84 @@
 @end
 
 @implementation Context
+- (void) listDevices {
+    [self freeDevices];
+    
+    self.devices_length = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo].count;
+    self.devices = malloc(self.devices_length * sizeof(capture_device));
+    for (int i = 0; i < self.devices_length; i++) {
+        AVCaptureDevice* nativeDevice = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo][i];
+        capture_device* device = &self.devices[i];
+        device->_internal = (__bridge void *)(nativeDevice);
+        device->name = nativeDevice.localizedName.UTF8String;
+        device->unique_id = nativeDevice.uniqueID.UTF8String;
+        device->manufacturer = nativeDevice.manufacturer.UTF8String;
+        device->model = nativeDevice.modelID.UTF8String;
+        
+        device->supportsExposureAuto = [nativeDevice isExposureModeSupported:AVCaptureExposureModeAutoExpose] || [nativeDevice isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure];
+        device->supportsExposureManual = [nativeDevice isExposureModeSupported:AVCaptureExposureModeLocked];
+        device->supportsFocusAuto = [nativeDevice isFocusModeSupported:AVCaptureExposureModeAutoExpose] || [nativeDevice isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus];
+        device->supportsFocusManual = [nativeDevice isFocusModeSupported:AVCaptureFocusModeLocked];
 
+        device->formats_length = nativeDevice.formats.count;
+        device->formats = malloc(device->formats_length * sizeof(capture_format));
+        
+        int formatIndex = 0;
+        for (AVCaptureDeviceFormat* format in nativeDevice.formats) {
+            for (AVFrameRateRange* frr in format.videoSupportedFrameRateRanges) {
+                for (int fr = frr.minFrameRate; fr <= frr.maxFrameRate; fr++) {
+                    if (formatIndex >= device->formats_length) {
+                        device->formats_length++;
+                        device->formats = realloc(device->formats, device->formats_length * sizeof(capture_format));
+                    }
+                    CMVideoDimensions dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
+                    device->formats[formatIndex].fps = fr;
+                    device->formats[formatIndex].fourcc = CMFormatDescriptionGetMediaSubType(format.formatDescription);
+                    device->formats[formatIndex].width = dims.width;
+                    device->formats[formatIndex].height = dims.height;
+                    formatIndex++;
+                }
+            }
+        }
+    }
+}
+
+- (void) freeDevices {
+    if (self.devices) {
+        for (int i = 0; i < self.devices_length; i++) {
+            free(self.devices[i].formats);
+            self.devices[i].formats = NULL;
+            self.devices[i].formats_length = 0;
+        }
+        free(self.devices);
+        self.devices = NULL;
+        self.devices_length = 0;
+    }
+}
+
+- (void) dealloc {
+    [self freeDevices];
+}
 @end
 
 capture_status create_context(capture_context** context_) {
     Context* context = [Context new];
     *context_ = (capture_context*) CFBridgingRetain(context);
-    NSLog(@"create_context() -> %p", context);
     return CAPTURE_OK;
 }
 
 capture_status release_context(capture_context* context_) {
-    NSLog(@"release_context(%p)", context_);
     Context* context = (__bridge Context*) (void*) context_;
     CFBridgingRelease(context_);
     return CAPTURE_OK;
 }
 
 capture_status list_devices(capture_context* context_, capture_device** devices, unsigned int* devices_length) {
-    // The extra cast to void* seems to be required to make the compiler happy,
-    // and I got that solution from http://stackoverflow.com/questions/10273833/casting-unsafe-unretained-id-to-const-void.
     Context* context = (__bridge Context*) (void*) context_;
-    NSLog(@"list_devices(%p -> %p, %p, %p)", context_, context, devices, devices_length);
 
-    if (context.devices) {
-        free(context.devices);
-        context.devices = NULL;
-        context.devices_length = 0;
-    }
+    [context listDevices];
     
-    unsigned long count = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo].count;
-    context.devices_length = count;
-    context.devices = malloc(count * sizeof(capture_device));
-    for (int i = 0; i < count; i++) {
-        AVCaptureDevice* device = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo][i];
-        context.devices[i]._internal = (__bridge void *)(device);
-        context.devices[i].name = device.localizedName.UTF8String;
-        context.devices[i].unique_id = device.uniqueID.UTF8String;
-        context.devices[i].manufacturer = device.manufacturer.UTF8String;
-        context.devices[i].model = device.modelID.UTF8String;
-    }
     *devices = context.devices;
     *devices_length = context.devices_length;
     return CAPTURE_OK;
 }
-
-
-//wchar_t* say_hello() {
-//    for (AVCaptureDevice *device in [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) {
-//        NSLog(@"%@", device);
-//        NSLog(@"localizedName %@, modelID %@, uniqueID %@", device.localizedName, device.modelID, device.uniqueID);
-//        NSLog(@"  AVCaptureExposureModeLocked %hhd, AVCaptureExposureModeAutoExpose %hhd, AVCaptureExposureModeContinuousAutoExposure %hhd",
-//              [device isExposureModeSupported:AVCaptureExposureModeLocked],
-//              [device isExposureModeSupported:AVCaptureExposureModeAutoExpose],
-//              [device isExposureModeSupported:AVCaptureExposureModeContinuousAutoExposure]
-//              );
-//        NSLog(@"  AVCaptureFocusModeLocked %hhd, AVCaptureFocusModeAutoFocus %hhd, AVCaptureFocusModeContinuousAutoFocus %hhd",
-//              [device isFocusModeSupported:AVCaptureFocusModeLocked],
-//              [device isFocusModeSupported:AVCaptureFocusModeAutoFocus],
-//              [device isFocusModeSupported:AVCaptureFocusModeContinuousAutoFocus]
-//              );
-//        for (AVCaptureDeviceFormat *format in [device formats]) {
-//            NSLog(@"  %@", format);
-//            //            NSLog(@"    %@", format.formatDescription);
-//            NSLog(@"    %@", format.videoSupportedFrameRateRanges);
-//            NSLog(@"    %@ %u",
-//                  NSFileTypeForHFSTypeCode(CMFormatDescriptionGetMediaSubType(format.formatDescription)),
-//                  (unsigned int) format.formatDescription);
-//            CMVideoDimensions dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-//            NSLog(@"    %d, %d", dims.width, dims.height);
-//        }
-//    }
-//    return L"hi there";
-//}

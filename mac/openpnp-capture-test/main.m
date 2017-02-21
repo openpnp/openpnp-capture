@@ -11,22 +11,25 @@
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        NSLog(@"start");
         capture_context* context;
         create_context(&context);
         
-//        capture_device* devices;
-//        unsigned int devices_length;
-//        list_devices(context, &devices, &devices_length);
-//        list_devices(context, &devices, &devices_length);
-//        list_devices(context, &devices, &devices_length);
-//        list_devices(context, &devices, &devices_length);
-//        for (int i = 0; i < devices_length; i++) {
-//            NSLog(@"%s, %s, %s, %s\n", devices[i].unique_id, devices[i].manufacturer, devices[i].model, devices[i].name);
-//        }
+        capture_device* devices;
+        unsigned int devices_length;
+        list_devices(context, &devices, &devices_length);
+        for (int i = 0; i < devices_length; i++) {
+            NSLog(@"%s, %s, %s, %s", devices[i].unique_id, devices[i].manufacturer, devices[i].model, devices[i].name);
+            NSLog(@"    auto focus %d, manual focus %d, auto exposure %d, manual exposure %d", devices[i].supportsFocusAuto, devices[i].supportsFocusManual, devices[i].supportsExposureAuto, devices[i].supportsExposureManual);
+            for (int j = 0; j < devices[i].formats_length; j++) {
+                NSLog(@"        fourcc %u, fps %u, width %u, height %u",
+                      devices[i].formats[j].fourcc,
+                      devices[i].formats[j].fps,
+                      devices[i].formats[j].width,
+                      devices[i].formats[j].height);
+            }
+        }
         
         release_context(context);
-        NSLog(@"stop");
     }
     return 0;
 }

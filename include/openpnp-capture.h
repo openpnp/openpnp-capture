@@ -12,6 +12,13 @@ typedef enum _capture_status {
  */
 typedef void* capture_context;
 
+typedef struct _capture_format {
+    unsigned int fps;
+    unsigned int fourcc;
+    unsigned int width;
+    unsigned int height;
+} capture_format;
+
 /**
  * A single capture device attached to the system. Contains information used
  * to identify the device and can be used to call into other library functions.
@@ -21,6 +28,15 @@ typedef struct _capture_device {
     const char* unique_id;
     const char* manufacturer;
     const char* model;
+    
+    bool supportsExposureAuto;
+    bool supportsExposureManual;
+    bool supportsFocusAuto;
+    bool supportsFocusManual;
+    
+    capture_format* formats;
+    int formats_length;
+    
     void* _internal;
 } capture_device;
 

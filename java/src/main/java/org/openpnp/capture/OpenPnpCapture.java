@@ -37,6 +37,9 @@ public class OpenPnpCapture {
         OpenPnpCapture capture = new OpenPnpCapture();
         for (CaptureDevice device : capture.listDevices()) {
             System.out.println(device);
+            for (CaptureFormat format : device.getFormats()) {
+                System.out.println("    " + format);
+            }
         }
         capture.release();
     }
