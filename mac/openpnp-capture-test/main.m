@@ -29,6 +29,9 @@ int main(int argc, const char * argv[]) {
             }
         }
         
+        capture_session* session;
+        open_session(&devices[1], &session);
+        
         release_context(context);
     }
     return 0;

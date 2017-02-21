@@ -17,6 +17,8 @@ typedef struct _capture_format {
     unsigned int fourcc;
     unsigned int width;
     unsigned int height;
+    
+    void* _internal;
 } capture_format;
 
 /**
@@ -40,10 +42,17 @@ typedef struct _capture_device {
     void* _internal;
 } capture_device;
 
+typedef struct _capture_session {
+    void* _internal;
+} capture_session;
+
 capture_status create_context(capture_context** context);
 
 capture_status release_context(capture_context* context);
 
 capture_status list_devices(capture_context* context, capture_device** devices, unsigned int* devices_length);
 
+capture_status open_session(capture_device* device, capture_session** session);
+
+capture_status close_session(capture_session* session);
 #endif
