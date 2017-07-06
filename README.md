@@ -9,3 +9,12 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 * Simple, common C wrapper for the listed APIs.
 
 It's not finished yet. It's not even working yet.
+
+# Build instructions (Windows)
+Run the batch file 'bootstrap.bat'. Make sure the compiler (Visual Studio) is in the search path.
+
+# Build instructions (OSX)
+TODO
+
+# Build instructions (Linux)
+TODO
