@@ -1,58 +1,85 @@
+/*
+
+    OpenPnp-Capture: a video capture subsystem.
+
+    Jason von Nieda
+    Niels Moseley
+
+*/
+
 #ifndef openpnp_capture_h
 #define openpnp_capture_h
 
-typedef enum _capture_status {
-    CAPTURE_OK = 0,
-    CAPTURE_ERROR = -1
-} capture_status;
+#include <stdint.h>
 
-/**
- * An opaque type that represents a context for callers to work within. The
- * caller is not expected to know anything about this value.
- */
-typedef void* capture_context;
+// make sure its exported/imported as pure C 
+// even if we're compiling with a C++ compiler
+#ifdef BUILD_OPENPNP_LIBRARY
+    #ifdef __cplusplus
+        #define DLLEXPORT extern "C" __declspec(dllexport)
+    #else
+        #define DLLEXPORT __declspec(dllexport)
+    #endif
+#else
+    #ifdef __cplusplus
+        #define DLLEXPORT extern "C" __declspec(dllimport)
+    #else
+        #define DLLEXPORT __declspec(dllimport)
+    #endif
+#endif
 
-typedef struct _capture_format {
-    unsigned int fps;
-    unsigned int fourcc;
-    unsigned int width;
-    unsigned int height;
-    
-    void* _internal;
-} capture_format;
+typedef void* CapContext;
+typedef int32_t  CapStream;
+typedef uint32_t CapResult;
+typedef uint32_t CapDeviceID;
 
-/**
- * A single capture device attached to the system. Contains information used
- * to identify the device and can be used to call into other library functions.
- */
-typedef struct _capture_device {
-    const char* name;
-    const char* unique_id;
-    const char* manufacturer;
-    const char* model;
-    
-    bool supportsExposureAuto;
-    bool supportsExposureManual;
-    bool supportsFocusAuto;
-    bool supportsFocusManual;
-    
-    capture_format* formats;
-    int formats_length;
-    
-    void* _internal;
-} capture_device;
+#define CAPRESULT_OK  0
+#define CAPRESULT_ERR 1
+#define CAPRESULT_DEVICENOTFOUND 2
+#define CAPRESULT_FORMATNOTSUPPORTED 3
 
-typedef struct _capture_session {
-    void* _internal;
-} capture_session;
+/** initialize the capture library */
+DLLEXPORT CapContext Cap_createContext(void);
 
-capture_status create_context(capture_context** context);
+/** un-initialize the capture library */
+DLLEXPORT CapResult Cap_releaseContext(CapContext ctx);
 
-capture_status release_context(capture_context* context);
+/** get the number of capture devices on the system.
+    note: this can change dynamically due to the
+    pluggin and unplugging of USB devices */
+DLLEXPORT uint32_t Cap_getDeviceCount(CapContext ctx);
 
-capture_status list_devices(capture_context* context, capture_device** devices, unsigned int* devices_length);
+/** get the name of a capture device.
+    Note: this name may or may not be unique
+    or persistent across system reboots. 
 
-capture_status open_session(capture_device* device, capture_session** session);
+    if a device with the given index does not exist,
+    NULL is returned.
+*/
+DLLEXPORT const char* Cap_getDeviceName(CapContext ctx, CapDeviceID index);
 
-capture_status close_session(capture_session* session);
+/** open a capture stream to a device with specific format requirements 
+
+    Note: if the device is not capable of the requirements or the device
+    does not exits, -1 is returned.
+*/
+DLLEXPORT CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t width, uint32_t height, uint32_t fourCC);
+
+/** close a capture stream */
+DLLEXPORT CapResult Cap_closeStream(CapContext ctx, CapStream stream);
+
+/** this function copies the most recent RGB frame data
+    to the given buffer.
+*/
+DLLEXPORT CapResult Cap_captureFrame(CapStream stream, void *RGBbufferPtr, uint32_t RGBbufferBytes);
+
+/** returns 1 if a new frame has been captured, 0 otherwise */
+DLLEXPORT uint32_t Cap_hasNewFrame(CapStream stream);
+
+DLLEXPORT CapResult Cap_getExposureLimits(CapDeviceID index, float *min, float *max);
+DLLEXPORT CapResult Cap_setExposure(CapDeviceID index, float value);
+DLLEXPORT CapResult Cap_setAutoExposure(CapStream stream, uint32_t bOnOff);
+
+DLLEXPORT void Cap_setLogLevel(uint32_t level);
+
 #endif

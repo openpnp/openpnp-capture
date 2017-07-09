@@ -17,8 +17,16 @@ project (openpnp-capture)
 include_directories(include)
 
 IF (WIN32)
+
 # add files for WIN32
-set (SOURCE win/libmain.c)
+set (SOURCE win/libmain.cpp
+            win/context.cpp
+            win/logging.cpp
+            win/stream.cpp)
+
+# add windows-specific test application
+add_subdirectory(win/tests)
+
 ELSEIF(APPLE)
 # TODO: add files for APPLE / OSX
   message( FATAL_ERROR "Support for APPLE systems is pending." )
