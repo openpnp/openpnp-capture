@@ -68,13 +68,20 @@ DLLEXPORT CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t w
 /** close a capture stream */
 DLLEXPORT CapResult Cap_closeStream(CapContext ctx, CapStream stream);
 
+/** returns 1 if the stream is open and capturing, else 0 */
+DLLEXPORT uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream);
+
 /** this function copies the most recent RGB frame data
     to the given buffer.
 */
-DLLEXPORT CapResult Cap_captureFrame(CapStream stream, void *RGBbufferPtr, uint32_t RGBbufferBytes);
+DLLEXPORT CapResult Cap_captureFrame(CapContext ctx, CapStream stream, void *RGBbufferPtr, uint32_t RGBbufferBytes);
 
 /** returns 1 if a new frame has been captured, 0 otherwise */
-DLLEXPORT uint32_t Cap_hasNewFrame(CapStream stream);
+DLLEXPORT uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream);
+
+/** returns the number of frames captured during the lifetime of the stream. 
+    For debugging purposes */
+DLLEXPORT uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
 
 DLLEXPORT CapResult Cap_getExposureLimits(CapDeviceID index, float *min, float *max);
 DLLEXPORT CapResult Cap_setExposure(CapDeviceID index, float value);

@@ -21,14 +21,14 @@
 
 HRESULT __stdcall StreamCallbackHandler::SampleCB(double time, IMediaSample* sample)
 {
-    m_callbackCounter++;
     if (sample == nullptr)
     {
         return S_OK;
     }
 
+    m_callbackCounter++;
+
     size_t bytes = sample->GetActualDataLength();
-    //size_t bytes2 = sample->GetSize();
     uint8_t *ptr;
     if ((sample->GetPointer(&ptr) == S_OK) && (m_stream != nullptr))
     {
@@ -47,7 +47,13 @@ Stream::Stream() :
     m_owner(nullptr),
     m_graph(nullptr),
     m_control(nullptr),
-    m_callbackHandler(nullptr)
+    m_callbackHandler(nullptr),
+    m_sampleGrabberFilter(nullptr),
+    m_sourceFilter(nullptr),
+    m_sampleGrabber(nullptr),
+    m_camControl(nullptr),
+    m_isOpen(false),
+    m_frames(0)
 {
 
 }
@@ -60,6 +66,11 @@ Stream::~Stream()
 void Stream::close()
 {
     LOG(LOG_INFO, "closing stream\n");
+
+    if (m_control != nullptr)
+    {
+        m_control->Stop();
+    }
 
     if (m_sampleGrabberFilter != nullptr)
     {
@@ -77,21 +88,27 @@ void Stream::close()
     SafeRelease(&m_sourceFilter);
     SafeRelease(&m_sampleGrabberFilter);
     SafeRelease(&m_sampleGrabber);
+    SafeRelease(&m_camControl);
 
     if (m_callbackHandler != 0)
     {
         delete m_callbackHandler;
     }
+
+    m_owner = nullptr;
+    m_width = 0;
+    m_height = 0;
+    m_frameBuffer.resize(0);
+    m_isOpen = false;    
 }
 
 
 bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
 {
-    if (m_owner != nullptr)
+    if (m_isOpen)
     {
-        // stream wasn't closed!
-        LOG(LOG_ERR,"open() was called on an active stream!\n");        
-        return false;
+        LOG(LOG_INFO,"open() was called on an active stream.\n");
+        close();
     }
 
     if (owner == nullptr)
@@ -107,6 +124,9 @@ bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t h
     }
 
     m_owner = owner;
+    m_frames = 0;
+    m_width = 0;
+    m_height = 0;    
 
     // Create the filter graph object.
     HRESULT hr = CoCreateInstance (CLSID_FilterGraph, NULL, CLSCTX_INPROC, IID_IFilterGraph2, (void **) &m_graph);
@@ -141,11 +161,25 @@ bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t h
         return false;        
     } 
 
+    // create camera control interface for exposure control etc . 
+    hr = m_sourceFilter->QueryInterface(IID_IAMCameraControl, (void **)&m_camControl); 
+    if (hr != S_OK) 
+    {
+        LOG(LOG_ERR,"Could not create IAMCameraControl\n");
+        return false;  
+    }
+
+    // FIXME/TODO: we should still be able to work with the camera when the
+    //       IAMCameraControl was not implemented.    
+    // disable auto exposure
+    m_camControl->Set(CameraControl_Exposure, -7, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_ABSOLUTE);
+    dumpCameraProperties();
+
     //create a samplegrabber filter for the device
     hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER,IID_IBaseFilter, (void**)&m_sampleGrabberFilter);
     if (hr < 0)
     {
-        LOG(LOG_ERR,"Could create sample grabber filter\n");
+        LOG(LOG_ERR,"Could not create sample grabber filter\n");
         return false;        
     }
 
@@ -171,7 +205,6 @@ bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t h
     //set the media type
     AM_MEDIA_TYPE mt;
     memset(&mt, 0, sizeof(AM_MEDIA_TYPE));
-
     mt.majortype	= MEDIATYPE_Video;
     mt.subtype		= MEDIASUBTYPE_RGB24; 
 
@@ -215,8 +248,6 @@ bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t h
     }    
 
     // look up the media type:
-    m_width = 0;
-    m_height = 0;
     AM_MEDIA_TYPE* info = new AM_MEDIA_TYPE();
     hr = m_sampleGrabber->GetConnectedMediaType(info);
     if ( hr == S_OK )
@@ -226,7 +257,12 @@ bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t h
             const VIDEOINFOHEADER * vi = reinterpret_cast<VIDEOINFOHEADER*>( info->pbFormat );
             m_width  = vi->bmiHeader.biWidth;
             m_height = vi->bmiHeader.biHeight;
-            LOG(LOG_INFO, "Width = %d, Height = %d\n", m_width, m_height);            
+            memcpy(&m_videoInfo, vi, sizeof(VIDEOINFOHEADER)); // save video header information
+            LOG(LOG_INFO, "Width = %d, Height = %d\n", m_width, m_height);
+
+            //FIXME: for now, just set the frame buffer size to
+            //       width*height*3 for 24 RGB raw images
+            m_frameBuffer.resize(m_width*m_height*3);                  
         }
         CoTaskMemFree( info->pbFormat );        
     }
@@ -241,21 +277,32 @@ bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t h
 
 	hr = m_sourceFilter->Run(0);
 
+    m_isOpen = true;
+
     return true;
 }
 
 bool Stream::hasNewFrame()
 {
-    return true;
+    m_bufferMutex.lock();
+    bool ok = m_newFrame;
+    m_bufferMutex.unlock();
+    return ok;
 }
 
-void Stream::captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes)
+bool Stream::captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes)
 {
+    if (!m_isOpen) return false;
+
     m_bufferMutex.lock();    
     size_t maxBytes = RGBbufferBytes <= m_frameBuffer.size() ? RGBbufferBytes : m_frameBuffer.size();
-    memcpy(RGBbufferPtr, &m_frameBuffer[0], maxBytes);
+    if (maxBytes != 0)
+    {
+        memcpy(RGBbufferPtr, &m_frameBuffer[0], maxBytes);
+    }
     m_newFrame = false;
     m_bufferMutex.unlock();
+    return true;
 }
 
 void Stream::submitBuffer(uint8_t *ptr, size_t bytes)
@@ -264,7 +311,88 @@ void Stream::submitBuffer(uint8_t *ptr, size_t bytes)
     if (m_frameBuffer.size() >= bytes)
     {
         memcpy(&m_frameBuffer[0], ptr, bytes);
-        m_newFrame = true;        
+        m_newFrame = true; 
+        m_frames++;
     }
     m_bufferMutex.unlock();
+}
+
+uint32_t Stream::getFOURCC()
+{
+    if (!m_isOpen) return 0;
+
+    if ((m_videoInfo.bmiHeader.biCompression == BI_RGB) || 
+        (m_videoInfo.bmiHeader.biCompression == BI_BITFIELDS))
+    {
+        //FIXME: is this the correct 4CC?
+        return MAKEFOURCC('R','G','B',' ');
+    }
+    else
+    {
+        return m_videoInfo.bmiHeader.biCompression;
+    }
+}
+
+void Stream::dumpCameraProperties()
+{
+    if (m_camControl != 0)
+    {
+		//query exposure
+		long flags, mmin, mmax, delta, defaultValue;
+        if (m_camControl->GetRange(CameraControl_Exposure, &mmin, &mmax,
+            &delta, &defaultValue, &flags) == S_OK)
+        {
+            LOG(LOG_INFO, "Exposure min     : %2.3f seconds (%d integer)\n", pow(2.0f, (float)mmin), mmin);
+            LOG(LOG_INFO, "Exposure max     : %2.3f seconds (%d integer)\n", pow(2.0f, (float)mmax), mmax);
+            LOG(LOG_INFO, "Exposure step    : %d (integer)\n", delta);
+            LOG(LOG_INFO, "Exposure default : %2.3f seconds\n", pow(2.0f, (float)defaultValue));		
+            LOG(LOG_INFO, "Flags            : %08X\n", flags);
+        }
+        else
+        {
+            LOG(LOG_INFO, "Could not get exposure range information\n");
+        }
+
+        //query focus
+        if (m_camControl->GetRange(CameraControl_Focus, &mmin, &mmax,
+            &delta, &defaultValue, &flags) == S_OK)
+        {
+            LOG(LOG_INFO, "Focus min     : %d integer\n", mmin);
+            LOG(LOG_INFO, "Focus max     : %d integer\n", mmax);
+            LOG(LOG_INFO, "Focus step    : %d integer\n", delta);
+            LOG(LOG_INFO, "Focus default : %d integer\n", defaultValue);
+            LOG(LOG_INFO, "Flags         : %08X\n", flags);
+        }
+        else
+        {
+            LOG(LOG_INFO, "Could not get focus range information\n");
+        }        
+
+        // query zoom
+        if (m_camControl->GetRange(CameraControl_Zoom, &mmin, &mmax,
+            &delta, &defaultValue, &flags) == S_OK)
+        {
+            LOG(LOG_INFO, "Zoom min     : %d integer\n", mmin);
+            LOG(LOG_INFO, "Zoom max     : %d integer\n", mmax);
+            LOG(LOG_INFO, "Zoom step    : %d integer\n", delta);
+            LOG(LOG_INFO, "Zoom default : %d integer\n", defaultValue);
+            LOG(LOG_INFO, "Flags         : %08X\n", flags);
+        }
+        else
+        {
+            LOG(LOG_INFO, "Could not get Zoom range information\n");
+        }         
+
+#if 0
+		if (m_camControl->get_Exposure(&value, &flags) == S_OK)
+		{
+			printf("Exposure: %2.3f seconds\n", pow(2.0f, (float)value));
+			printf("Flags   : %08X\n", flags);
+		}
+		else
+		{
+			printf("Exposure info failed!\n");
+		}
+#endif       
+    }
 }

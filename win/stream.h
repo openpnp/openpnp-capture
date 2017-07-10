@@ -16,6 +16,9 @@
 
 #include <windows.h>
 #include <dshow.h>
+#include <Vidcap.h>
+#include <Ksmedia.h>
+
 #include <stdint.h>
 #include <vector>
 #include <mutex>
@@ -52,7 +55,7 @@ public:
     /** alternate callback handler (not used) */
     virtual HRESULT __stdcall BufferCB(double time, BYTE* buffer, long len) override
     {
-        m_callbackCounter++;
+        //m_callbackCounter++;
         return S_OK;
     }
 
@@ -123,15 +126,34 @@ public:
         buffer pointed to by RGBbufferPtr. The maximum buffer size 
         must be supplied in RGBbufferBytes.
     */
-    void captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes);
+    bool captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes);
     
+    /** Returns true if the stream is open and capturing */
+    bool isOpen() const
+    {
+        return m_isOpen;
+    }
+
+    /** Return the FOURCC media type of the stream */
+    uint32_t getFOURCC();
+
+    /** Return the number of frames captured.
+        FIXME: protect by mutex 
+    */
+    uint32_t getFrameCount() const
+    {
+        return m_frames;
+    }
+
 protected:
     void submitBuffer(uint8_t* ptr, size_t bytes);
+    void dumpCameraProperties();
 
     Context*    m_owner;                    ///< The context object associated with this stream
 
     uint32_t    m_width;                    ///< The width of the frame in pixels
     uint32_t    m_height;                   ///< The height of the frame in pixels
+    bool        m_isOpen;
 
     IFilterGraph2*  m_graph;
     IMediaControl*  m_control;
@@ -139,14 +161,18 @@ protected:
     IBaseFilter*    m_sampleGrabberFilter;
     ISampleGrabber* m_sampleGrabber;
     ICaptureGraphBuilder2* m_capture;
+    IAMCameraControl* m_camControl;
 
     /** Each time a new frame is available, the DirectShow subsystem
         will call the callback handler */
     StreamCallbackHandler *m_callbackHandler;
 
-    std::mutex  m_bufferMutex;
-    bool        m_newFrame;
-    std::vector<uint8_t> m_frameBuffer;
+    std::mutex  m_bufferMutex;              ///< mutex to protect m_frameBuffer and m_newFrame
+    bool        m_newFrame;                 ///< new frame buffer flag
+    std::vector<uint8_t> m_frameBuffer;     ///< raw frame buffer
+    uint32_t    m_frames;                   ///< number of frames captured
+
+    VIDEOINFOHEADER m_videoInfo;            ///< video information of current captured stream
 };
 
 #endif

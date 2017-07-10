@@ -168,20 +168,6 @@ bool Context::enumerateDevices()
             LOG(LOG_INFO, "ID %d -> %s\n", num_devices, info.m_name.c_str());            
         }
 
-        #if 0
-        // try display name.. 
-        LPOLESTR dname;
-        hr = moniker->GetDisplayName(0,0, &dname);
-        if (hr == S_OK)
-        {
-            int32_t chars = WideCharToMultiByte(CP_UTF8, 0, dname, -1, nullptr, 0, nullptr, nullptr);
-            std::vector<char> buffer;
-            buffer.resize(chars);
-            WideCharToMultiByte(CP_UTF8, 0, dname, -1, &buffer[0], chars, nullptr, nullptr);
-            LOG(LOG_INFO, "     -> DNAME %s\n", &buffer[0]);
-        }
-        #endif
-
         num_devices++;
     }
     return true;
@@ -312,6 +298,17 @@ int32_t Context::openStream(CapDeviceID id)
         LOG(LOG_ERR, "Could not open stream for device %s\n", device->m_name.c_str());
         return -1;
     }
+    else
+    {
+        printf("[DBG ] FOURCC = ");
+        uint32_t fcc = s->getFOURCC();
+        for(uint32_t i=0; i<4; i++)
+        {            
+            printf("%c", (fcc & 0xff));
+            fcc >>= 8;
+        }
+        printf("\n");
+    }
     m_streams.push_back(s);
     return m_streams.size()-1;
 }
@@ -338,4 +335,72 @@ void Context::closeStream(int32_t streamID)
         delete m_streams[streamID];
         m_streams[streamID] = nullptr;
     }
+}
+
+uint32_t Context::isOpenStream(int32_t streamID)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "isOpenStream was called with a negative stream ID\n");
+        return 0;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "isOpenStream was called with an out-of-bounds stream ID\n");
+        return 0;        
+    }
+
+    return m_streams[streamID]->isOpen() ? 1 : 0;
+}
+
+bool Context::captureFrame(int32_t streamID, uint8_t *RGBbufferPtr, size_t RGBbufferBytes)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "captureFrame was called with a negative stream ID\n");
+        return false;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "captureFrame was called with an out-of-bounds stream ID\n");
+        return false;
+    }
+    
+    return m_streams[streamID]->captureFrame(RGBbufferPtr, RGBbufferBytes);
+}
+
+bool Context::hasNewFrame(int32_t streamID)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "hasNewFrame was called with a negative stream ID\n");
+        return false;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "hasNewFrame was called with an out-of-bounds stream ID\n");
+        return false;        
+    }
+
+    return m_streams[streamID]->hasNewFrame();
+}
+
+uint32_t Context::getStreamFrameCount(int32_t streamID)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "getStreamFrameCount was called with a negative stream ID\n");
+        return 0;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "getStreamFrameCount was called with an out-of-bounds stream ID\n");
+        return 0;        
+    }
+
+    return m_streams[streamID]->getFrameCount();
 }

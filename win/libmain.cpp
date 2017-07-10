@@ -74,3 +74,43 @@ DLLEXPORT CapResult Cap_closeStream(CapContext ctx, CapStream stream)
     }
     return CAPRESULT_OK;
 }
+
+DLLEXPORT uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        return c->isOpenStream(stream);
+    }
+    return 0;   // closed stream
+}
+
+DLLEXPORT CapResult Cap_captureFrame(CapContext ctx, CapStream stream, void *RGBbufferPtr, uint32_t RGBbufferBytes)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        return c->captureFrame(stream, (uint8_t*)RGBbufferPtr, RGBbufferBytes) ? CAPRESULT_OK : CAPRESULT_ERR;
+    }    
+    return CAPRESULT_ERR;
+}
+
+DLLEXPORT uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        return c->hasNewFrame(stream) ? 1: 0;
+    }    
+    return 0;
+}
+
+DLLEXPORT uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        return c->getStreamFrameCount(stream);
+    }    
+    return 0;    
+}

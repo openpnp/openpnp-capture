@@ -89,6 +89,18 @@ public:
     /** close the stream to a device */
     void closeStream(int32_t streamID);
 
+    /** returns 1 if the stream is open and capturing, else 0 */
+    uint32_t isOpenStream(int32_t streamID);
+
+    /** returns true if succeeds, else false */
+    bool captureFrame(int32_t streamID, uint8_t *RGBbufferPtr, size_t RGBbufferBytes);
+
+    /** returns true if the stream has a new frame, false otherwise */
+    bool hasNewFrame(int32_t streamID);
+
+    /** returns the number of frames captured during the lifetime of the stream */
+    uint32_t getStreamFrameCount(int32_t streamID);
+
 protected:
     /** Enumerate DirectShow capture devices and put their 
         information into the m_devices array */
@@ -101,7 +113,7 @@ protected:
     std::string wcharPtrToString(const wchar_t *str);
     
     std::vector<deviceInfo> m_devices;
-    std::vector<Stream*>    m_streams;
+    std::vector<Stream*>    m_streams;      // FIXME: change to std::map<uint32_t, Stream*>
 };
 
 #endif
