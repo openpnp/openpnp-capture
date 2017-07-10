@@ -17,16 +17,22 @@
 #include <windows.h>
 #include <dshow.h>
 #include <stdint.h>
+#include <vector>
+#include <mutex>
 #include "logging.h"
 #include "samplegrabber.h"
 
 class Context;      // pre-declaration
-struct deviceInfo;  // device info class
-class Stream;
+struct deviceInfo;  // pre-declaration
+class Stream;       // pre-declaration
 
 /** A class to handle callbacks from the video subsystem,
-    A call is made for every frame */
+    A call is made for every frame.
 
+    Note that the callback will be called by the DirectShow thread
+    and should return as quickly as possible to avoid interference
+    with the capturing process.
+*/
 class StreamCallbackHandler : public ISampleGrabberCB
 {
 public:
@@ -40,18 +46,17 @@ public:
         LOG(LOG_INFO, "Callback counter = %d\n", m_callbackCounter);
     }
 
-    virtual HRESULT __stdcall SampleCB(double time, IMediaSample* sample) override
-    {
-        m_callbackCounter++;
-        return S_OK;
-    }
+    /** callback handler used in this library */
+    virtual HRESULT __stdcall SampleCB(double time, IMediaSample* sample) override;
 
+    /** alternate callback handler (not used) */
     virtual HRESULT __stdcall BufferCB(double time, BYTE* buffer, long len) override
     {
         m_callbackCounter++;
         return S_OK;
     }
 
+    /** function implementation required by ISampleGrabberCB base class */
     virtual HRESULT __stdcall QueryInterface( REFIID iid, LPVOID *ppv )
     {
         if( iid == IID_ISampleGrabberCB || iid == IID_IUnknown )
@@ -62,11 +67,13 @@ public:
         return E_NOINTERFACE;
     }
 
+    /** function implementation required by ISampleGrabberCB base class */
     virtual ULONG	__stdcall AddRef()
     {
         return 1;
     }
 
+    /** function implementation required by ISampleGrabberCB base class */
     virtual ULONG	__stdcall Release()
     {
         return 2;
@@ -82,30 +89,49 @@ public:
         m_callbackCounter = 0;
     }
 
+
 private:
-    Stream*  m_stream;
-    uint32_t m_callbackCounter;
+    std::mutex  m_bufferMutex;      ///< mutex to protect frame buffer access
+    Stream*     m_stream;
+    uint32_t    m_callbackCounter;
 };
 
 
 /** The stream class handles the capturing of a single device */
 class Stream
 {
+friend StreamCallbackHandler;
+
 public:
     Stream();
     ~Stream();
 
+    /** Open a capture stream to a device and request a specific (internal) stream format. 
+        When succesfully opened, capturing starts immediately.
+    */
     bool open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC);
+
+    /** Close a capture stream */
     void close();
 
+    /** Returns true if a new frame is available for reading using 'captureFrame'. 
+        The internal new frame flag is reset by captureFrame.
+    */
     bool hasNewFrame();
+
+    /** Retrieve the most recently captured frame and copy it in a
+        buffer pointed to by RGBbufferPtr. The maximum buffer size 
+        must be supplied in RGBbufferBytes.
+    */
     void captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes);
-
+    
 protected:
-    Context*                m_owner;
+    void submitBuffer(uint8_t* ptr, size_t bytes);
 
-    uint32_t    m_width;
-    uint32_t    m_height;
+    Context*    m_owner;                    ///< The context object associated with this stream
+
+    uint32_t    m_width;                    ///< The width of the frame in pixels
+    uint32_t    m_height;                   ///< The height of the frame in pixels
 
     IFilterGraph2*  m_graph;
     IMediaControl*  m_control;
@@ -114,7 +140,13 @@ protected:
     ISampleGrabber* m_sampleGrabber;
     ICaptureGraphBuilder2* m_capture;
 
+    /** Each time a new frame is available, the DirectShow subsystem
+        will call the callback handler */
     StreamCallbackHandler *m_callbackHandler;
+
+    std::mutex  m_bufferMutex;
+    bool        m_newFrame;
+    std::vector<uint8_t> m_frameBuffer;
 };
 
 #endif

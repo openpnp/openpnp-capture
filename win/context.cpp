@@ -291,20 +291,20 @@ std::string Context::wcharPtrToString(const wchar_t *sstr)
 } 
 
 
-int32_t Context::openStream(deviceInfo *device)
+int32_t Context::openStream(CapDeviceID id)
 {
-    if (device == 0)
+    deviceInfo *device = nullptr;
+
+    if (m_devices.size() > id)
     {
-        if (m_devices.size() > 0)
-        {
-            device = &m_devices[0];
-        }
-        else
-        {
-            LOG(LOG_ERR, "openStream: No devices found\n", device->m_name.c_str());
-            return -1;
-        }
+        device = &m_devices[id];
     }
+    else
+    {
+        LOG(LOG_ERR, "openStream: No devices found\n", device->m_name.c_str());
+        return -1;
+    }
+
 
     Stream *s = new Stream();
     if (!s->open(this, device, 0,0,0))

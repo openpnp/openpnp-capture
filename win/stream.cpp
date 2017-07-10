@@ -15,6 +15,34 @@
 #include "context.h"
 #include "scopedcomptr.h"
 
+// **********************************************************************
+//   StreamCallbackHandler
+// **********************************************************************
+
+HRESULT __stdcall StreamCallbackHandler::SampleCB(double time, IMediaSample* sample)
+{
+    m_callbackCounter++;
+    if (sample == nullptr)
+    {
+        return S_OK;
+    }
+
+    size_t bytes = sample->GetActualDataLength();
+    //size_t bytes2 = sample->GetSize();
+    uint8_t *ptr;
+    if ((sample->GetPointer(&ptr) == S_OK) && (m_stream != nullptr))
+    {
+        m_stream->submitBuffer(ptr, bytes);
+    }
+    return S_OK;
+}
+
+
+
+// **********************************************************************
+//   Stream
+// **********************************************************************
+
 Stream::Stream() :
     m_owner(nullptr),
     m_graph(nullptr),
@@ -223,4 +251,20 @@ bool Stream::hasNewFrame()
 
 void Stream::captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes)
 {
+    m_bufferMutex.lock();    
+    size_t maxBytes = RGBbufferBytes <= m_frameBuffer.size() ? RGBbufferBytes : m_frameBuffer.size();
+    memcpy(RGBbufferPtr, &m_frameBuffer[0], maxBytes);
+    m_newFrame = false;
+    m_bufferMutex.unlock();
+}
+
+void Stream::submitBuffer(uint8_t *ptr, size_t bytes)
+{
+    m_bufferMutex.lock();
+    if (m_frameBuffer.size() >= bytes)
+    {
+        memcpy(&m_frameBuffer[0], ptr, bytes);
+        m_newFrame = true;        
+    }
+    m_bufferMutex.unlock();
 }

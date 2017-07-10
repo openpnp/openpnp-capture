@@ -60,7 +60,7 @@ DLLEXPORT CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t w
     if (ctx != 0)
     {
         Context *c = reinterpret_cast<Context*>(ctx);
-        return c->openStream(0);
+        return c->openStream(index);
     }
     return -1;
 }
