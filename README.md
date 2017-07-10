@@ -1,3 +1,5 @@
+![OpenPNP Logo](doc/logo_small.png)
+
 OpenPnP Capture is a cross platform video capture library with a focus on machine vision. It's goals are:
 
 * Native camera access on Windows, Linux and Mac. Implemented with MediaFoundation, V4L2 and AVFoundation respectively.
@@ -14,12 +16,13 @@ Working in the windows version:
 * device enumeration.
 * capturing from a device (using default frame size and format).
 * partial c interface.
+* exposure control.
 
 Not working in the windows version:
 * setting of frame size.
 * setting of video format, e.g. MJPG etc.
 * supported format enumeration.
-* focus/exposure control.
+* focus control.
 
 ### Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
