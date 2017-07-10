@@ -8,12 +8,23 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 * Auto and manual focus control.
 * Simple, common C wrapper for the listed APIs.
 
-It's not finished yet. It's not even working yet.
+### Status
+
+Working in the windows version:
+* device enumeration.
+* capturing from a device (using default frame size and format).
+* partial c interface.
+
+Not working in the windows version:
+* setting of frame size.
+* setting of video format, e.g. MJPG etc.
+* supported format enumeration.
+* focus/exposure control.
 
 ### Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
 
-Now run your
+Go to the build directory and run nmake or ninja to build the library and the test application.
 
 ### Build instructions (OSX)
 TODO
