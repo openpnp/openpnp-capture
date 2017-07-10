@@ -38,15 +38,17 @@ int main(int argc, char*argv[])
         printf("Stream is closed (?)\n");
     }
 
-    printf("Press any key to exit..\n");
+    printf("Press Q to exit..\n");
 
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(640*480*3);
 
+    Cap_setAutoExposure(ctx, streamID, 1);
+
 #if 1
     uint32_t counter = 0;
     uint32_t tries = 0;
-    while(counter < 50)
+    while(counter < 30)
     {
         Sleep(50);
         printf("%d", Cap_getStreamFrameCount(ctx, streamID));
@@ -62,6 +64,8 @@ int main(int argc, char*argv[])
         }
     };
 #endif
+
+    Cap_setAutoExposure(ctx, streamID, 0);
 
     // wait for a new frame .. 
     //while (Cap_hasNewFrame(ctx, streamID) == 0) {};
@@ -118,7 +122,28 @@ A raster of Height rows, in order from top to bottom. Each row consists of Width
         fclose(fout);
     }
 
-    getch();
+    char c = 0;
+    int32_t v = 0;
+    while((c != 'q') && (c != 'Q'))
+    {
+        c = getch();
+        switch(c)
+        {
+        case '+':
+            printf("+");
+            Cap_setExposure(ctx, streamID, ++v);
+            break;
+        case '-':
+            printf("-");
+            Cap_setExposure(ctx, streamID, --v);
+            break;
+        case '0':
+            printf("0");
+            v = 0;
+            Cap_setExposure(ctx, streamID, v);
+            break;        
+        }
+    }
 
     Cap_closeStream(ctx, streamID);
 

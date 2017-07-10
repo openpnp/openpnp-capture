@@ -219,3 +219,24 @@ bool Context::removeStream(int32_t ID)
     }
     return false;
 }
+
+bool Context::setStreamExposure(int32_t streamID, int32_t value)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setExposure(value);
+}
+
+bool Context::setStreamAutoExposure(int32_t streamID, bool enable)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setAutoExposure(enable);
+}
+
+bool Context::getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *max)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->getExposureLimits(min, max);
+}

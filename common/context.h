@@ -82,6 +82,12 @@ public:
     /** returns the number of frames captured during the lifetime of the stream */
     uint32_t getStreamFrameCount(int32_t streamID);
 
+    bool setStreamExposure(int32_t streamID, int32_t value);
+
+    bool setStreamAutoExposure(int32_t streamID, bool enable);
+
+    bool getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *max);
+
 protected:
     /** Enumerate DirectShow capture devices and put their 
         information into the m_devices array 

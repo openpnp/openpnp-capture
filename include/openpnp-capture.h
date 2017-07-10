@@ -37,6 +37,8 @@ typedef uint32_t CapDeviceID;   ///< unique device ID
 #define CAPRESULT_ERR 1
 #define CAPRESULT_DEVICENOTFOUND 2
 #define CAPRESULT_FORMATNOTSUPPORTED 3
+#define CAPRESULT_EXPOSURENOTSUPPORTED 4
+#define CAPRESULT_FOCUSNOTSUPPORTED 5
 
 /** initialize the capture library */
 DLLPUBLIC CapContext Cap_createContext(void);
@@ -83,9 +85,9 @@ DLLPUBLIC uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream);
     For debugging purposes */
 DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
 
-DLLPUBLIC CapResult Cap_getExposureLimits(CapDeviceID index, float *min, float *max);
-DLLPUBLIC CapResult Cap_setExposure(CapDeviceID index, float value);
-DLLPUBLIC CapResult Cap_setAutoExposure(CapStream stream, uint32_t bOnOff);
+DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
+DLLPUBLIC CapResult Cap_setExposure(CapContext ctx, CapStream stream, int32_t value);
+DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32_t bOnOff);
 
 DLLPUBLIC void Cap_setLogLevel(uint32_t level);
 

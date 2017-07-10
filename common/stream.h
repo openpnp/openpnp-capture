@@ -65,6 +65,12 @@ public:
         return m_frames;
     }
 
+    virtual bool setExposure(int32_t value) = 0;
+
+    virtual bool setAutoExposure(bool enabled) = 0;
+
+    virtual bool getExposureLimits(int32_t *min, int32_t *max) = 0;
+
 protected:
     void submitBuffer(uint8_t* ptr, size_t bytes);
 

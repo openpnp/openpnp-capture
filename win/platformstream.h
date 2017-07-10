@@ -132,6 +132,12 @@ public:
     /** Return the FOURCC media type of the stream */
     virtual uint32_t getFOURCC() override;
 
+    virtual bool setExposure(int32_t value) override;
+
+    virtual bool setAutoExposure(bool enabled) override;
+
+    virtual bool getExposureLimits(int32_t *min, int32_t *max) override;
+
 protected:
     void dumpCameraProperties();
 
