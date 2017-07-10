@@ -14,13 +14,13 @@
 #include "context.h"
 #include "logging.h"
 
-DLLEXPORT CapContext Cap_createContext()
+DLLPUBLIC CapContext Cap_createContext()
 {
     Context *ctx = new Context();
     return ctx;
 }
 
-DLLEXPORT CapResult Cap_releaseContext(CapContext ctx)
+DLLPUBLIC CapResult Cap_releaseContext(CapContext ctx)
 {
     if (ctx != 0)
     {
@@ -32,7 +32,7 @@ DLLEXPORT CapResult Cap_releaseContext(CapContext ctx)
     return CAPRESULT_ERR;
 }
 
-DLLEXPORT uint32_t Cap_getDeviceCount(CapContext ctx)
+DLLPUBLIC uint32_t Cap_getDeviceCount(CapContext ctx)
 {
     if (ctx != 0)
     {
@@ -41,7 +41,7 @@ DLLEXPORT uint32_t Cap_getDeviceCount(CapContext ctx)
     return 0;
 }
 
-DLLEXPORT const char* Cap_getDeviceName(CapContext ctx, CapDeviceID id)
+DLLPUBLIC const char* Cap_getDeviceName(CapContext ctx, CapDeviceID id)
 {
     if (ctx != 0)
     {
@@ -50,12 +50,12 @@ DLLEXPORT const char* Cap_getDeviceName(CapContext ctx, CapDeviceID id)
     return 0;
 }
 
-DLLEXPORT void Cap_setLogLevel(uint32_t level)
+DLLPUBLIC void Cap_setLogLevel(uint32_t level)
 {
     setLogLevel(level);
 }
 
-DLLEXPORT CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t width, uint32_t height, uint32_t fourCC)
+DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t width, uint32_t height, uint32_t fourCC)
 {
     if (ctx != 0)
     {
@@ -65,7 +65,7 @@ DLLEXPORT CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t w
     return -1;
 }
 
-DLLEXPORT CapResult Cap_closeStream(CapContext ctx, CapStream stream)
+DLLPUBLIC CapResult Cap_closeStream(CapContext ctx, CapStream stream)
 {
     if (ctx != 0)
     {
@@ -75,7 +75,7 @@ DLLEXPORT CapResult Cap_closeStream(CapContext ctx, CapStream stream)
     return CAPRESULT_OK;
 }
 
-DLLEXPORT uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream)
+DLLPUBLIC uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream)
 {
     if (ctx != 0)
     {
@@ -85,7 +85,7 @@ DLLEXPORT uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream)
     return 0;   // closed stream
 }
 
-DLLEXPORT CapResult Cap_captureFrame(CapContext ctx, CapStream stream, void *RGBbufferPtr, uint32_t RGBbufferBytes)
+DLLPUBLIC CapResult Cap_captureFrame(CapContext ctx, CapStream stream, void *RGBbufferPtr, uint32_t RGBbufferBytes)
 {
     if (ctx != 0)
     {
@@ -95,7 +95,7 @@ DLLEXPORT CapResult Cap_captureFrame(CapContext ctx, CapStream stream, void *RGB
     return CAPRESULT_ERR;
 }
 
-DLLEXPORT uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream)
+DLLPUBLIC uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream)
 {
     if (ctx != 0)
     {
@@ -105,7 +105,7 @@ DLLEXPORT uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream)
     return 0;
 }
 
-DLLEXPORT uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
+DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
 {
     if (ctx != 0)
     {
