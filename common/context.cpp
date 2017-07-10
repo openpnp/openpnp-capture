@@ -1,0 +1,221 @@
+/*
+
+    OpenPnp-Capture: a video capture subsystem.
+
+    Windows platform code
+
+    Created by Niels Moseley on 7/6/17.
+    Copyright © 2017 Niels Moseley. All rights reserved.
+
+    Platform/implementation specific structures
+    and typedefs.
+
+*/
+
+//#include <Mfidl.h>
+//#include <Mfapi.h>
+
+#include <vector>
+#include "context.h"
+#include "logging.h"
+#include "stream.h"
+
+#ifdef _WIN32
+#include "../win/platformstream.h"
+#elif __linux__
+#include "../linux/platformstream.h"
+#endif
+
+Context::Context() :
+    m_streamCounter(0)
+{
+    //NOTE: derived platform dependent class must enumerate
+    //      the devices here and place them in m_devices.
+}
+
+Context::~Context()
+{
+    LOG(LOG_DEBUG, "Context destroyed\n");
+}
+
+const char* Context::getDeviceName(CapDeviceID id) const
+{
+    if (id >= m_devices.size())
+    {
+        return NULL; // no such device ID!
+    }
+    return m_devices[id].m_name.c_str();
+}
+
+uint32_t Context::getDeviceCount() const
+{
+    return m_devices.size();
+}
+
+
+int32_t Context::openStream(CapDeviceID id)
+{
+    deviceInfo *device = nullptr;
+
+    if (m_devices.size() > id)
+    {
+        device = &m_devices[id];
+    }
+    else
+    {
+        LOG(LOG_ERR, "openStream: No devices found\n", device->m_name.c_str());
+        return -1;
+    }
+
+
+    Stream *s = new PlatformStream();
+    if (!s->open(this, device, 0,0,0))
+    {
+        LOG(LOG_ERR, "Could not open stream for device %s\n", device->m_name.c_str());
+        return -1;
+    }
+    else
+    {
+        printf("[DBG ] FOURCC = ");
+        uint32_t fcc = s->getFOURCC();
+        for(uint32_t i=0; i<4; i++)
+        {            
+            printf("%c", (fcc & 0xff));
+            fcc >>= 8;
+        }
+        printf("\n");
+    }
+
+    int32_t streamID = storeStream(s);
+    return streamID;
+}
+
+bool Context::closeStream(int32_t streamID)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "closeStream was called with a negative stream ID\n");
+        return false;
+    }
+
+    // remove stream from collection
+    Stream *streamPtr = lookupStreamByID(streamID);
+    if (streamPtr != nullptr)
+    {
+        delete streamPtr;
+    }
+    else
+    {
+        LOG(LOG_ERR, "could not delete stream with ID %d.\n", streamID);
+    }
+
+    if (!removeStream(streamID))
+    {
+        LOG(LOG_ERR, "could not remove stream with ID %d from m_streams.\n", streamID);
+    }
+    
+    return true;
+}
+
+uint32_t Context::isOpenStream(int32_t streamID)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "isOpenStream was called with a negative stream ID\n");
+        return 0;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "isOpenStream was called with an out-of-bounds stream ID\n");
+        return 0;        
+    }
+
+    return m_streams[streamID]->isOpen() ? 1 : 0;
+}
+
+bool Context::captureFrame(int32_t streamID, uint8_t *RGBbufferPtr, size_t RGBbufferBytes)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "captureFrame was called with a negative stream ID\n");
+        return false;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "captureFrame was called with an out-of-bounds stream ID\n");
+        return false;
+    }
+    
+    return m_streams[streamID]->captureFrame(RGBbufferPtr, RGBbufferBytes);
+}
+
+bool Context::hasNewFrame(int32_t streamID)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "hasNewFrame was called with a negative stream ID\n");
+        return false;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "hasNewFrame was called with an out-of-bounds stream ID\n");
+        return false;        
+    }
+
+    return m_streams[streamID]->hasNewFrame();
+}
+
+uint32_t Context::getStreamFrameCount(int32_t streamID)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "getStreamFrameCount was called with a negative stream ID\n");
+        return 0;
+    }    
+
+    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    {
+        LOG(LOG_ERR, "getStreamFrameCount was called with an out-of-bounds stream ID\n");
+        return 0;        
+    }
+
+    return m_streams[streamID]->getFrameCount();
+}
+
+/** Lookup a stream by ID and return a pointer
+    to it if it exists. If it doesnt exist, 
+    return NULL */
+Stream* Context::lookupStreamByID(int32_t ID)
+{
+    auto it = m_streams.find(ID);
+    if (it != m_streams.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+/** Store a stream pointer in the m_streams map
+    and return its unique ID */
+int32_t Context::storeStream(Stream *stream)
+{   
+    int32_t ID = m_streamCounter++; 
+    m_streams.insert(std::pair<int32_t,Stream*>(ID, stream));    
+    return ID;
+}
+
+/** Remove a stream from the m_streams map.
+    Return true if this was successful */
+bool Context::removeStream(int32_t ID)
+{
+    auto it = m_streams.find(ID);
+    if (it != m_streams.end())
+    {
+        m_streams.erase(it);
+        return true;
+    }
+    return false;
+}

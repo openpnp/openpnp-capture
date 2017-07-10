@@ -19,10 +19,12 @@ include_directories(include)
 IF (WIN32)
 
 # add files for WIN32
-set (SOURCE win/libmain.cpp
-            win/context.cpp
-            win/logging.cpp
-            win/stream.cpp)
+set (SOURCE common/libmain.cpp
+            common/context.cpp
+            common/logging.cpp
+            common/stream.cpp
+            win/platformcontext.cpp
+            win/platformstream.cpp)
 
 # add windows-specific test application
 add_subdirectory(win/tests)

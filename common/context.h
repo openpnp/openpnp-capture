@@ -2,13 +2,11 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Windows platform code
-
-    Created by Niels Moseley on 7/6/17.
+    Created by Niels Moseley on 7/11/17.
     Copyright © 2017 Niels Moseley. All rights reserved.
 
-    Platform/implementation specific structures
-    and typedefs.
+    Platform independent context class to keep track
+    of the global state.
 
 */
 
@@ -17,12 +15,6 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#pragma comment(lib, "strmiids")
-//#pragma comment(lib, "Mfplat")
-//#pragma comment(lib, "Mf.lib")
-
-#include <windows.h>
-#include <dshow.h>
 #include <vector>
 #include <string>
 #include <map>
@@ -30,32 +22,19 @@
 
 #include "openpnp-capture.h"
 
-class Stream;
-
-/** device information struct/object */
-struct deviceInfo
-{
-    deviceInfo()  : m_moniker(0) {}
-    ~deviceInfo()
-    {
-        if (m_moniker != nullptr)
-        {
-            //FIXME: not sure what to do with
-            // IMoniker* here. When I call
-            // ->Release(), the program crashes ?
-            // even an additional AddRef was
-            // applied.. ? Documentation unclear.
-        }
-    }
-
-    std::string     m_name;         ///< UTF-8 printable name
-    std::wstring    m_filterName;   ///< DirectShow internal device name
-    std::wstring    m_devicePath;   ///< unique device path
-    IMoniker*       m_moniker;      ///< DirectShow object for capture device        
-};
+#ifdef _WIN32
+    #pragma comment(lib, "strmiids")
+    #include "../win/deviceinfo.h"
+#elif __linux__
+    #include "../linux/deviceinfo.h"
+#else
+    #include "../mac/deviceinfo.h"
+#endif
 
 
-/** context class keeps track of all the platform dependent
+class Stream;   // pre-declaration
+
+/** context base class keeps track of all the platform independent
     objects and information */
 
 class Context
@@ -105,8 +84,12 @@ public:
 
 protected:
     /** Enumerate DirectShow capture devices and put their 
-        information into the m_devices array */
-    bool enumerateDevices();
+        information into the m_devices array 
+        
+        Implement this function in a platform-dependent
+        derived class.
+    */
+    virtual bool enumerateDevices() = 0;
 
     /** Lookup a stream by ID and return a pointer
         to it if it exists. If it doesnt exist, 
@@ -123,11 +106,19 @@ protected:
 
 
 
-    /** Convert a wide character string to an UTF-8 string */
-    std::string wstringToString(const std::wstring &wstr);
+    /** Convert a wide character string to an UTF-8 string 
+        
+        Implement this function in a platform-dependent
+        derived class.    
+    */
+    virtual std::string wstringToString(const std::wstring &wstr) = 0;
 
-    /** Convert a wide charater string to an UTF-8 string */
-    std::string wcharPtrToString(const wchar_t *str);
+    /** Convert a wide charater string to an UTF-8 string
+        
+        Implement this function in a platform-dependent
+        derived class.    
+    */
+    virtual std::string wcharPtrToString(const wchar_t *str) = 0;
     
 
     std::vector<deviceInfo>     m_devices;  ///< list of enumerated devices

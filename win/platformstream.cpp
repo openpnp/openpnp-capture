@@ -11,8 +11,8 @@
 
 */
 
-#include "stream.h"
-#include "context.h"
+#include "platformstream.h"
+#include "../common/context.h"
 #include "scopedcomptr.h"
 
 // **********************************************************************
@@ -40,30 +40,28 @@ HRESULT __stdcall StreamCallbackHandler::SampleCB(double time, IMediaSample* sam
 
 
 // **********************************************************************
-//   Stream
+//   PlatformStream
 // **********************************************************************
 
-Stream::Stream() :
-    m_owner(nullptr),
+PlatformStream::PlatformStream() : 
+    Stream(),
     m_graph(nullptr),
     m_control(nullptr),
     m_callbackHandler(nullptr),
     m_sampleGrabberFilter(nullptr),
     m_sourceFilter(nullptr),
     m_sampleGrabber(nullptr),
-    m_camControl(nullptr),
-    m_isOpen(false),
-    m_frames(0)
+    m_camControl(nullptr)
 {
 
 }
 
-Stream::~Stream()
+PlatformStream::~PlatformStream()
 {
     close();
 }
 
-void Stream::close()
+void PlatformStream::close()
 {
     LOG(LOG_INFO, "closing stream\n");
 
@@ -103,7 +101,7 @@ void Stream::close()
 }
 
 
-bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
+bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
 {
     if (m_isOpen)
     {
@@ -282,42 +280,7 @@ bool Stream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t h
     return true;
 }
 
-bool Stream::hasNewFrame()
-{
-    m_bufferMutex.lock();
-    bool ok = m_newFrame;
-    m_bufferMutex.unlock();
-    return ok;
-}
-
-bool Stream::captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes)
-{
-    if (!m_isOpen) return false;
-
-    m_bufferMutex.lock();    
-    size_t maxBytes = RGBbufferBytes <= m_frameBuffer.size() ? RGBbufferBytes : m_frameBuffer.size();
-    if (maxBytes != 0)
-    {
-        memcpy(RGBbufferPtr, &m_frameBuffer[0], maxBytes);
-    }
-    m_newFrame = false;
-    m_bufferMutex.unlock();
-    return true;
-}
-
-void Stream::submitBuffer(uint8_t *ptr, size_t bytes)
-{
-    m_bufferMutex.lock();
-    if (m_frameBuffer.size() >= bytes)
-    {
-        memcpy(&m_frameBuffer[0], ptr, bytes);
-        m_newFrame = true; 
-        m_frames++;
-    }
-    m_bufferMutex.unlock();
-}
-
-uint32_t Stream::getFOURCC()
+uint32_t PlatformStream::getFOURCC()
 {
     if (!m_isOpen) return 0;
 
@@ -333,7 +296,7 @@ uint32_t Stream::getFOURCC()
     }
 }
 
-void Stream::dumpCameraProperties()
+void PlatformStream::dumpCameraProperties()
 {
     if (m_camControl != 0)
     {

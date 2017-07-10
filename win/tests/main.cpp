@@ -10,7 +10,7 @@
 #include <windows.h> // for Sleep
 
 #include "openpnp-capture.h"
-#include "context.h"
+#include "../common/context.h"
 
 int main(int argc, char*argv[])
 {    

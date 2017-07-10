@@ -14,9 +14,15 @@
 #include "context.h"
 #include "logging.h"
 
+#ifdef _WIN32
+#include "../win/platformcontext.h"
+#elif __linux__
+#include "../linux/platformcontext.h"
+#endif
+
 DLLPUBLIC CapContext Cap_createContext()
 {
-    Context *ctx = new Context();
+    Context *ctx = new PlatformContext();
     return ctx;
 }
 
