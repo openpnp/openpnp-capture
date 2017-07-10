@@ -25,6 +25,7 @@
 #include <dshow.h>
 #include <vector>
 #include <string>
+#include <map>
 #include <stdint.h>
 
 #include "openpnp-capture.h"
@@ -52,6 +53,7 @@ struct deviceInfo
     std::wstring    m_devicePath;   ///< unique device path
     IMoniker*       m_moniker;      ///< DirectShow object for capture device        
 };
+
 
 /** context class keeps track of all the platform dependent
     objects and information */
@@ -87,7 +89,7 @@ public:
     int32_t openStream(CapDeviceID id);
 
     /** close the stream to a device */
-    void closeStream(int32_t streamID);
+    bool closeStream(int32_t streamID);
 
     /** returns 1 if the stream is open and capturing, else 0 */
     uint32_t isOpenStream(int32_t streamID);
@@ -106,14 +108,31 @@ protected:
         information into the m_devices array */
     bool enumerateDevices();
 
+    /** Lookup a stream by ID and return a pointer
+        to it if it exists. If it doesnt exist, 
+        return NULL */
+    Stream* lookupStreamByID(int32_t ID);
+
+    /** Store a stream pointer in the m_streams map
+        and return its unique ID */
+    int32_t storeStream(Stream *stream);
+
+    /** Remove a stream from the m_streams map.
+        Return true if this was successful */
+    bool removeStream(int32_t ID);
+
+
+
     /** Convert a wide character string to an UTF-8 string */
     std::string wstringToString(const std::wstring &wstr);
 
     /** Convert a wide charater string to an UTF-8 string */
     std::string wcharPtrToString(const wchar_t *str);
     
-    std::vector<deviceInfo> m_devices;
-    std::vector<Stream*>    m_streams;      // FIXME: change to std::map<uint32_t, Stream*>
+
+    std::vector<deviceInfo>     m_devices;  ///< list of enumerated devices
+    std::map<int32_t, Stream*>  m_streams;  ///< collection of streams
+    int32_t                     m_streamCounter;
 };
 
 #endif

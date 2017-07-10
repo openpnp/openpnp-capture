@@ -21,7 +21,8 @@
 #include "scopedcomptr.h"
 #include "stream.h"
 
-Context::Context()
+Context::Context() :
+    m_streamCounter(0)
 {
     HRESULT hr;
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -309,32 +310,36 @@ int32_t Context::openStream(CapDeviceID id)
         }
         printf("\n");
     }
-    m_streams.push_back(s);
-    return m_streams.size()-1;
+
+    int32_t streamID = storeStream(s);
+    return streamID;
 }
 
-void Context::closeStream(int32_t streamID)
+bool Context::closeStream(int32_t streamID)
 {
     if (streamID < 0)
     {
         LOG(LOG_ERR, "closeStream was called with a negative stream ID\n");
-        return;
+        return false;
     }
-    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+
+    // remove stream from collection
+    Stream *streamPtr = lookupStreamByID(streamID);
+    if (streamPtr != nullptr)
     {
-        LOG(LOG_ERR, "closeStream was called with an out-of-bounds stream ID\n");
-        return;        
-    }
-    if (m_streams[streamID] == nullptr)
-    {
-        LOG(LOG_ERR, "closeStream was called on a closed stream\n");
-        return;
+        delete streamPtr;
     }
     else
     {
-        delete m_streams[streamID];
-        m_streams[streamID] = nullptr;
+        LOG(LOG_ERR, "could not delete stream with ID %d.\n", streamID);
     }
+
+    if (!removeStream(streamID))
+    {
+        LOG(LOG_ERR, "could not remove stream with ID %d from m_streams.\n", streamID);
+    }
+    
+    return true;
 }
 
 uint32_t Context::isOpenStream(int32_t streamID)
@@ -403,4 +408,39 @@ uint32_t Context::getStreamFrameCount(int32_t streamID)
     }
 
     return m_streams[streamID]->getFrameCount();
+}
+
+/** Lookup a stream by ID and return a pointer
+    to it if it exists. If it doesnt exist, 
+    return NULL */
+Stream* Context::lookupStreamByID(int32_t ID)
+{
+    auto it = m_streams.find(ID);
+    if (it != m_streams.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
+/** Store a stream pointer in the m_streams map
+    and return its unique ID */
+int32_t Context::storeStream(Stream *stream)
+{   
+    int32_t ID = m_streamCounter++; 
+    m_streams.insert(std::pair<int32_t,Stream*>(ID, stream));    
+    return ID;
+}
+
+/** Remove a stream from the m_streams map.
+    Return true if this was successful */
+bool Context::removeStream(int32_t ID)
+{
+    auto it = m_streams.find(ID);
+    if (it != m_streams.end())
+    {
+        m_streams.erase(it);
+        return true;
+    }
+    return false;
 }
