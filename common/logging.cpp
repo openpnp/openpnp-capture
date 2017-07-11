@@ -5,7 +5,7 @@
 
 static uint32_t gs_logLevel = LOG_NOTICE;
 
-void LOG(uint32_t logLevel, char *format, ...)
+void LOG(uint32_t logLevel, const char *format, ...)
 {
     if (logLevel > gs_logLevel)
     {

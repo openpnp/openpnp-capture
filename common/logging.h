@@ -26,7 +26,7 @@
 #define LOG_INFO 6
 #define LOG_DEBUG 7
 
-void LOG(uint32_t logLevel, char *format, ...);
+void LOG(uint32_t logLevel, const char *format, ...);
 void setLogLevel(uint32_t logLevel);
 uint32_t getLogLevel();
 #endif

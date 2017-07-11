@@ -27,7 +27,7 @@ class Stream
 {
 public:
     Stream();
-    ~Stream();
+    virtual ~Stream();
 
     /** Open a capture stream to a device and request a specific (internal) stream format. 
         When succesfully opened, capturing starts immediately.

@@ -10,8 +10,11 @@
 # Author: Niels A. Moseley
 #
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project (openpnp-capture)
+
+# force C++11 standard
+set(CMAKE_CXX_STANDARD 11)
 
 # add include directory 
 include_directories(include)
@@ -30,8 +33,11 @@ set (SOURCE common/libmain.cpp
 add_subdirectory(win/tests)
 
 ELSEIF(APPLE)
-# TODO: add files for APPLE / OSX
-  message( FATAL_ERROR "Support for APPLE systems is pending." )
+set (SOURCE common/libmain.cpp
+            common/context.cpp
+            common/logging.cpp
+            common/stream.cpp)
+            
 ELSEIF(UNIX)
 # TODO: add files for UNIX/LINUX
   message( FATAL_ERROR "Support for UNIX systems is pending." )
