@@ -1,58 +1,94 @@
+/*
+
+    OpenPnp-Capture: a video capture subsystem.
+
+    Jason von Nieda
+    Niels Moseley
+
+*/
+
 #ifndef openpnp_capture_h
 #define openpnp_capture_h
 
-typedef enum _capture_status {
-    CAPTURE_OK = 0,
-    CAPTURE_ERROR = -1
-} capture_status;
+#include <stdint.h>
 
-/**
- * An opaque type that represents a context for callers to work within. The
- * caller is not expected to know anything about this value.
- */
-typedef void* capture_context;
+// make sure its exported/imported as pure C 
+// even if we're compiling with a C++ compiler
+#ifdef BUILD_OPENPNP_LIBRARY
+    #ifdef __cplusplus
+        #define DLLPUBLIC extern "C" __declspec(dllexport)
+    #else
+        #define DLLPUBLIC __declspec(dllexport)
+    #endif
+#else
+    #ifdef __cplusplus
+        #define DLLPUBLIC extern "C" __declspec(dllimport)
+    #else
+        #define DLLPUBLIC __declspec(dllimport)
+    #endif
+#endif
 
-typedef struct _capture_format {
-    unsigned int fps;
-    unsigned int fourcc;
-    unsigned int width;
-    unsigned int height;
-    
-    void* _internal;
-} capture_format;
+typedef void*    CapContext;    ///< an opaque pointer to the internal Context*
+typedef int32_t  CapStream;     ///< a stream identifier (normally >=0, <0 for error)
+typedef uint32_t CapResult;     ///< result defined by CAPRESULT_xxx
+typedef uint32_t CapDeviceID;   ///< unique device ID
 
-/**
- * A single capture device attached to the system. Contains information used
- * to identify the device and can be used to call into other library functions.
- */
-typedef struct _capture_device {
-    const char* name;
-    const char* unique_id;
-    const char* manufacturer;
-    const char* model;
-    
-    bool supportsExposureAuto;
-    bool supportsExposureManual;
-    bool supportsFocusAuto;
-    bool supportsFocusManual;
-    
-    capture_format* formats;
-    int formats_length;
-    
-    void* _internal;
-} capture_device;
+#define CAPRESULT_OK  0
+#define CAPRESULT_ERR 1
+#define CAPRESULT_DEVICENOTFOUND 2
+#define CAPRESULT_FORMATNOTSUPPORTED 3
+#define CAPRESULT_EXPOSURENOTSUPPORTED 4
+#define CAPRESULT_FOCUSNOTSUPPORTED 5
 
-typedef struct _capture_session {
-    void* _internal;
-} capture_session;
+/** initialize the capture library */
+DLLPUBLIC CapContext Cap_createContext(void);
 
-capture_status create_context(capture_context** context);
+/** un-initialize the capture library */
+DLLPUBLIC CapResult Cap_releaseContext(CapContext ctx);
 
-capture_status release_context(capture_context* context);
+/** get the number of capture devices on the system.
+    note: this can change dynamically due to the
+    pluggin and unplugging of USB devices */
+DLLPUBLIC uint32_t Cap_getDeviceCount(CapContext ctx);
 
-capture_status list_devices(capture_context* context, capture_device** devices, unsigned int* devices_length);
+/** get the name of a capture device.
+    Note: this name may or may not be unique
+    or persistent across system reboots. 
 
-capture_status open_session(capture_device* device, capture_session** session);
+    if a device with the given index does not exist,
+    NULL is returned.
+*/
+DLLPUBLIC const char* Cap_getDeviceName(CapContext ctx, CapDeviceID index);
 
-capture_status close_session(capture_session* session);
+/** open a capture stream to a device with specific format requirements 
+
+    Note: if the device is not capable of the requirements or the device
+    does not exits, -1 is returned.
+*/
+DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t width, uint32_t height, uint32_t fourCC);
+
+/** close a capture stream */
+DLLPUBLIC CapResult Cap_closeStream(CapContext ctx, CapStream stream);
+
+/** returns 1 if the stream is open and capturing, else 0 */
+DLLPUBLIC uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream);
+
+/** this function copies the most recent RGB frame data
+    to the given buffer.
+*/
+DLLPUBLIC CapResult Cap_captureFrame(CapContext ctx, CapStream stream, void *RGBbufferPtr, uint32_t RGBbufferBytes);
+
+/** returns 1 if a new frame has been captured, 0 otherwise */
+DLLPUBLIC uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream);
+
+/** returns the number of frames captured during the lifetime of the stream. 
+    For debugging purposes */
+DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
+
+DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
+DLLPUBLIC CapResult Cap_setExposure(CapContext ctx, CapStream stream, int32_t value);
+DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32_t bOnOff);
+
+DLLPUBLIC void Cap_setLogLevel(uint32_t level);
+
 #endif
