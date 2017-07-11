@@ -21,18 +21,15 @@
 #include <stdint.h>
 
 #include "openpnp-capture.h"
-
-#ifdef _WIN32
-    #pragma comment(lib, "strmiids")
-    #include "../win/deviceinfo.h"
-#elif __linux__
-    #include "../linux/deviceinfo.h"
-#else
-    #include "../mac/deviceinfo.h"
-#endif
-
+#include "deviceinfo.h"
 
 class Stream;   // pre-declaration
+
+/* Define a platform stream factory call to
+   separate platform dependent code from this class.
+   This function needs to be provided in platformstream.cpp 
+*/
+Stream* createPlatformStream();
 
 /** context base class keeps track of all the platform independent
     objects and information */

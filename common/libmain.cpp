@@ -14,15 +14,17 @@
 #include "context.h"
 #include "logging.h"
 
-#ifdef _WIN32
-#include "../win/platformcontext.h"
-#elif __linux__
-#include "../linux/platformcontext.h"
-#endif
+// Define a PlatformContext factory call 
+// to separate platform dependent and independent
+// code.
+//
+// This function must be implemented in platformcontext.cpp
+Context* createPlatformContext();
+
 
 DLLPUBLIC CapContext Cap_createContext()
 {
-    Context *ctx = new PlatformContext();
+    Context *ctx = createPlatformContext();
     return ctx;
 }
 

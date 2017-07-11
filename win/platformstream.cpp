@@ -11,9 +11,15 @@
 
 */
 
+#include "platformdeviceinfo.h"
 #include "platformstream.h"
-#include "../common/context.h"
+#include "platformcontext.h"
 #include "scopedcomptr.h"
+
+Stream* createPlatformStream()
+{
+    return new PlatformStream();
+}
 
 // **********************************************************************
 //   StreamCallbackHandler
@@ -121,6 +127,13 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
+    platformDeviceInfo *dinfo = dynamic_cast<platformDeviceInfo*>(device);
+    if (dinfo == NULL)
+    {
+        LOG(LOG_CRIT, "Could not cast deviceInfo* to platfromDeviceInfo*!");
+        return false;
+    }
+
     m_owner = owner;
     m_frames = 0;
     m_width = 0;
@@ -152,7 +165,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
-    hr = m_graph->AddSourceFilterForMoniker(device->m_moniker, 0, device->m_filterName.c_str(), &m_sourceFilter);
+    hr = m_graph->AddSourceFilterForMoniker(dinfo->m_moniker, 0, dinfo->m_filterName.c_str(), &m_sourceFilter);
     if (hr != S_OK)
     {
         LOG(LOG_ERR,"Could add source filter to filter graph (HRESULT=%08X)\n", hr);
@@ -192,7 +205,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     // generate a unique name for each sample grabber filter
     // used in the system.
     std::wstring filtername(L"SGF_");
-    filtername.append(device->m_filterName);
+    filtername.append(dinfo->m_filterName);
     hr = m_graph->AddFilter(m_sampleGrabberFilter, filtername.c_str());
     if (hr < 0)
     {

@@ -24,7 +24,7 @@
 #include "openpnp-capture.h"
 
 #pragma comment(lib, "strmiids")
-#include "deviceinfo.h"
+#include "platformdeviceinfo.h"
 #include "../common/context.h"
 
 /** context base class keeps track of all the platform independent

@@ -18,7 +18,7 @@
 #include "logging.h"
 
 class Context;      // pre-declaration
-struct deviceInfo;  // pre-declaration
+class deviceInfo;   // pre-declaration
 class Stream;       // pre-declaration
 
 

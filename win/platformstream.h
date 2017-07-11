@@ -28,8 +28,7 @@
 
 
 class Context;          // pre-declaration
-struct deviceInfo;      // pre-declaration
-class PlatformStream;   // pre-declaration
+class PlatformStream;  // pre-declaration
 
 /** A class to handle callbacks from the video subsystem,
     A call is made for every frame.

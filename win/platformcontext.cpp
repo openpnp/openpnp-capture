@@ -13,10 +13,17 @@
 */
 
 #include <vector>
-#include "platformcontext.h"
 #include "../common/logging.h"
 #include "scopedcomptr.h"
-#include "../common/stream.h"
+#include "platformstream.h"
+#include "platformcontext.h"
+
+// a platform factory function needed by
+// libmain.cpp
+Context* createPlatformContext()
+{
+    return new PlatformContext();
+}
 
 PlatformContext::PlatformContext() :
     Context()
@@ -93,7 +100,7 @@ bool PlatformContext::enumerateDevices()
 
 		if (hr >= 0)
 		{            
-            deviceInfo *info = new deviceInfo();
+            platformDeviceInfo *info = new platformDeviceInfo();
 			VariantInit(&name);
 
 			//get the description

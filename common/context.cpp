@@ -2,29 +2,17 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Windows platform code
-
     Created by Niels Moseley on 7/6/17.
     Copyright © 2017 Niels Moseley. All rights reserved.
 
-    Platform/implementation specific structures
-    and typedefs.
+    Platform independent context class.
 
 */
-
-//#include <Mfidl.h>
-//#include <Mfapi.h>
 
 #include <vector>
 #include "context.h"
 #include "logging.h"
 #include "stream.h"
-
-#ifdef _WIN32
-#include "../win/platformstream.h"
-#elif __linux__
-#include "../linux/platformstream.h"
-#endif
 
 Context::Context() :
     m_streamCounter(0)
@@ -74,7 +62,9 @@ int32_t Context::openStream(CapDeviceID id)
     }
 
 
-    Stream *s = new PlatformStream();
+    //Stream *s = new PlatformStream();
+    Stream *s = createPlatformStream();
+
     if (!s->open(this, device, 0,0,0))
     {
         LOG(LOG_ERR, "Could not open stream for device %s\n", device->m_name.c_str());
