@@ -21,26 +21,46 @@ include_directories(include)
 
 IF (WIN32)
 
-# add files for WIN32
-set (SOURCE common/libmain.cpp
-            common/context.cpp
-            common/logging.cpp
-            common/stream.cpp
-            win/platformcontext.cpp
-            win/platformstream.cpp)
+    # add files for WIN32
+    set (SOURCE common/libmain.cpp
+                common/context.cpp
+                common/logging.cpp
+                common/stream.cpp
+                win/platformcontext.cpp
+                win/platformstream.cpp)
 
-# add windows-specific test application
-add_subdirectory(win/tests)
+    # create the library
+    add_library(openpnp-capture SHARED ${SOURCE})
+
+    # add windows-specific test application
+    add_subdirectory(win/tests)
 
 ELSEIF(APPLE)
-set (SOURCE common/libmain.cpp
-            common/context.cpp
-            common/logging.cpp
-            common/stream.cpp)
-            
+
+    set (SOURCE common/libmain.cpp
+                common/context.cpp
+                common/logging.cpp
+                common/stream.cpp)
+
+    # create the library
+    add_library(openpnp-capture SHARED ${SOURCE})
+
 ELSEIF(UNIX)
-# TODO: add files for UNIX/LINUX
-  message( FATAL_ERROR "Support for UNIX systems is pending." )
+    
+    set (SOURCE common/libmain.cpp
+                common/context.cpp
+                common/logging.cpp
+                common/stream.cpp
+                linux/platformcontext.cpp
+                linux/platformstream.cpp)
+
+    # need pthreads for std::thread
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    add_library(openpnp-capture SHARED ${SOURCE})
+    target_link_libraries(openpnp-capture Threads::Threads)
+
+    # add linux-specific test application
+    add_subdirectory(linux/tests)
 ENDIF()
 
-add_library(openpnp-capture SHARED ${SOURCE})

@@ -15,16 +15,16 @@ void LOG(uint32_t logLevel, const char *format, ...)
     switch(logLevel)
     {
     case LOG_CRIT:
-        printf("[CRIT] ");
+        fprintf(stderr,"[CRIT] ");
         break;        
     case LOG_ERR:
-        printf("[ERR ] ");
+        fprintf(stderr,"[ERR ] ");
         break;
     case LOG_INFO:
-        printf("[INFO] ");
+        fprintf(stderr,"[INFO] ");
         break;    
     case LOG_DEBUG:
-        printf("[DBG ] ");
+        fprintf(stderr,"[DBG ] ");
         break;                       
     default:
         break;

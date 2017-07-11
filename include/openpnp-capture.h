@@ -12,14 +12,14 @@
 
 #include <stdint.h>
 
-//
+// 
 //
 #if defined(__clang__)
     #define SO_IMPORT 
     #define SO_EXPORT    
 #elif defined(__GNUC__) || defined(__GNUG__)
-    #define SO_IMPORT __attribute__ ((dllexport))
-    #define SO_EXPORT __attribute__ ((dllexport))
+    #define SO_IMPORT
+    #define SO_EXPORT
 #elif defined(_MSC_VER)
     #define SO_IMPORT __declspec(dllimport)
     #define SO_EXPORT __declspec(dllexport)

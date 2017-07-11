@@ -9,6 +9,7 @@
 
 */
 
+#include <memory.h> // for memcpy
 #include "stream.h"
 #include "context.h"
 
