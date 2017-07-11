@@ -42,9 +42,15 @@ const char* Context::getDeviceName(CapDeviceID id) const
 {
     if (id >= m_devices.size())
     {
+        LOG(LOG_ERR,"Device with ID %d not found", id);
         return NULL; // no such device ID!
     }
-    return m_devices[id].m_name.c_str();
+    if (m_devices[id] == nullptr)
+    {
+        LOG(LOG_ERR,"Internal device pointer is NULL");
+        return NULL; // device pointer is NULL!
+    }
+    return m_devices[id]->m_name.c_str();
 }
 
 uint32_t Context::getDeviceCount() const
@@ -59,7 +65,7 @@ int32_t Context::openStream(CapDeviceID id)
 
     if (m_devices.size() > id)
     {
-        device = &m_devices[id];
+        device = m_devices[id];
     }
     else
     {

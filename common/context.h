@@ -82,14 +82,17 @@ public:
     /** returns the number of frames captured during the lifetime of the stream */
     uint32_t getStreamFrameCount(int32_t streamID);
 
+    /** set the exposure of the camera in 'camera' units. */
     bool setStreamExposure(int32_t streamID, int32_t value);
 
+    /** enable/disable the automatic exposure setting in the camera. */
     bool setStreamAutoExposure(int32_t streamID, bool enable);
 
+    /** get the min and max exposure settings in 'camera' units. */
     bool getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *max);
 
 protected:
-    /** Enumerate DirectShow capture devices and put their 
+    /** Enumerate all capture devices and put their 
         information into the m_devices array 
         
         Implement this function in a platform-dependent
@@ -111,7 +114,7 @@ protected:
     bool removeStream(int32_t ID);
 
 
-
+#if 0
     /** Convert a wide character string to an UTF-8 string 
         
         Implement this function in a platform-dependent
@@ -125,11 +128,11 @@ protected:
         derived class.    
     */
     virtual std::string wcharPtrToString(const wchar_t *str) = 0;
-    
+#endif
 
-    std::vector<deviceInfo>     m_devices;  ///< list of enumerated devices
-    std::map<int32_t, Stream*>  m_streams;  ///< collection of streams
-    int32_t                     m_streamCounter;
+    std::vector<deviceInfo*>    m_devices;          ///< list of enumerated devices
+    std::map<int32_t, Stream*>  m_streams;          ///< collection of streams
+    int32_t                     m_streamCounter;    ///< counter to generate stream IDs
 };
 
 #endif

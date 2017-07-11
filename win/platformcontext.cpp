@@ -12,9 +12,6 @@
 
 */
 
-//#include <Mfidl.h>
-//#include <Mfapi.h>
-
 #include <vector>
 #include "platformcontext.h"
 #include "../common/logging.h"
@@ -96,7 +93,7 @@ bool PlatformContext::enumerateDevices()
 
 		if (hr >= 0)
 		{            
-            deviceInfo info;
+            deviceInfo *info = new deviceInfo();
 			VariantInit(&name);
 
 			//get the description
@@ -110,10 +107,10 @@ bool PlatformContext::enumerateDevices()
                 {
                     // copy wchar device name into info structure so we can reference the
                     // device later
-                    info.m_filterName = std::wstring(BStringPtr);
+                    info->m_filterName = std::wstring(BStringPtr);
 
                     // convert wchar string to UTF-8 to pass to JAVA                    
-                    info.m_name = wcharPtrToString(BStringPtr);
+                    info->m_name = wcharPtrToString(BStringPtr);
                 }                
             }
             else
@@ -127,15 +124,15 @@ bool PlatformContext::enumerateDevices()
         		BSTR BStringPtr = name.bstrVal;            
                 if (BStringPtr)
                 {
-                    info.m_devicePath = std::wstring(BStringPtr);
+                    info->m_devicePath = std::wstring(BStringPtr);
                     LOG(LOG_INFO, "     -> PATH %s\n", wcharPtrToString(BStringPtr).c_str());                    
                 } 
             }
 
             moniker->AddRef();
-            info.m_moniker = moniker;
+            info->m_moniker = moniker;
             m_devices.push_back(info);
-            LOG(LOG_INFO, "ID %d -> %s\n", num_devices, info.m_name.c_str());            
+            LOG(LOG_INFO, "ID %d -> %s\n", num_devices, info->m_name.c_str());            
         }
 
         num_devices++;
