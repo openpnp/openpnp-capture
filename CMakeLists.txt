@@ -40,7 +40,9 @@ ELSEIF(APPLE)
     set (SOURCE common/libmain.cpp
                 common/context.cpp
                 common/logging.cpp
-                common/stream.cpp)
+                common/stream.cpp
+                mac/platformcontext.cpp
+                mac/platformstream.cpp)
 
     # create the library
     add_library(openpnp-capture SHARED ${SOURCE})
