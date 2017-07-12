@@ -276,3 +276,15 @@ bool Context::getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *m
     if (stream == nullptr) return false;
     return stream->getExposureLimits(min, max);
 }
+
+/** convert a FOURCC uint32_t to human readable form */
+std::string fourCCToString(uint32_t fourcc)
+{
+    std::string v;
+    for(uint32_t i=0; i<4; i++)
+    {
+        v += static_cast<char>(fourcc & 0xFF);
+        fourcc >>= 8;
+    }
+    return v;
+};

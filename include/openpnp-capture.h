@@ -51,10 +51,11 @@ typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
 
 struct CapFormatInfo
 {
-    uint32_t width;
-    uint32_t height;
-    uint32_t fourcc;
-    uint32_t fps;
+    uint32_t width;     ///< width in pixels
+    uint32_t height;    ///< height in pixels
+    uint32_t fourcc;    ///< fourcc code (platform dependent)
+    uint32_t fps;       ///< frames per second
+    uint32_t bpp;       ///< bits per pixel
 };
 
 #define CAPRESULT_OK  0

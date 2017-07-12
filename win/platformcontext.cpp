@@ -13,6 +13,7 @@
 */
 
 #include <vector>
+
 #include "../common/logging.h"
 #include "scopedcomptr.h"
 #include "platformstream.h"
@@ -165,6 +166,36 @@ std::string PlatformContext::wcharPtrToString(const wchar_t *sstr)
     return std::string(&buffer[0]);
 } 
 
+
+
+// Release the format block for a media type.
+
+void _FreeMediaType(AM_MEDIA_TYPE& mt)
+{
+    if (mt.cbFormat != 0)
+    {
+        CoTaskMemFree((PVOID)mt.pbFormat);
+        mt.cbFormat = 0;
+        mt.pbFormat = NULL;
+    }
+    if (mt.pUnk != NULL)
+    {
+        // pUnk should not be used.
+        mt.pUnk->Release();
+        mt.pUnk = NULL;
+    }
+}
+
+// Delete a media type structure that was allocated on the heap.
+void _DeleteMediaType(AM_MEDIA_TYPE *pmt)
+{
+    if (pmt != NULL)
+    {
+        _FreeMediaType(*pmt); 
+        CoTaskMemFree(pmt);
+    }
+}
+
 bool PinMatchesCategory(IPin *pPin, REFGUID Category)
 {
     bool bFound = FALSE;
@@ -265,7 +296,68 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
         return false;
     }
 
-    
+    ScopedComPtr<IPin> capturePin(pPin);
+
+    IEnumMediaTypes *pMediaEnum;
+    hr = capturePin->EnumMediaTypes(&pMediaEnum);
+    if (hr != S_OK)
+    {
+        LOG(LOG_INFO, "Could not enumerate media types!\n");
+        return false;        
+    }
+
+    ScopedComPtr<IEnumMediaTypes> mediaEnum(pMediaEnum);
+
+    AM_MEDIA_TYPE *pmt = NULL;
+    while (hr = mediaEnum->Next(1, &pmt, NULL), hr == S_OK)
+    { 
+        if (pmt->formattype == FORMAT_VideoInfo)
+        {
+            // Check the buffer size.
+            if (pmt->cbFormat >= sizeof(VIDEOINFOHEADER))
+            {
+                VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
+                CapFormatInfo newFrameInfo;
+                if (pVih != nullptr)
+                {
+                    newFrameInfo.bpp = pVih->bmiHeader.biBitCount;
+                    if (pVih->bmiHeader.biCompression == BI_RGB)
+                    {
+                        newFrameInfo.fourcc = 'RGB ';
+                    }
+                    else if (pVih->bmiHeader.biCompression == BI_BITFIELDS)
+                    {
+                        newFrameInfo.fourcc = '   ';
+                    }
+                    else
+                    {
+                        newFrameInfo.fourcc = pVih->bmiHeader.biCompression;
+                    }
+
+                    newFrameInfo.width  = pVih->bmiHeader.biWidth;
+                    newFrameInfo.height = pVih->bmiHeader.biHeight;
+                    
+                    if (pVih->AvgTimePerFrame != 0)
+                    {
+                        // pVih->AvgTimePerFrame is in units of 100ns
+                        newFrameInfo.fps = static_cast<uint32_t>(10.0e6f/static_cast<float>(pVih->AvgTimePerFrame));
+                    }
+                    else
+                    {
+                        newFrameInfo.fps = 0;
+                    }
+                    
+                    std::string fourCCString = fourCCToString(newFrameInfo.fourcc);
+
+                    LOG(LOG_INFO, "%d x %d  %d fps  %d bpp  FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
+                        newFrameInfo.fps, newFrameInfo.bpp, fourCCString.c_str());
+
+                    info->m_formats.push_back(newFrameInfo);
+                }
+            }
+        }
+        _DeleteMediaType(pmt);
+    }
 
 #if 0
     ScopedComPtr<IEnumPins> enumPins(pEnum);

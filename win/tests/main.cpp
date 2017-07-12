@@ -12,6 +12,7 @@
 #include "openpnp-capture.h"
 #include "../common/context.h"
 
+
 std::string FourCCToString(uint32_t fourcc)
 {
     std::string v;

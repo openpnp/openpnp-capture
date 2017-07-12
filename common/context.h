@@ -122,4 +122,7 @@ protected:
     int32_t                     m_streamCounter;    ///< counter to generate stream IDs
 };
 
+/** convert a FOURCC uint32_t to human readable form */
+std::string fourCCToString(uint32_t fourcc);
+
 #endif
