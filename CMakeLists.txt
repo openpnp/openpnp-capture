@@ -36,14 +36,25 @@ IF (WIN32)
     add_subdirectory(win/tests)
 
 ELSEIF(APPLE)
-
     set (SOURCE common/libmain.cpp
                 common/context.cpp
                 common/logging.cpp
-                common/stream.cpp)
+                common/stream.cpp
+                mac/platformcontext.mm
+                mac/platformstream.mm)
+
 
     # create the library
     add_library(openpnp-capture SHARED ${SOURCE})
+
+    # include OS X specific frameworks
+    target_link_libraries(openpnp-capture
+        "-framework AVFoundation"
+        "-framework Foundation"
+        )
+
+    # add mac specific test application
+    add_subdirectory(mac/tests)
 
 ELSEIF(UNIX)
     
