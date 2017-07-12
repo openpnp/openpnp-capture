@@ -6,6 +6,11 @@
 @property size_t devices_length;
 @end
 
+@interface Session : NSObject
+@property AVCaptureSession* session;
+@property dispatch_queue_t queue;
+@end
+
 // TODO pick a naming scheme and stick with it
 // Thinking native_x, x. Refactor all.
 
@@ -19,6 +24,7 @@
         AVCaptureDevice* native_device = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo][i];
         capture_device* device = &self.devices[i];
         device->_internal = CFBridgingRetain(native_device);
+        // TODO these aren't safe
         device->name = native_device.localizedName.UTF8String;
         device->unique_id = native_device.uniqueID.UTF8String;
         device->manufacturer = native_device.manufacturer.UTF8String;
@@ -75,6 +81,12 @@
 }
 @end
 
+@implementation Session
+- (void) captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection {
+    NSLog(@"frame received");
+}
+@end
+
 capture_status create_context(capture_context** context) {
     Context* native_context = [Context new];
     *context = (capture_context*) CFBridgingRetain(native_context);
@@ -102,7 +114,9 @@ capture_status open_session(capture_device* device, capture_session** session) {
 
     NSLog(@"open_session(%@, %p)", native_device, session);
     
-    AVCaptureSession* native_session = [AVCaptureSession new];
+    Session* native_session = [Session new];
+    
+    native_session.session = [AVCaptureSession new];
     
     NSError* error = nil;
     AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:native_device error:&error];
@@ -112,13 +126,15 @@ capture_status open_session(capture_device* device, capture_session** session) {
     }
     
     AVCaptureVideoDataOutput* output = [AVCaptureVideoDataOutput new];
+    native_session.queue = dispatch_queue_create(NULL, NULL);
+    [output setSampleBufferDelegate:native_session queue:native_session.queue];
     
-    [native_session addInput:input];
-    [native_session addOutput:output];
+    [native_session.session addInput:input];
+    [native_session.session addOutput:output];
     
     // TODO set delegate and figure out what to do with frames
     // TODO remove this, maybe? Not sure if we do this here yet or externally.
-    [native_session startRunning];
+    [native_session.session startRunning];
     
     *session = CFBridgingRetain(native_session);
     return CAPTURE_OK;
