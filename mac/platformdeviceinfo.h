@@ -18,6 +18,8 @@ public:
     {
 
     }
+    
+    std::string m_uniqueId;
 };
 
 #endif
