@@ -12,6 +12,17 @@
 #include "openpnp-capture.h"
 #include "../common/context.h"
 
+std::string FourCCToString(uint32_t fourcc)
+{
+    std::string v;
+    for(uint32_t i=0; i<4; i++)
+    {
+        v += static_cast<char>(fourcc & 0xFF);
+        fourcc >>= 8;
+    }
+    return v;
+}
+
 int main(int argc, char*argv[])
 {    
     printf("OpenPNP Capture Test Program\n");
@@ -24,9 +35,25 @@ int main(int argc, char*argv[])
     for(uint32_t i=0; i<deviceCount; i++)
     {
         printf("ID %d -> %s\n", i, Cap_getDeviceName(ctx,i));
+
+        // show all supported frame buffer formats
+        int32_t nFormats = Cap_getNumFormats(ctx, i);
+
+        printf("  Number of formats: %d\n", nFormats);
+
+        std::string fourccString;
+        for(int32_t j=0; j<nFormats; j++)
+        {
+            CapFormatInfo finfo;
+            Cap_getFormatInfo(ctx, i, j, &finfo);
+            fourccString = FourCCToString(finfo.fourcc);
+
+            printf("  Format ID %d: %d x %d pixels  FOURCC=%s\n",
+                j, finfo.width, finfo.height, fourccString.c_str());
+        }
     }
 
-    int32_t streamID = Cap_openStream(ctx, 0, 0, 0, 0);
+    int32_t streamID = Cap_openStream(ctx, 0, 0);
     printf("Stream ID = %d\n", streamID);
     
     if (Cap_isOpenStream(ctx, streamID) == 1)
@@ -36,6 +63,7 @@ int main(int argc, char*argv[])
     else
     {
         printf("Stream is closed (?)\n");
+        return 1;
     }
 
     printf("Press Q to exit..\n");

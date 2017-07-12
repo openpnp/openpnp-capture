@@ -47,7 +47,47 @@ uint32_t Context::getDeviceCount() const
 }
 
 
-int32_t Context::openStream(CapDeviceID id)
+int32_t Context::getNumFormats(CapDeviceID index) const
+{
+    if (index >= m_devices.size())
+    {
+        LOG(LOG_ERR,"Device with ID %d not found", index);
+        return -1; // no such device ID!
+    }
+    if (m_devices[index] == nullptr)
+    {
+        LOG(LOG_ERR,"Internal device pointer is NULL");
+        return -1; // device pointer is NULL!
+    }
+    return m_devices[index]->m_formats.size();
+}
+
+
+bool Context::getFormatInfo(CapDeviceID index, CapFormatID formatID, CapFormatInfo *info) const
+{
+    if (index >= m_devices.size())
+    {
+        LOG(LOG_ERR,"Device with ID %d not found", index);
+        return false; // no such device ID!
+    }
+    if (m_devices[index] == nullptr)
+    {
+        LOG(LOG_ERR,"Internal device pointer is NULL");
+        return false; // device pointer is NULL!
+    }
+    if (formatID < m_devices[index]->m_formats.size())
+    {
+        *info = m_devices[index]->m_formats[formatID];
+    }
+    else
+    {
+        LOG(LOG_ERR,"Invalid format ID (got %d but max ID is %d)\n", formatID, m_devices[index]->m_formats.size());
+        return false; // invalid format ID 
+    }
+    return true;
+}
+
+int32_t Context::openStream(CapDeviceID id, CapFormatID formatID)
 {
     deviceInfo *device = nullptr;
 
@@ -57,7 +97,7 @@ int32_t Context::openStream(CapDeviceID id)
     }
     else
     {
-        LOG(LOG_ERR, "openStream: No devices found\n", device->m_name.c_str());
+        LOG(LOG_ERR, "openStream: No devices found\n");
         return -1;
     }
 

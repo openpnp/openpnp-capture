@@ -121,7 +121,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
-    if (owner == nullptr)
+    if (device == nullptr)
     {
         LOG(LOG_ERR,"open() was with device=NULL!\n");
         return false;

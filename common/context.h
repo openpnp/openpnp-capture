@@ -51,7 +51,13 @@ public:
     const char* getDeviceName(CapDeviceID id) const;
 
     /** Return the number of devices found */
-    uint32_t    getDeviceCount() const;
+    uint32_t getDeviceCount() const;
+
+    /** return the number of formats supported by a certain device */
+    int32_t getNumFormats(CapDeviceID index) const;
+
+    /** get the format information from a device. */
+    bool getFormatInfo(CapDeviceID index, CapFormatID id, CapFormatInfo *info) const;
 
     /** Opens a stream to a device with index/ID id and returns the stream ID.
         If an error occurs (device not found), -1 is returned.
@@ -62,7 +68,7 @@ public:
         Note: for now, only one stream per device is supported but opening more
               streams might or might not work.
     */
-    int32_t openStream(CapDeviceID id);
+    int32_t openStream(CapDeviceID id, CapFormatID formatID);
 
     /** close the stream to a device */
     bool closeStream(int32_t streamID);
@@ -90,7 +96,8 @@ public:
 
 protected:
     /** Enumerate all capture devices and put their 
-        information into the m_devices array 
+        information (name, buffer formats etc) into 
+        the m_devices array.
         
         Implement this function in a platform-dependent
         derived class.
@@ -109,23 +116,6 @@ protected:
     /** Remove a stream from the m_streams map.
         Return true if this was successful */
     bool removeStream(int32_t ID);
-
-
-#if 0
-    /** Convert a wide character string to an UTF-8 string 
-        
-        Implement this function in a platform-dependent
-        derived class.    
-    */
-    virtual std::string wstringToString(const std::wstring &wstr) = 0;
-
-    /** Convert a wide charater string to an UTF-8 string
-        
-        Implement this function in a platform-dependent
-        derived class.    
-    */
-    virtual std::string wcharPtrToString(const wchar_t *str) = 0;
-#endif
 
     std::vector<deviceInfo*>    m_devices;          ///< list of enumerated devices
     std::map<int32_t, Stream*>  m_streams;          ///< collection of streams
