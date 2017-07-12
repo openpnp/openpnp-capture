@@ -101,11 +101,19 @@ int32_t Context::openStream(CapDeviceID id, CapFormatID formatID)
         return -1;
     }
 
+    // lookup desired format
+    if (formatID >= device->m_formats.size())
+    {
+        LOG(LOG_ERR, "openStream: Requested format index out of range\n");
+        return -1;        
+    }
 
     //Stream *s = new PlatformStream();
     Stream *s = createPlatformStream();
 
-    if (!s->open(this, device, 0,0,0))
+    if (!s->open(this, device, device->m_formats[formatID].width,
+                 device->m_formats[formatID].height,
+                 device->m_formats[formatID].fourcc))
     {
         LOG(LOG_ERR, "Could not open stream for device %s\n", device->m_name.c_str());
         return -1;

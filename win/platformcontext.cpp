@@ -292,12 +292,92 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
     }
     else
     {
-        LOG(LOG_INFO, "Could not find capture pin!\n");
+        LOG(LOG_ERR, "Could not find capture pin!\n");
         return false;
     }
 
     ScopedComPtr<IPin> capturePin(pPin);
 
+    // retrieve an IAMStreamConfig interface
+    IAMStreamConfig *pConfig = NULL;
+    if (capturePin->QueryInterface(IID_IAMStreamConfig, (void**)&pConfig) != S_OK)
+    {
+        LOG(LOG_ERR, "Could not create IAMStreamConfig interface!\n");
+        return false;
+    }
+
+    ScopedComPtr<IAMStreamConfig> streamConfig(pConfig);
+
+    int iCount = 0, iSize = 0;
+    hr = pConfig->GetNumberOfCapabilities(&iCount, &iSize);
+
+    LOG(LOG_INFO,"Stream has %d capabilities.\n", iCount);
+
+    // Check the size to make sure we pass in the correct structure.
+    if (iSize == sizeof(VIDEO_STREAM_CONFIG_CAPS))
+    {
+        // Use the video capabilities structure.
+
+        for (int32_t iFormat = 0; iFormat < iCount; iFormat++)
+        {
+            VIDEO_STREAM_CONFIG_CAPS scc;
+            AM_MEDIA_TYPE *pmtConfig;
+            hr = pConfig->GetStreamCaps(iFormat, &pmtConfig, (BYTE*)&scc);
+            if (SUCCEEDED(hr))
+            {
+                /* Examine the format, and possibly use it. */
+                if (pmtConfig->formattype == FORMAT_VideoInfo)
+                {
+                    // Check the buffer size.
+                    if (pmtConfig->cbFormat >= sizeof(VIDEOINFOHEADER))
+                    {
+                        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmtConfig->pbFormat);
+                        CapFormatInfo newFrameInfo;
+                        if (pVih != nullptr)
+                        {
+                            newFrameInfo.bpp = pVih->bmiHeader.biBitCount;
+                            if (pVih->bmiHeader.biCompression == BI_RGB)
+                            {
+                                newFrameInfo.fourcc = 'RGB ';
+                            }
+                            else if (pVih->bmiHeader.biCompression == BI_BITFIELDS)
+                            {
+                                newFrameInfo.fourcc = '   ';
+                            }
+                            else
+                            {
+                                newFrameInfo.fourcc = pVih->bmiHeader.biCompression;
+                            }
+
+                            newFrameInfo.width  = pVih->bmiHeader.biWidth;
+                            newFrameInfo.height = pVih->bmiHeader.biHeight;
+                            
+                            if (pVih->AvgTimePerFrame != 0)
+                            {
+                                // pVih->AvgTimePerFrame is in units of 100ns
+                                newFrameInfo.fps = static_cast<uint32_t>(10.0e6f/static_cast<float>(pVih->AvgTimePerFrame));
+                            }
+                            else
+                            {
+                                newFrameInfo.fps = 0;
+                            }
+                            
+                            std::string fourCCString = fourCCToString(newFrameInfo.fourcc);
+
+                            LOG(LOG_INFO, "%d x %d  %d fps  %d bpp  FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
+                                newFrameInfo.fps, newFrameInfo.bpp, fourCCString.c_str());
+
+                            info->m_formats.push_back(newFrameInfo);
+                        }
+                    }
+                }
+                // Delete the media type when you are done.
+                _DeleteMediaType(pmtConfig);
+            }
+        }
+    }
+
+#if 0
     IEnumMediaTypes *pMediaEnum;
     hr = capturePin->EnumMediaTypes(&pMediaEnum);
     if (hr != S_OK)
@@ -394,6 +474,8 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
 
 
     }
-        #endif    
+    #endif    
+    #endif
+
     return true;
 }

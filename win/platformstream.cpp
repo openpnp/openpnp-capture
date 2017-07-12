@@ -16,6 +16,12 @@
 #include "platformcontext.h"
 #include "scopedcomptr.h"
 
+extern void _FreeMediaType(AM_MEDIA_TYPE& mt);
+
+// Delete a media type structure that was allocated on the heap.
+extern void _DeleteMediaType(AM_MEDIA_TYPE *pmt);
+
+
 Stream* createPlatformStream()
 {
     return new PlatformStream();
@@ -172,6 +178,76 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;        
     } 
 
+    //set the desired frame buffer format
+    IAMStreamConfig *pConfig = NULL;
+    hr = m_capture->FindInterface(&PIN_CATEGORY_CAPTURE, 0, m_sourceFilter, IID_IAMStreamConfig, (void**)&pConfig);
+    if (FAILED(hr))
+    {
+        LOG(LOG_ERR,"Could not create IAMStreamConfig\n");
+        return false;
+    }
+
+    ScopedComPtr<IAMStreamConfig> streamConfig(pConfig);
+
+    // find the desired video mode
+    AM_MEDIA_TYPE *selectedConfig = NULL;
+
+    int iCount = 0, iSize = 0;
+    hr = streamConfig->GetNumberOfCapabilities(&iCount, &iSize);
+    if (FAILED(hr))
+    {
+        LOG(LOG_ERR, "Cannot retrieve device capabilities\n");
+        return false;
+    }
+
+    // Check the size to make sure we pass in the correct structure.
+    if (iSize == sizeof(VIDEO_STREAM_CONFIG_CAPS))
+    {
+        bool formatSet = false;
+        // Use the video capabilities structure.
+        for (int iFormat = 0; iFormat < iCount; iFormat++)
+        {
+            VIDEO_STREAM_CONFIG_CAPS scc;
+            AM_MEDIA_TYPE *pmtConfig;
+            hr = streamConfig->GetStreamCaps(iFormat, &pmtConfig, (BYTE*)&scc);
+            if (SUCCEEDED(hr))
+            {
+                /* Examine the format, and possibly use it. */
+
+                if ((pmtConfig->majortype == MEDIATYPE_Video) &&
+                    (pmtConfig->formattype == FORMAT_VideoInfo) &&
+                    (pmtConfig->cbFormat >= sizeof (VIDEOINFOHEADER)) &&
+                    (pmtConfig->pbFormat != NULL))
+                {
+                    VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmtConfig->pbFormat);
+
+                    if ((pVih->bmiHeader.biWidth == width) &&
+                        (pVih->bmiHeader.biHeight == height) &&
+                        (pVih->bmiHeader.biCompression == fourCC))
+                    {
+                        streamConfig->SetFormat(pmtConfig);                        
+                        formatSet = true;
+                        LOG(LOG_INFO, "Capture format set!\n");
+                        break;
+                    }
+                }
+                // Delete the media type when you are done.
+                _DeleteMediaType(pmtConfig);
+            }
+        }
+        if (!formatSet)
+        {
+            LOG(LOG_INFO, "Failed to find capture format!\n");
+            return false;
+        }        
+    }
+    else
+    {
+        LOG(LOG_CRIT,"Could not find video mode: VIDEO_STREAM_CONFIG_CAPS not found\n");
+        return false;
+    }
+
+
     // create camera control interface for exposure control etc . 
     hr = m_sourceFilter->QueryInterface(IID_IAMCameraControl, (void **)&m_camControl); 
     if (hr != S_OK) 
@@ -243,7 +319,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }       
 
-    hr = m_capture->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_sourceFilter, m_sampleGrabberFilter, NULL);
+    hr = m_capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, m_sourceFilter, m_sampleGrabberFilter, NULL);
     if (hr < 0)
     {
         LOG(LOG_ERR,"Error calling RenderStream (HRESULT=%08X)\n", hr);

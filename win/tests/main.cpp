@@ -26,8 +26,21 @@ std::string FourCCToString(uint32_t fourcc)
 
 int main(int argc, char*argv[])
 {    
+    uint32_t deviceFormatID = 0;
+    uint32_t deviceID       = 0;
+
     printf("OpenPNP Capture Test Program\n");
     Cap_setLogLevel(7);
+
+    if (argc >= 2)
+    {
+        deviceID = atoi(argv[1]);
+    }
+    
+    if (argc >= 3)
+    {
+        deviceFormatID = atoi(argv[2]);
+    }
 
     CapContext ctx = Cap_createContext();
 
@@ -54,7 +67,7 @@ int main(int argc, char*argv[])
         }
     }
 
-    int32_t streamID = Cap_openStream(ctx, 0, 0);
+    int32_t streamID = Cap_openStream(ctx, deviceID, deviceFormatID);
     printf("Stream ID = %d\n", streamID);
     
     if (Cap_isOpenStream(ctx, streamID) == 1)
@@ -69,8 +82,12 @@ int main(int argc, char*argv[])
 
     printf("Press Q to exit..\n");
 
+    // get current stream parameters 
+    CapFormatInfo finfo;
+    Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
+
     std::vector<uint8_t> m_buffer;
-    m_buffer.resize(640*480*3);
+    m_buffer.resize(finfo.width*finfo.height*3);
 
     Cap_setAutoExposure(ctx, streamID, 1);
 
@@ -116,14 +133,11 @@ A raster of Height rows, in order from top to bottom. Each row consists of Width
 #endif
 
         FILE *fout = fopen("image.ppm", "wb");
-        fprintf(fout, "P6 640 480 255\n"); // PGM header
-
-        const uint32_t height = 480;
-        const uint32_t width  = 640;
+        fprintf(fout, "P6 %d %d 255\n", finfo.width, finfo.height); // PGM header
 
         // exchange BGR to RGB
         uint32_t idx = 0;
-        for(uint32_t i=0; i<width*height; i++)
+        for(uint32_t i=0; i<finfo.width*finfo.height; i++)
         {
             uint8_t b = m_buffer[idx];
             uint8_t g = m_buffer[idx+1];
@@ -135,10 +149,10 @@ A raster of Height rows, in order from top to bottom. Each row consists of Width
 
         // and upside-down :)
         const uint32_t stride = 3;
-        const size_t lineBytes = width * stride;
+        const size_t lineBytes = finfo.width * stride;
         uint8_t *row  = new uint8_t[lineBytes];
         uint8_t *low  = &m_buffer[0];
-        uint8_t *high = &m_buffer[(height - 1) * lineBytes];
+        uint8_t *high = &m_buffer[(finfo.height - 1) * lineBytes];
 
         for (; low < high; low += lineBytes, high -= lineBytes) {
             memcpy(row, low, lineBytes);
