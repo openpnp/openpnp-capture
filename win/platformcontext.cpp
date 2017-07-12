@@ -136,6 +136,8 @@ bool PlatformContext::enumerateDevices()
                 } 
             }
 
+            enumerateFrameInfo(moniker, info);
+
             moniker->AddRef();
             info->m_moniker = moniker;
             m_devices.push_back(info);
@@ -162,3 +164,144 @@ std::string PlatformContext::wcharPtrToString(const wchar_t *sstr)
     WideCharToMultiByte(CP_UTF8, 0, sstr, -1, &buffer[0], chars, nullptr, nullptr);
     return std::string(&buffer[0]);
 } 
+
+bool PinMatchesCategory(IPin *pPin, REFGUID Category)
+{
+    bool bFound = FALSE;
+
+    IKsPropertySet *pKs = NULL;
+    HRESULT hr = pPin->QueryInterface(IID_PPV_ARGS(&pKs));
+    if (SUCCEEDED(hr))
+    {
+        GUID PinCategory;
+        DWORD cbReturned;
+        hr = pKs->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0, 
+            &PinCategory, sizeof(GUID), &cbReturned);
+        if (SUCCEEDED(hr) && (cbReturned == sizeof(GUID)))
+        {
+            bFound = (PinCategory == Category);
+        }
+        pKs->Release();
+    }
+    return bFound;
+}
+
+HRESULT FindPinByCategory(
+    IBaseFilter *pFilter, // Pointer to the filter to search.
+    PIN_DIRECTION PinDir, // Direction of the pin.
+    REFGUID Category,     // Pin category.
+    IPin **ppPin)         // Receives a pointer to the pin.
+{
+    *ppPin = 0;
+
+    HRESULT hr = S_OK;
+    BOOL bFound = FALSE;
+
+    IEnumPins *pEnum = 0;
+    IPin *pPin = 0;
+
+    hr = pFilter->EnumPins(&pEnum);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    ScopedComPtr<IEnumPins> pinEnum(pEnum);
+
+    while (hr = pinEnum->Next(1, &pPin, 0), hr == S_OK)
+    {
+        PIN_DIRECTION ThisPinDir;
+        hr = pPin->QueryDirection(&ThisPinDir);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        ScopedComPtr<IPin> myPin(pPin);
+
+        if ((ThisPinDir == PinDir) && 
+            PinMatchesCategory(pPin, Category))
+        {
+            *ppPin = pPin;
+            (*ppPin)->AddRef();   // The caller must release the interface.
+            return S_OK;
+        }
+    }
+
+    return E_FAIL;
+}
+
+bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *info)
+{
+    IBaseFilter *pCap  = NULL;
+    IEnumPins   *pEnum = NULL;
+    IPin        *pPin  = NULL;
+
+    LOG(LOG_DEBUG, "enumerateFrameInfo() called\n");
+
+    HRESULT hr = moniker->BindToObject(0, 0, IID_IBaseFilter, (void**)&pCap);
+    if (!SUCCEEDED(hr))
+    {
+        LOG(LOG_ERR, "No frame information: BindToObject failed.\n");
+        return false;
+    }
+
+    ScopedComPtr<IBaseFilter> baseFilter(pCap);
+
+    hr = baseFilter->EnumPins(&pEnum);
+    if (FAILED(hr))
+    {
+        LOG(LOG_ERR, "No frame information: EnumPins failed.\n");
+        return false;
+    }
+
+    if (FindPinByCategory(pCap, PINDIR_OUTPUT, PIN_CATEGORY_CAPTURE, &pPin) == S_OK)
+    {
+        LOG(LOG_INFO, "Capture pin found!\n");
+    }
+    else
+    {
+        LOG(LOG_INFO, "Could not find capture pin!\n");
+        return false;
+    }
+
+    
+
+#if 0
+    ScopedComPtr<IEnumPins> enumPins(pEnum);
+
+    while(enumPins->Next(1, &pPin, 0) == S_OK)
+    {
+        ScopedComPtr<IPin> pin(pPin);
+
+        PIN_INFO pinInfo;
+        hr = pin->QueryPinInfo(&pinInfo);
+        if (FAILED(hr))
+        {
+            LOG(LOG_ERR, "No frame information: QueryPinInfo failed.\n");
+            return false;
+        }
+
+        pinInfo.
+
+        PIN_DIRECTION PinDirThis;
+        hr = pin->QueryDirection(&PinDirThis);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+        if (PinDir == PinDirThis)
+        {
+            // Found a match. Return the IPin pointer to the caller.
+            *ppPin = pPin;
+            pEnum->Release();
+            return S_OK;
+        }
+        // Release the pin for the next time through the loop.
+        pPin->Release();
+
+
+    }
+        #endif    
+    return true;
+}
