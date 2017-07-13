@@ -68,7 +68,8 @@ bool PlatformContext::enumerateDevices()
             LOG(LOG_ERR, "enumerateDevices: Can't get capabilities\n");
             continue;
         }
-        else 
+        
+        if ((video_cap.device_caps & V4L2_CAP_VIDEO_CAPTURE) != 0)
         {
             LOG(LOG_INFO,"Name: '%s'\n", video_cap.card);
             LOG(LOG_INFO,"Path: '%s'\n", fname);
@@ -102,12 +103,6 @@ bool PlatformContext::enumerateDevices()
                 LOG(LOG_INFO,"async I/O NOT supported\n");
             }   
 
-            //printf("Minimum size:\t%d x %d\n", video_cap.minwidth, video_cap.minheight);
-            //printf("Maximum size:\t%d x %d\n", video_cap.maxwidth, video_cap.maxheight);
-        }
-
-        if ((video_cap.device_caps & V4L2_CAP_VIDEO_CAPTURE) != 0)
-        {
             platformDeviceInfo* dinfo = new platformDeviceInfo();
             dinfo->m_name = std::string((const char*)video_cap.card);
             dinfo->m_devicePath = std::string(fname);
@@ -122,7 +117,6 @@ bool PlatformContext::enumerateDevices()
             {
                 fmtdesc.index = index;
             
-                // first we find the pixel format type / fourcc
                 if (ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1)
                 {
                     tryMore = false;
@@ -153,4 +147,28 @@ bool PlatformContext::enumerateDevices()
         ::close(fd);         
     }
     return true;
+}
+
+
+bool PlatformContext::queryFrameSize(int fd, uint32_t index, uint32_t pixelformat, uint32_t *width, uint32_t *height)
+{
+    v4l2_frmsizeenum frmSize;
+    frmSize.index = index;
+    frmSize.pixel_format = pixelformat;
+    if (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmSize) != -1)
+    {
+        if (frmSize.type == V4L2_FRMSIZE_TYPE_DISCRETE)
+        {
+            *width  = frmSize.discrete.width;
+            *height = frmSize.discrete.height;
+        }
+        else
+        {
+            LOG(LOG_WARNING, "queryFrameSize returned non-discrete frame size!\n");
+            *width = 0;
+            *height = 0;
+        }
+        return true;
+    }
+    return false;
 }

@@ -58,17 +58,38 @@ DLLPUBLIC const char* Cap_getDeviceName(CapContext ctx, CapDeviceID id)
     return 0;
 }
 
+DLLPUBLIC int32_t Cap_getNumFormats(CapContext ctx, CapDeviceID id)
+{
+    if (ctx != 0)
+    {
+        return reinterpret_cast<Context*>(ctx)->getNumFormats(id);
+    }
+    return -1;
+}
+
+DLLPUBLIC CapResult Cap_getFormatInfo(CapContext ctx, CapDeviceID index, CapFormatID id, CapFormatInfo *info)
+{
+    if (ctx != 0)
+    {
+        if (reinterpret_cast<Context*>(ctx)->getFormatInfo(index, id, info))
+        {
+            return CAPRESULT_OK;
+        }
+    }
+    return CAPRESULT_ERR;    
+}
+
 DLLPUBLIC void Cap_setLogLevel(uint32_t level)
 {
     setLogLevel(level);
 }
 
-DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t width, uint32_t height, uint32_t fourCC)
+DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, CapFormatID formatID)
 {
     if (ctx != 0)
     {
         Context *c = reinterpret_cast<Context*>(ctx);
-        return c->openStream(index);
+        return c->openStream(index, formatID);
     }
     return -1;
 }

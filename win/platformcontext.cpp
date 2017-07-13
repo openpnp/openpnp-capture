@@ -13,6 +13,7 @@
 */
 
 #include <vector>
+
 #include "../common/logging.h"
 #include "scopedcomptr.h"
 #include "platformstream.h"
@@ -136,6 +137,8 @@ bool PlatformContext::enumerateDevices()
                 } 
             }
 
+            enumerateFrameInfo(moniker, info);
+
             moniker->AddRef();
             info->m_moniker = moniker;
             m_devices.push_back(info);
@@ -162,3 +165,317 @@ std::string PlatformContext::wcharPtrToString(const wchar_t *sstr)
     WideCharToMultiByte(CP_UTF8, 0, sstr, -1, &buffer[0], chars, nullptr, nullptr);
     return std::string(&buffer[0]);
 } 
+
+
+
+// Release the format block for a media type.
+
+void _FreeMediaType(AM_MEDIA_TYPE& mt)
+{
+    if (mt.cbFormat != 0)
+    {
+        CoTaskMemFree((PVOID)mt.pbFormat);
+        mt.cbFormat = 0;
+        mt.pbFormat = NULL;
+    }
+    if (mt.pUnk != NULL)
+    {
+        // pUnk should not be used.
+        mt.pUnk->Release();
+        mt.pUnk = NULL;
+    }
+}
+
+// Delete a media type structure that was allocated on the heap.
+void _DeleteMediaType(AM_MEDIA_TYPE *pmt)
+{
+    if (pmt != NULL)
+    {
+        _FreeMediaType(*pmt); 
+        CoTaskMemFree(pmt);
+    }
+}
+
+bool PinMatchesCategory(IPin *pPin, REFGUID Category)
+{
+    bool bFound = FALSE;
+
+    IKsPropertySet *pKs = NULL;
+    HRESULT hr = pPin->QueryInterface(IID_PPV_ARGS(&pKs));
+    if (SUCCEEDED(hr))
+    {
+        GUID PinCategory;
+        DWORD cbReturned;
+        hr = pKs->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0, 
+            &PinCategory, sizeof(GUID), &cbReturned);
+        if (SUCCEEDED(hr) && (cbReturned == sizeof(GUID)))
+        {
+            bFound = (PinCategory == Category);
+        }
+        pKs->Release();
+    }
+    return bFound;
+}
+
+HRESULT FindPinByCategory(
+    IBaseFilter *pFilter, // Pointer to the filter to search.
+    PIN_DIRECTION PinDir, // Direction of the pin.
+    REFGUID Category,     // Pin category.
+    IPin **ppPin)         // Receives a pointer to the pin.
+{
+    *ppPin = 0;
+
+    HRESULT hr = S_OK;
+    BOOL bFound = FALSE;
+
+    IEnumPins *pEnum = 0;
+    IPin *pPin = 0;
+
+    hr = pFilter->EnumPins(&pEnum);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    ScopedComPtr<IEnumPins> pinEnum(pEnum);
+
+    while (hr = pinEnum->Next(1, &pPin, 0), hr == S_OK)
+    {
+        PIN_DIRECTION ThisPinDir;
+        hr = pPin->QueryDirection(&ThisPinDir);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+
+        ScopedComPtr<IPin> myPin(pPin);
+
+        if ((ThisPinDir == PinDir) && 
+            PinMatchesCategory(pPin, Category))
+        {
+            *ppPin = pPin;
+            (*ppPin)->AddRef();   // The caller must release the interface.
+            return S_OK;
+        }
+    }
+
+    return E_FAIL;
+}
+
+bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *info)
+{
+    IBaseFilter *pCap  = NULL;
+    IEnumPins   *pEnum = NULL;
+    IPin        *pPin  = NULL;
+
+    LOG(LOG_DEBUG, "enumerateFrameInfo() called\n");
+
+    HRESULT hr = moniker->BindToObject(0, 0, IID_IBaseFilter, (void**)&pCap);
+    if (!SUCCEEDED(hr))
+    {
+        LOG(LOG_ERR, "No frame information: BindToObject failed.\n");
+        return false;
+    }
+
+    ScopedComPtr<IBaseFilter> baseFilter(pCap);
+
+    hr = baseFilter->EnumPins(&pEnum);
+    if (FAILED(hr))
+    {
+        LOG(LOG_ERR, "No frame information: EnumPins failed.\n");
+        return false;
+    }
+
+    if (FindPinByCategory(pCap, PINDIR_OUTPUT, PIN_CATEGORY_CAPTURE, &pPin) == S_OK)
+    {
+        LOG(LOG_INFO, "Capture pin found!\n");
+    }
+    else
+    {
+        LOG(LOG_ERR, "Could not find capture pin!\n");
+        return false;
+    }
+
+    ScopedComPtr<IPin> capturePin(pPin);
+
+    // retrieve an IAMStreamConfig interface
+    IAMStreamConfig *pConfig = NULL;
+    if (capturePin->QueryInterface(IID_IAMStreamConfig, (void**)&pConfig) != S_OK)
+    {
+        LOG(LOG_ERR, "Could not create IAMStreamConfig interface!\n");
+        return false;
+    }
+
+    ScopedComPtr<IAMStreamConfig> streamConfig(pConfig);
+
+    int iCount = 0, iSize = 0;
+    hr = pConfig->GetNumberOfCapabilities(&iCount, &iSize);
+
+    LOG(LOG_INFO,"Stream has %d capabilities.\n", iCount);
+
+    // Check the size to make sure we pass in the correct structure.
+    if (iSize == sizeof(VIDEO_STREAM_CONFIG_CAPS))
+    {
+        // Use the video capabilities structure.
+
+        for (int32_t iFormat = 0; iFormat < iCount; iFormat++)
+        {
+            VIDEO_STREAM_CONFIG_CAPS scc;
+            AM_MEDIA_TYPE *pmtConfig;
+            hr = pConfig->GetStreamCaps(iFormat, &pmtConfig, (BYTE*)&scc);
+            if (SUCCEEDED(hr))
+            {
+                /* Examine the format, and possibly use it. */
+                if (pmtConfig->formattype == FORMAT_VideoInfo)
+                {
+                    // Check the buffer size.
+                    if (pmtConfig->cbFormat >= sizeof(VIDEOINFOHEADER))
+                    {
+                        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmtConfig->pbFormat);
+                        CapFormatInfo newFrameInfo;
+                        if (pVih != nullptr)
+                        {
+                            newFrameInfo.bpp = pVih->bmiHeader.biBitCount;
+                            if (pVih->bmiHeader.biCompression == BI_RGB)
+                            {
+                                newFrameInfo.fourcc = 'RGB ';
+                            }
+                            else if (pVih->bmiHeader.biCompression == BI_BITFIELDS)
+                            {
+                                newFrameInfo.fourcc = '   ';
+                            }
+                            else
+                            {
+                                newFrameInfo.fourcc = pVih->bmiHeader.biCompression;
+                            }
+
+                            newFrameInfo.width  = pVih->bmiHeader.biWidth;
+                            newFrameInfo.height = pVih->bmiHeader.biHeight;
+                            
+                            if (pVih->AvgTimePerFrame != 0)
+                            {
+                                // pVih->AvgTimePerFrame is in units of 100ns
+                                newFrameInfo.fps = static_cast<uint32_t>(10.0e6f/static_cast<float>(pVih->AvgTimePerFrame));
+                            }
+                            else
+                            {
+                                newFrameInfo.fps = 0;
+                            }
+                            
+                            std::string fourCCString = fourCCToString(newFrameInfo.fourcc);
+
+                            LOG(LOG_INFO, "%d x %d  %d fps  %d bpp  FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
+                                newFrameInfo.fps, newFrameInfo.bpp, fourCCString.c_str());
+
+                            info->m_formats.push_back(newFrameInfo);
+                        }
+                    }
+                }
+                // Delete the media type when you are done.
+                _DeleteMediaType(pmtConfig);
+            }
+        }
+    }
+
+#if 0
+    IEnumMediaTypes *pMediaEnum;
+    hr = capturePin->EnumMediaTypes(&pMediaEnum);
+    if (hr != S_OK)
+    {
+        LOG(LOG_INFO, "Could not enumerate media types!\n");
+        return false;        
+    }
+
+    ScopedComPtr<IEnumMediaTypes> mediaEnum(pMediaEnum);
+
+    AM_MEDIA_TYPE *pmt = NULL;
+    while (hr = mediaEnum->Next(1, &pmt, NULL), hr == S_OK)
+    { 
+        if (pmt->formattype == FORMAT_VideoInfo)
+        {
+            // Check the buffer size.
+            if (pmt->cbFormat >= sizeof(VIDEOINFOHEADER))
+            {
+                VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
+                CapFormatInfo newFrameInfo;
+                if (pVih != nullptr)
+                {
+                    newFrameInfo.bpp = pVih->bmiHeader.biBitCount;
+                    if (pVih->bmiHeader.biCompression == BI_RGB)
+                    {
+                        newFrameInfo.fourcc = 'RGB ';
+                    }
+                    else if (pVih->bmiHeader.biCompression == BI_BITFIELDS)
+                    {
+                        newFrameInfo.fourcc = '   ';
+                    }
+                    else
+                    {
+                        newFrameInfo.fourcc = pVih->bmiHeader.biCompression;
+                    }
+
+                    newFrameInfo.width  = pVih->bmiHeader.biWidth;
+                    newFrameInfo.height = pVih->bmiHeader.biHeight;
+                    
+                    if (pVih->AvgTimePerFrame != 0)
+                    {
+                        // pVih->AvgTimePerFrame is in units of 100ns
+                        newFrameInfo.fps = static_cast<uint32_t>(10.0e6f/static_cast<float>(pVih->AvgTimePerFrame));
+                    }
+                    else
+                    {
+                        newFrameInfo.fps = 0;
+                    }
+                    
+                    std::string fourCCString = fourCCToString(newFrameInfo.fourcc);
+
+                    LOG(LOG_INFO, "%d x %d  %d fps  %d bpp  FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
+                        newFrameInfo.fps, newFrameInfo.bpp, fourCCString.c_str());
+
+                    info->m_formats.push_back(newFrameInfo);
+                }
+            }
+        }
+        _DeleteMediaType(pmt);
+    }
+
+#if 0
+    ScopedComPtr<IEnumPins> enumPins(pEnum);
+
+    while(enumPins->Next(1, &pPin, 0) == S_OK)
+    {
+        ScopedComPtr<IPin> pin(pPin);
+
+        PIN_INFO pinInfo;
+        hr = pin->QueryPinInfo(&pinInfo);
+        if (FAILED(hr))
+        {
+            LOG(LOG_ERR, "No frame information: QueryPinInfo failed.\n");
+            return false;
+        }
+
+        pinInfo.
+
+        PIN_DIRECTION PinDirThis;
+        hr = pin->QueryDirection(&PinDirThis);
+        if (FAILED(hr))
+        {
+            return hr;
+        }
+        if (PinDir == PinDirThis)
+        {
+            // Found a match. Return the IPin pointer to the caller.
+            *ppPin = pPin;
+            pEnum->Release();
+            return S_OK;
+        }
+        // Release the pin for the next time through the loop.
+        pPin->Release();
+
+
+    }
+    #endif    
+    #endif
+
+    return true;
+}

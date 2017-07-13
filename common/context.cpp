@@ -47,7 +47,47 @@ uint32_t Context::getDeviceCount() const
 }
 
 
-int32_t Context::openStream(CapDeviceID id)
+int32_t Context::getNumFormats(CapDeviceID index) const
+{
+    if (index >= m_devices.size())
+    {
+        LOG(LOG_ERR,"Device with ID %d not found", index);
+        return -1; // no such device ID!
+    }
+    if (m_devices[index] == nullptr)
+    {
+        LOG(LOG_ERR,"Internal device pointer is NULL");
+        return -1; // device pointer is NULL!
+    }
+    return m_devices[index]->m_formats.size();
+}
+
+
+bool Context::getFormatInfo(CapDeviceID index, CapFormatID formatID, CapFormatInfo *info) const
+{
+    if (index >= m_devices.size())
+    {
+        LOG(LOG_ERR,"Device with ID %d not found", index);
+        return false; // no such device ID!
+    }
+    if (m_devices[index] == nullptr)
+    {
+        LOG(LOG_ERR,"Internal device pointer is NULL");
+        return false; // device pointer is NULL!
+    }
+    if (formatID < m_devices[index]->m_formats.size())
+    {
+        *info = m_devices[index]->m_formats[formatID];
+    }
+    else
+    {
+        LOG(LOG_ERR,"Invalid format ID (got %d but max ID is %d)\n", formatID, m_devices[index]->m_formats.size());
+        return false; // invalid format ID 
+    }
+    return true;
+}
+
+int32_t Context::openStream(CapDeviceID id, CapFormatID formatID)
 {
     deviceInfo *device = nullptr;
 
@@ -57,15 +97,23 @@ int32_t Context::openStream(CapDeviceID id)
     }
     else
     {
-        LOG(LOG_ERR, "openStream: No devices found\n", device->m_name.c_str());
+        LOG(LOG_ERR, "openStream: No devices found\n");
         return -1;
     }
 
+    // lookup desired format
+    if (formatID >= device->m_formats.size())
+    {
+        LOG(LOG_ERR, "openStream: Requested format index out of range\n");
+        return -1;        
+    }
 
     //Stream *s = new PlatformStream();
     Stream *s = createPlatformStream();
 
-    if (!s->open(this, device, 0,0,0))
+    if (!s->open(this, device, device->m_formats[formatID].width,
+                 device->m_formats[formatID].height,
+                 device->m_formats[formatID].fourcc))
     {
         LOG(LOG_ERR, "Could not open stream for device %s\n", device->m_name.c_str());
         return -1;
@@ -236,3 +284,15 @@ bool Context::getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *m
     if (stream == nullptr) return false;
     return stream->getExposureLimits(min, max);
 }
+
+/** convert a FOURCC uint32_t to human readable form */
+std::string fourCCToString(uint32_t fourcc)
+{
+    std::string v;
+    for(uint32_t i=0; i<4; i++)
+    {
+        v += static_cast<char>(fourcc & 0xFF);
+        fourcc >>= 8;
+    }
+    return v;
+};

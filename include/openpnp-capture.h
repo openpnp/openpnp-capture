@@ -47,6 +47,16 @@ typedef void*    CapContext;    ///< an opaque pointer to the internal Context*
 typedef int32_t  CapStream;     ///< a stream identifier (normally >=0, <0 for error)
 typedef uint32_t CapResult;     ///< result defined by CAPRESULT_xxx
 typedef uint32_t CapDeviceID;   ///< unique device ID
+typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
+
+struct CapFormatInfo
+{
+    uint32_t width;     ///< width in pixels
+    uint32_t height;    ///< height in pixels
+    uint32_t fourcc;    ///< fourcc code (platform dependent)
+    uint32_t fps;       ///< frames per second
+    uint32_t bpp;       ///< bits per pixel
+};
 
 #define CAPRESULT_OK  0
 #define CAPRESULT_ERR 1
@@ -75,12 +85,23 @@ DLLPUBLIC uint32_t Cap_getDeviceCount(CapContext ctx);
 */
 DLLPUBLIC const char* Cap_getDeviceName(CapContext ctx, CapDeviceID index);
 
+/** return the number of formats supported by a certain device.
+    returns -1 if device does not exist.
+*/
+DLLPUBLIC int32_t Cap_getNumFormats(CapContext ctx, CapDeviceID index);
+
+/** get the format information from a device. */
+DLLPUBLIC CapResult Cap_getFormatInfo(CapContext ctx, CapDeviceID index, CapFormatID id, CapFormatInfo *info); 
+
 /** open a capture stream to a device with specific format requirements 
 
-    Note: if the device is not capable of the requirements or the device
+    If the device is not capable of the requirements or the device
     does not exits, -1 is returned.
+
+    Although the (internal) frame buffer format is set via the fourCC ID,
+    the frames returned by Cap_captureFrame are always 24-bit RGB.
 */
-DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, uint32_t width, uint32_t height, uint32_t fourCC);
+DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, CapFormatID formatID);
 
 /** close a capture stream */
 DLLPUBLIC CapResult Cap_closeStream(CapContext ctx, CapStream stream);
@@ -100,8 +121,15 @@ DLLPUBLIC uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream);
     For debugging purposes */
 DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
 
+
+
+/** Get the exposure min and max in 'camera' units */
 DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
+
+/** Set the exposure in 'camera' units */
 DLLPUBLIC CapResult Cap_setExposure(CapContext ctx, CapStream stream, int32_t value);
+
+/** Set enable/disable the automatic exposure */
 DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32_t bOnOff);
 
 DLLPUBLIC void Cap_setLogLevel(uint32_t level);
