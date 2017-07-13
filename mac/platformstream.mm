@@ -87,3 +87,35 @@ std::string PlatformStream::genFOURCCstring(uint32_t v)
     return result;
 }
 
+//capture_status open_session(capture_device* device, capture_session** session) {
+//    AVCaptureDevice* native_device = (__bridge AVCaptureDevice*) (void*) device->_internal;
+//    
+//    NSLog(@"open_session(%@, %p)", native_device, session);
+//    
+//    Session* native_session = [Session new];
+//    
+//    native_session.session = [AVCaptureSession new];
+//    
+//    NSError* error = nil;
+//    AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:native_device error:&error];
+//    if (!input) {
+//        NSLog(@"open_session() error: %@", error);
+//        return CAPTURE_ERROR;
+//    }
+//    
+//    AVCaptureVideoDataOutput* output = [AVCaptureVideoDataOutput new];
+//    native_session.queue = dispatch_queue_create(NULL, NULL);
+//    [output setSampleBufferDelegate:native_session queue:native_session.queue];
+//    
+//    [native_session.session addInput:input];
+//    [native_session.session addOutput:output];
+//    
+//    // TODO set delegate and figure out what to do with frames
+//    // TODO remove this, maybe? Not sure if we do this here yet or externally.
+//    [native_session.session startRunning];
+//    
+//    *session = CFBridgingRetain(native_session);
+//    return CAPTURE_OK;
+//}
+
+
