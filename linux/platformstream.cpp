@@ -2,7 +2,7 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Windows platform code
+    Linux platform code
 
     Created by Niels Moseley on 7/6/17.
     Copyright © 2017 Niels Moseley. All rights reserved.
