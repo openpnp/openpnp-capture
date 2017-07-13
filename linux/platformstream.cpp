@@ -15,8 +15,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/mman.h>
 #include <memory.h>
 #include <string>
+#include "scopedptr.h"
 
 #include "platformdeviceinfo.h"
 #include "platformstream.h"
@@ -39,6 +44,137 @@ int xioctl(int fh, int request, void *arg)
     } while ((r == -1) && (errno == EINTR));
 
     return r;
+}
+
+
+// **********************************************************************
+//   PlatformStreamHelper functions
+// **********************************************************************
+
+bool PlatformStreamHelper::createAndMapBuffers(uint32_t nBuffers)
+{
+    v4l2_requestbuffers req;
+
+    CLEAR(req);
+
+    req.count  = nBuffers;
+    req.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    req.memory = V4L2_MEMORY_MMAP;
+
+    if (xioctl(m_fd, VIDIOC_REQBUFS, &req) == -1) 
+    {
+        LOG(LOG_ERR, "createAndMapBuffers failed - no memory mapping support.\n");
+        return false;
+    }
+
+    if (req.count < 2) 
+    {
+        LOG(LOG_ERR, "createAndMapBuffers: need more than 1 buffer.\n");
+        return false;
+    }
+
+    LOG(LOG_DEBUG, "Reserving %d mmap buffers\n", req.count);
+
+    m_buffers.resize(req.count);
+
+    for (uint32_t b = 0; b < req.count; ++b) 
+    {
+        v4l2_buffer buf;
+
+        CLEAR(buf);
+
+        buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buf.memory      = V4L2_MEMORY_MMAP;
+        buf.index       = b;
+
+        if (xioctl(m_fd, VIDIOC_QUERYBUF, &buf) == -1)
+        {
+            LOG(LOG_ERR, "createAndMapBuffers: VIDIOC_QUERYBUF failed.\n");
+            return false;
+        }
+
+        m_buffers[b].length = buf.length;
+        m_buffers[b].start  = mmap(NULL, buf.length, PROT_READ | PROT_WRITE, 
+            MAP_SHARED, m_fd, buf.m.offset);
+
+        if (m_buffers[b].start == MAP_FAILED)
+        {
+            LOG(LOG_ERR, "createAndMapBuffers: mmap failed.\n");
+            return false;
+        }
+        else
+        {
+            LOG(LOG_DEBUG, "Created mmap buffer of %d bytes\n", buf.length);
+        }
+
+    }
+
+    return true;
+}
+
+void PlatformStreamHelper::unmapAndDeleteBuffers()
+{
+    for(uint32_t i=0; i<m_buffers.size(); i++)
+    {
+        munmap(m_buffers[i].start, m_buffers[i].length);
+    }
+
+    m_buffers.clear();
+    LOG(LOG_DEBUG, "Mmap buffers deleted\n");
+}
+
+bool PlatformStreamHelper::queueAllBuffers()
+{
+    // ****************************************
+    // create queue buffers
+    // ****************************************
+
+    v4l2_buf_type bufferType;
+    for (uint32_t i = 0; i < m_buffers.size(); ++i)
+    {        
+        v4l2_buffer   buf;
+
+        CLEAR(buf);
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.index = i;
+
+        if (xioctl(m_fd, VIDIOC_QBUF, &buf) == -1)
+        {
+            LOG(LOG_ERR,"VIDIOC_QBUF failed (errno=%d)\n", errno);
+            return false;
+        }
+    }
+    return true;
+}
+
+bool PlatformStreamHelper::streamOn()
+{
+    v4l2_buf_type bufferType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+    if (xioctl(m_fd, VIDIOC_STREAMON, &bufferType) == -1)
+    {
+        LOG(LOG_ERR,"VIDIOC_STREAMON failed (errno=%d)\n", errno);
+        return false;
+    }
+
+    LOG(LOG_DEBUG, "stream is On\n");
+
+    return true;
+}
+
+bool PlatformStreamHelper::streamOff()
+{
+    v4l2_buf_type bufferType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (xioctl(m_fd, VIDIOC_STREAMOFF, &bufferType) == -1)
+    {
+        LOG(LOG_ERR,"VIDIOC_STREAMON failed (errno=%d)\n", errno);
+        return false;
+    }
+
+    LOG(LOG_DEBUG, "stream is Off\n");
+
+    return true;
 }
 
 // **********************************************************************
@@ -76,49 +212,36 @@ void captureThreadFunction(PlatformStream *stream, int fd, size_t bufferSizeByte
     }
 }
 
+
+
 void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSizeBytes)
 {
     //https://linuxtv.org/downloads/v4l-dvb-apis/uapi/v4l/capture.c.html
     const uint32_t nBuffers = 5;
-
-    struct CaptureBufferInfo
-    {
-        uint8_t *start;
-        size_t  length;
-    };
-
-    CaptureBufferInfo buffers[nBuffers];
     
     if (stream == nullptr)
     {
         return;
     }
 
-    // ****************************************
-    // create queue buffers
-    // ****************************************
+    LOG(LOG_DEBUG, "captureThreadFunctionAsync started\n");
 
-    v4l2_buf_type bufferType;
-    for (uint32_t i = 0; i < nBuffers; ++i)
-    {        
-        v4l2_buffer   buf;
+    PlatformStreamHelper *pHelper = new PlatformStreamHelper(fd);
+    ScopedPtr<PlatformStreamHelper> helper(pHelper);
 
-        CLEAR(buf);
-        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.index = i;
-
-        if (xioctl(fd, VIDIOC_QBUF, &buf) == -1)
-        {
-            LOG(LOG_ERR,"VIDIOC_QBUF failed (errno=%d)\n", errno);
-        }
-    }
-
-    bufferType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
-    if (xioctl(fd, VIDIOC_STREAMON, &bufferType) == -1)
+    if (!helper->createAndMapBuffers(nBuffers))
     {
-        LOG(LOG_ERR,"VIDIOC_STREAMON failed (errno=%d)\n", errno);
+        return;
+    }
+    
+    if (!helper->queueAllBuffers())
+    {
+        return;
+    }
+    
+    if (!helper->streamOn())
+    {
+        return;
     }
 
     while(!stream->getThreadQuitState())
@@ -177,7 +300,7 @@ void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSiz
         }
 
         //assert(buf.index < nBuffers);
-        stream->threadSubmitBuffer(buffers[buf.index].start, buf.bytesused);
+        stream->threadSubmitBuffer(helper->getBufferPointer(buf.index), buf.bytesused);
 
         // re-queue the buffer
         if (xioctl(fd, VIDIOC_QBUF, &buf) == -1)
@@ -187,12 +310,11 @@ void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSiz
         }
     } // while  
 
-    bufferType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    if (xioctl(fd, VIDIOC_STREAMOFF, &bufferType) == -1)
-    {
-        LOG(LOG_ERR, "VIDIOC_STREAMOFF error\n");
-        return;     
-    } 
+    // Note: the destruction of the PlatformHelper 
+    // by the scoped pointer will automaticall
+    // turn off streaming and remove the
+    // memory mapped buffers from the system.
+    LOG(LOG_DEBUG, "captureThreadFunctionAsync exited\n");
 }
 
 // **********************************************************************
@@ -275,7 +397,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     m_height = 0;    
 
     //m_deviceHandle = ::open(dinfo->m_devicePath.c_str(), O_RDWR /* required */ | O_NONBLOCK);
-    m_deviceHandle = ::open(dinfo->m_devicePath.c_str(), O_RDWR /* required */);
+    m_deviceHandle = ::open(dinfo->m_devicePath.c_str(), O_RDWR /* required */ | O_NONBLOCK);
     if (m_deviceHandle < 0)
     {
         LOG(LOG_CRIT, "Could not open device %s (errno = %d)\n", dinfo->m_devicePath.c_str(), errno);
@@ -304,7 +426,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 
     LOG(LOG_INFO, "Width  = %d pixels\n", m_fmt.fmt.pix.width);
     LOG(LOG_INFO, "Height = %d pixels\n", m_fmt.fmt.pix.height);
-    LOG(LOG_INFO, "FOURCC = %s\n", genFOURCCstring(m_fmt.fmt.pix.pixelformat).c_str());
+    LOG(LOG_INFO, "FOURCC = %s\n", fourCCToString(m_fmt.fmt.pix.pixelformat).c_str());
 
     m_isOpen = true;
 
@@ -349,16 +471,5 @@ bool PlatformStream::setAutoExposure(bool enabled)
 bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax) 
 {
     return false;
-}
-
-std::string PlatformStream::genFOURCCstring(uint32_t v)
-{
-    std::string result;
-    for(uint32_t i=0; i<4; i++)
-    {
-        result += static_cast<char>(v & 0xFF);
-        v >>= 8;
-    }
-    return result;
 }
 

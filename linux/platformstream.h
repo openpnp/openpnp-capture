@@ -27,6 +27,67 @@ class Context;          // pre-declaration
 class PlatformStream;  // pre-declaration
 
 
+/** A helper class to take care of allocation and
+    de-allocation of memory mapped V4L2 buffers */
+class PlatformStreamHelper
+{
+public:
+    PlatformStreamHelper(int fd) : m_fd(fd)
+    {
+        LOG(LOG_DEBUG, "PlatformStreamHelper created.\n");
+    }
+
+    virtual ~PlatformStreamHelper()
+    {
+        if (m_buffers.size() != 0)
+        {
+            streamOff();
+            unmapAndDeleteBuffers();
+        }
+        LOG(LOG_DEBUG, "PlatformStreamHelper deleted.\n");
+    }
+
+    /** remove the memory mapped buffers from the system */
+    void unmapAndDeleteBuffers();
+
+    /** create a number of memory mapped buffers */
+    bool createAndMapBuffers(uint32_t nBuffers);
+
+    /** queue all the buffer for use by V4L2 */
+    bool queueAllBuffers();
+
+    /** tell V4L2 to start frame capturing */
+    bool streamOn();
+
+    /** tell V4L2 to stop frame capturing */
+    bool streamOff();
+
+    /** return a pointer to the buffer with a certain index
+        in m_buffers vector */
+    void* getBufferPointer(uint32_t index) const
+    {
+        if (index < m_buffers.size())
+        {
+            return m_buffers[index].start;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    struct bufferInfo
+    {
+        void*   start;      // pointer to start of buffer
+        size_t  length;     // length of buffer in bytes
+    };
+
+    std::vector<bufferInfo> m_buffers;
+    int m_fd; 
+};
+
+
+/** Platform dependent code to support Linux using V4L2 */
 class PlatformStream : public Stream
 {
 public:
@@ -59,15 +120,15 @@ public:
 
     /** public submit buffer so the capture thread/function
         can access it */
-    void threadSubmitBuffer(uint8_t *ptr, size_t bytes)
+    void threadSubmitBuffer(void *ptr, size_t bytes)
     {
-        submitBuffer(ptr, bytes);
+        if (ptr != nullptr) 
+        {
+            submitBuffer((uint8_t*)ptr, bytes);
+        }
     }
 
 protected:
-    /** generate FOURCC string from a uint32 */
-    std::string genFOURCCstring(uint32_t v);
-
     int         m_deviceHandle;     ///< V4L2 device handle
     v4l2_format m_fmt;              ///< V4L2 frame format
     bool        m_quitThread;       ///< if true, captureThreadFunction should return
