@@ -8,6 +8,8 @@
 #define deviceinfo_h
 
 #include <string>
+#include <vector>
+#include "openpnp-capture.h"
 
 /** device information struct/object */
 class deviceInfo
@@ -15,7 +17,8 @@ class deviceInfo
 public:
     virtual ~deviceInfo() {}
 
-    std::string     m_name;         ///< UTF-8 printable name
+    std::string                 m_name;     ///< UTF-8 printable name
+    std::vector<CapFormatInfo>  m_formats;  ///< available buffer formats
 };
 
 #endif

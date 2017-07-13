@@ -51,6 +51,7 @@ ELSEIF(APPLE)
     target_link_libraries(openpnp-capture
         "-framework AVFoundation"
         "-framework Foundation"
+        "-framework CoreMedia"
         )
 
     # add mac specific test application

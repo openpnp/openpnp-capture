@@ -44,6 +44,10 @@ public:
     virtual ~PlatformContext();
 
 protected:
+
+    /** retrieve all the frame information and write it to the platformDeviceInfo object */
+    bool enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *info);
+
     /** Enumerate DirectShow capture devices and put their 
         information into the m_devices array 
         
