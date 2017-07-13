@@ -32,6 +32,12 @@ int main(int argc, char*argv[])
     printf("OpenPNP Capture Test Program\n");
     Cap_setLogLevel(7);
 
+    if (argc == 1)
+    {
+        printf("Usage: openpnp-capture-test <camera ID> <frame format ID>\n");
+        printf("\n..continuing with default camera parameters.\n\n");
+    }
+
     if (argc >= 2)
     {
         deviceID = atoi(argv[1]);
@@ -80,18 +86,19 @@ int main(int argc, char*argv[])
         return 1;
     }
 
-    printf("Press Q to exit..\n");
+    printf("Press Q to exit.\n");
+    printf("Press + or - to change the exposure.\n");
 
     // get current stream parameters 
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
+#if 0
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(finfo.width*finfo.height*3);
 
     Cap_setAutoExposure(ctx, streamID, 1);
 
-#if 1
     uint32_t counter = 0;
     uint32_t tries = 0;
     while(counter < 30)
@@ -109,28 +116,10 @@ int main(int argc, char*argv[])
             break;
         }
     };
-#endif
-
-    Cap_setAutoExposure(ctx, streamID, 0);
-
-    // wait for a new frame .. 
-    //while (Cap_hasNewFrame(ctx, streamID) == 0) {};
-    
+        
     if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
     {
         printf("Buffer captured!\n");
-
-#if 0
-A "magic number" for identifying the file type. A ppm image's magic number is the two characters "P6".
-Whitespace (blanks, TABs, CRs, LFs).
-A width, formatted as ASCII characters in decimal.
-Whitespace.
-A height, again in ASCII decimal.
-Whitespace.
-The maximum color value (Maxval), again in ASCII decimal. Must be less than 65536 and more than zero.
-A single whitespace character (usually a newline).
-A raster of Height rows, in order from top to bottom. Each row consists of Width pixels, in order from left to right. Each pixel is a triplet of red, green, and blue samples, in that order. Each sample is represented in pure binary by either 1 or 2 bytes. If the Maxval is less than 256, it is 1 byte. Otherwise, it is 2 bytes. The most significant byte is first. 
-#endif
 
         FILE *fout = fopen("image.ppm", "wb");
         fprintf(fout, "P6 %d %d 255\n", finfo.width, finfo.height); // PGM header
@@ -165,27 +154,54 @@ A raster of Height rows, in order from top to bottom. Each row consists of Width
         fclose(fout);
     }
 
+#endif
+    Cap_setAutoExposure(ctx, streamID, 0);
+
+    // try to create a message loop so the preview
+    // window doesn't crash.. 
+
+    MSG msg;
+    BOOL bRet;
+
     char c = 0;
-    int32_t v = 0;
+    int32_t v = 0; // exposure value
     while((c != 'q') && (c != 'Q'))
     {
-        c = getch();
-        switch(c)
+        if (PeekMessage(&msg, NULL, 0, 0, 0) != 0)
         {
-        case '+':
-            printf("+");
-            Cap_setExposure(ctx, streamID, ++v);
-            break;
-        case '-':
-            printf("-");
-            Cap_setExposure(ctx, streamID, --v);
-            break;
-        case '0':
-            printf("0");
-            v = 0;
-            Cap_setExposure(ctx, streamID, v);
-            break;        
+            bRet = GetMessage(&msg, NULL, 0, 0);
+
+            if (bRet > 0)  // (bRet > 0 indicates a message that must be processed.)
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
         }
+
+        if (_kbhit())
+        {
+            c = _getch();
+            switch(c)
+            {
+            case '+':                
+                Cap_setExposure(ctx, streamID, ++v);
+                printf("exposure = %d  \r", v);
+                break;
+            case '-':
+                printf("-");
+                Cap_setExposure(ctx, streamID, --v);
+                printf("exposure = %d  \r", v);
+                break;
+            case '0':
+                printf("0");
+                v = 0;
+                Cap_setExposure(ctx, streamID, v);
+                printf("exposure = %d  \r", v);
+                break;        
+            }            
+        }
+
+        Sleep(10);
     }
 
     Cap_closeStream(ctx, streamID);
