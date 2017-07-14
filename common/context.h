@@ -113,7 +113,8 @@ protected:
         and return its unique ID */
     int32_t storeStream(Stream *stream);
 
-    /** Remove a stream from the m_streams map.
+    /** Remove a stream from the m_streams map
+        and call delete on the object.
         Return true if this was successful */
     bool removeStream(int32_t ID);
 

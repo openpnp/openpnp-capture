@@ -83,6 +83,7 @@ int main(int argc, char*argv[])
     else
     {
         printf("Stream is closed (?)\n");
+        Cap_releaseContext(ctx);
         return 1;
     }
 

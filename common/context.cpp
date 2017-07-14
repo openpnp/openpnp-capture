@@ -23,6 +23,13 @@ Context::Context() :
 
 Context::~Context()
 {
+    // delete stream objects
+    auto iter = m_streams.begin();
+    while(iter != m_streams.end())
+    {
+        delete iter->second;
+        iter++;
+    }
     LOG(LOG_DEBUG, "Context destroyed\n");
 }
 
@@ -142,17 +149,7 @@ bool Context::closeStream(int32_t streamID)
         return false;
     }
 
-    // remove stream from collection
-    Stream *streamPtr = lookupStreamByID(streamID);
-    if (streamPtr != nullptr)
-    {
-        delete streamPtr;
-    }
-    else
-    {
-        LOG(LOG_ERR, "could not delete stream with ID %d.\n", streamID);
-    }
-
+    // remove and delete stream from collection
     if (!removeStream(streamID))
     {
         LOG(LOG_ERR, "could not remove stream with ID %d from m_streams.\n", streamID);
@@ -258,6 +255,7 @@ bool Context::removeStream(int32_t ID)
     auto it = m_streams.find(ID);
     if (it != m_streams.end())
     {
+        delete it->second;
         m_streams.erase(it);
         return true;
     }

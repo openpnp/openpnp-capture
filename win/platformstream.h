@@ -107,7 +107,7 @@ friend StreamCallbackHandler;
 
 public:
     PlatformStream();
-    ~PlatformStream();
+    virtual ~PlatformStream();
 
     /** Open a capture stream to a device and request a specific (internal) stream format. 
         When succesfully opened, capturing starts immediately.

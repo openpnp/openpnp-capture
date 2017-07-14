@@ -237,13 +237,13 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         }
         if (!formatSet)
         {
-            LOG(LOG_INFO, "Failed to find capture format!\n");
+            LOG(LOG_ERR, "Failed to find capture format!\n");
             return false;
         }        
     }
     else
     {
-        LOG(LOG_CRIT,"Could not find video mode: VIDEO_STREAM_CONFIG_CAPS not found\n");
+        LOG(LOG_ERR,"Could not find video mode: VIDEO_STREAM_CONFIG_CAPS not found\n");
         return false;
     }
 

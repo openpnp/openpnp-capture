@@ -27,7 +27,8 @@ Stream::Stream() :
 
 Stream::~Stream()
 {
-    close();
+    LOG(LOG_DEBUG,"Stream::~Stream reports %d frames captured.\n", m_frames);
+    //Note: close() should be called/handled by the PlatformStream!
 }
 
 bool Stream::hasNewFrame()
