@@ -124,7 +124,7 @@ public:
     {
         if (ptr != nullptr) 
         {
-            submitBuffer((uint8_t*)ptr, bytes);
+            Stream::submitBuffer((uint8_t*)ptr, bytes);
         }
     }
 

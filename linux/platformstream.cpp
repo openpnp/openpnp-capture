@@ -168,7 +168,7 @@ bool PlatformStreamHelper::streamOff()
     v4l2_buf_type bufferType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (xioctl(m_fd, VIDIOC_STREAMOFF, &bufferType) == -1)
     {
-        LOG(LOG_ERR,"VIDIOC_STREAMON failed (errno=%d)\n", errno);
+        LOG(LOG_ERR,"VIDIOC_STREAMOFF failed (errno=%d)\n", errno);
         return false;
     }
 
@@ -286,7 +286,9 @@ void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSiz
             switch (errno) 
             {
             case EAGAIN:
-                return;
+                LOG(LOG_DEBUG, "VIDIOC_DQBUF returned EAGAIN\n");
+                //FIXME: what to do here?!?
+                continue;
 
             case EIO:
                 /* Could ignore EIO, see spec. */
@@ -427,6 +429,9 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     LOG(LOG_INFO, "Width  = %d pixels\n", m_fmt.fmt.pix.width);
     LOG(LOG_INFO, "Height = %d pixels\n", m_fmt.fmt.pix.height);
     LOG(LOG_INFO, "FOURCC = %s\n", fourCCToString(m_fmt.fmt.pix.pixelformat).c_str());
+
+    // set the (max) size of the frame buffer in Stream class
+    m_frameBuffer.resize(m_width*m_height*4);
 
     m_isOpen = true;
 

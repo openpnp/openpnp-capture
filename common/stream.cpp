@@ -57,6 +57,12 @@ bool Stream::captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes)
 void Stream::submitBuffer(uint8_t *ptr, size_t bytes)
 {
     m_bufferMutex.lock();
+    
+    if (m_frameBuffer.size() == 0)
+    {
+        LOG(LOG_ERR,"Stream::m_frameBuffer size is 0 - cant store frame buffers!\n");
+    }
+
     if (m_frameBuffer.size() >= bytes)
     {
         memcpy(&m_frameBuffer[0], ptr, bytes);

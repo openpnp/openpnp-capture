@@ -86,12 +86,14 @@ int main(int argc, char*argv[])
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
+
+#if 0
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(finfo.width*finfo.height*3);
 
     Cap_setAutoExposure(ctx, streamID, 1);
 
-#if 1
+
     uint32_t counter = 0;
     uint32_t tries = 0;
     while(counter < 30)
@@ -109,7 +111,6 @@ int main(int argc, char*argv[])
             break;
         }
     };
-#endif
 
     Cap_setAutoExposure(ctx, streamID, 0);
 
@@ -152,6 +153,8 @@ int main(int argc, char*argv[])
         fwrite(&m_buffer[0], 1, m_buffer.size(), fout);
         fclose(fout);
     }
+
+#endif
 
     char c = 0;
     int32_t v = 0;
