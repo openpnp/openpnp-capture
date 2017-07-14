@@ -86,13 +86,11 @@ int main(int argc, char*argv[])
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
+    Cap_setAutoExposure(ctx, streamID, 0);
 
-#if 0
+#if 1
     std::vector<uint8_t> m_buffer;
-    m_buffer.resize(finfo.width*finfo.height*3);
-
-    Cap_setAutoExposure(ctx, streamID, 1);
-
+    m_buffer.resize(finfo.width*finfo.height*4);
 
     uint32_t counter = 0;
     uint32_t tries = 0;
@@ -103,6 +101,14 @@ int main(int argc, char*argv[])
         if (Cap_hasNewFrame(ctx, streamID) == 1)
         {
             Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size());
+
+            // write frames to disk
+            char fname[100];
+            sprintf(fname, "frame%d.dat", counter);
+            FILE *fout = fopen(fname, "wb");
+            fwrite(&m_buffer[0], 1, m_buffer.size(), fout);
+            fclose(fout);
+
             counter++;
         }
         tries++;
@@ -111,7 +117,9 @@ int main(int argc, char*argv[])
             break;
         }
     };
+#endif
 
+#if 0
     Cap_setAutoExposure(ctx, streamID, 0);
 
     // wait for a new frame .. 
