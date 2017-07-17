@@ -21,3 +21,4 @@ set (SOURCE main.cpp ../../common/logging.cpp)
 add_executable(openpnp-capture-test ${SOURCE})
 
 target_link_libraries(openpnp-capture-test openpnp-capture)
+target_link_libraries(openpnp-capture-test turbojpeg)

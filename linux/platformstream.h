@@ -21,6 +21,7 @@
 #include <linux/videodev2.h>
 #include "../common/logging.h"
 #include "../common/stream.h"
+#include "mjpeghelper.h"
 
 
 class Context;          // pre-declaration
@@ -128,6 +129,7 @@ protected:
     v4l2_format m_fmt;              ///< V4L2 frame format
     bool        m_quitThread;       ///< if true, captureThreadFunction should return
     std::thread *m_helperThread;    ///< helper object threading control
+    MJPEGHelper m_mjpegHelper;      ///< helper to convert MJPEG stream RGB
 };
 
 #endif

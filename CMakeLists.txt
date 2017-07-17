@@ -64,16 +64,18 @@ ELSEIF(UNIX)
                 common/logging.cpp
                 common/stream.cpp
                 linux/platformcontext.cpp
-                linux/platformstream.cpp)
+                linux/platformstream.cpp
+                linux/mjpeghelper.cpp)
 
     # need pthreads for std::thread
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
     add_library(openpnp-capture SHARED ${SOURCE})
     target_link_libraries(openpnp-capture Threads::Threads)
-
+    target_link_libraries(openpnp-capture turbojpeg)
+    
     # add linux-specific test application
     add_subdirectory(linux/tests)
-    
+
 ENDIF()
 

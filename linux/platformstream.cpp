@@ -398,7 +398,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     m_width = 0;
     m_height = 0;    
 
-    //m_deviceHandle = ::open(dinfo->m_devicePath.c_str(), O_RDWR /* required */ | O_NONBLOCK);
     m_deviceHandle = ::open(dinfo->m_devicePath.c_str(), O_RDWR /* required */ | O_NONBLOCK);
     if (m_deviceHandle < 0)
     {
@@ -407,7 +406,30 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
-    m_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    // request a format
+    m_fmt.type       = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    m_fmt.fmt.pix.width  = width;
+    m_fmt.fmt.pix.height = height;
+    m_fmt.fmt.pix.pixelformat = fourCC;
+    m_fmt.fmt.pix.field  = V4L2_FIELD_NONE; // we want regular frames, not interlaced ones.
+    
+    //FIXME: this is needed for compressed formats
+    //       but can we get away with this in uncompressed
+    //       formats?
+    m_fmt.fmt.pix.bytesperline = 0;
+    m_fmt.fmt.pix.sizeimage = 0;        // only set be the driver
+    m_fmt.fmt.pix.priv = 0; 
+
+    if (xioctl(m_deviceHandle, VIDIOC_S_FMT, &m_fmt) == -1)
+    {
+        LOG(LOG_CRIT, "Could set the frame buffer format (errno = %d)\n", errno);
+        close();
+        return false;
+    }
+
+    // now get the actual format information set by the
+    // driver
+
     if (xioctl(m_deviceHandle, VIDIOC_G_FMT, &m_fmt) == -1)
     {
         LOG(LOG_CRIT, "Could not query default format (errno = %d)\n", errno);
@@ -482,7 +504,13 @@ void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
             Stream::submitBuffer((uint8_t*)ptr, bytes);
             break;
         case 0x47504A4D:    // MJPG
-            Stream::submitBuffer((uint8_t*)ptr, bytes);
+            m_bufferMutex.lock();
+            if (m_mjpegHelper.decompressFrame((uint8_t*)ptr, bytes, &m_frameBuffer[0], m_width, m_height))
+            {
+                m_newFrame = true; 
+                m_frames++;
+            }
+            m_bufferMutex.unlock();
             break;
         default:
             LOG(LOG_DEBUG, "ThreadSubmitBuffer: unsupported format %s (%08X)\n", fourCCToString(m_fmt.fmt.pix.pixelformat).c_str(),

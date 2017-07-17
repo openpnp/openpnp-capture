@@ -24,6 +24,26 @@ std::string FourCCToString(uint32_t fourcc)
     return v;
 }
 
+
+bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const uint8_t *bufferPtr, size_t bytes)
+{
+    char fname[100];
+    sprintf(fname, "frame_%d.ppm",frameNum);
+    
+    FILE *fout = fopen(fname, "wb");
+    if (fout == 0)
+    {
+        fprintf(stderr, "Cannot open %s for writing\n", fname);
+        return false;
+    }
+
+    fprintf(fout, "P6 %d %d 255\n", width, height); // PGM header
+    fwrite(bufferPtr, 1, bytes, fout);
+    fclose(fout);
+
+    return true;
+}
+
 int main(int argc, char*argv[])
 {    
     uint32_t deviceFormatID = 0;
@@ -88,43 +108,10 @@ int main(int argc, char*argv[])
 
     Cap_setAutoExposure(ctx, streamID, 0);
 
-#if 1
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(finfo.width*finfo.height*3);
 
-    uint32_t counter = 0;
-    uint32_t tries = 0;
-    while(counter < 30)
-    {
-        usleep(50*1000);
-        printf("%d", Cap_getStreamFrameCount(ctx, streamID));
-        if (Cap_hasNewFrame(ctx, streamID) == 1)
-        {
-            Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size());
-
-            // write frames to disk
-            char fname[100];
-            sprintf(fname, "frame%d.dat", counter);
-            FILE *fout = fopen(fname, "wb");
-            fwrite(&m_buffer[0], 1, m_buffer.size(), fout);
-            fclose(fout);
-
-            counter++;
-        }
-        tries++;
-        if (tries == 1000)
-        {
-            break;
-        }
-    };
-#endif
-
-#if 0
-    Cap_setAutoExposure(ctx, streamID, 0);
-
-    // wait for a new frame .. 
-    //while (Cap_hasNewFrame(ctx, streamID) == 0) {};
-    
+#if 0    
     if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
     {
         printf("Buffer captured!\n");
@@ -166,6 +153,7 @@ int main(int argc, char*argv[])
 
     char c = 0;
     int32_t v = 0;
+    uint32_t frameWriteCounter=0;    
     while((c != 'q') && (c != 'Q'))
     {
         c = getchar();
@@ -183,7 +171,20 @@ int main(int argc, char*argv[])
             printf("0");
             v = 0;
             Cap_setExposure(ctx, streamID, v);
-            break;        
+            break; 
+        case 'w':
+            if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
+            {
+                if (writeBufferAsPPM(frameWriteCounter, 
+                    finfo.width,
+                    finfo.height,
+                    &m_buffer[0],
+                    m_buffer.size()))
+                {
+                    printf("Written frame to frame_%d.ppm\n", frameWriteCounter++);
+                }
+            }
+            break;                   
         }
     }
 
