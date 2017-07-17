@@ -129,7 +129,7 @@ protected:
     v4l2_format m_fmt;              ///< V4L2 frame format
     bool        m_quitThread;       ///< if true, captureThreadFunction should return
     std::thread *m_helperThread;    ///< helper object threading control
-    MJPEGHelper m_mjpegHelper;      ///< helper to convert MJPEG stream RGB
+    MJPEGHelper m_mjpegHelper;      ///< helper to convert MJPEG stream to RGB
 };
 
 #endif

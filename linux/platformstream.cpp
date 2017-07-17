@@ -535,18 +535,49 @@ uint32_t PlatformStream::getFOURCC()
 
 bool PlatformStream::setExposure(int32_t value) 
 {
-    return false;
+    v4l2_control ctrl;
+    CLEAR(ctrl);
+
+    ctrl.id = V4L2_CID_EXPOSURE;
+    ctrl.value = value;
+    if (xioctl(m_deviceHandle, VIDIOC_S_CTRL, &ctrl)==-1)
+    {
+        LOG(LOG_ERR,"setAutoExposure failed on VIDIOC_S_CTRL (errno %d)\n", errno);
+        return false;        
+    }
+    return true;
 }
 
 
 bool PlatformStream::setAutoExposure(bool enabled) 
 {
-    return false;
+    v4l2_control ctrl;
+    CLEAR(ctrl);
+
+    ctrl.id = V4L2_CID_AUTOGAIN;
+    ctrl.value = enabled ? 1 : 0;
+    if (xioctl(m_deviceHandle, VIDIOC_S_CTRL, &ctrl)==-1)
+    {
+        LOG(LOG_ERR,"setAutoExposure failed on VIDIOC_S_CTRL (errno %d)\n", errno);
+        return false;        
+    }
+    return true;
 }
 
 
 bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax) 
 {
-    return false;
+    v4l2_queryctrl ctrl;
+    CLEAR(ctrl);
+
+    ctrl.id = V4L2_CID_EXPOSURE;
+    if (xioctl(m_deviceHandle, VIDIOC_QUERYCTRL, &ctrl) == -1)
+    {
+        LOG(LOG_ERR,"getExposureLimited failed on VIDIOC_QUERYCTRL (errno %d)\n", errno);
+        return false;
+    }
+    *emin = ctrl.minimum;
+    *emax = ctrl.maximum;
+    return true;
 }
 
