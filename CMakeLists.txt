@@ -74,5 +74,6 @@ ELSEIF(UNIX)
 
     # add linux-specific test application
     add_subdirectory(linux/tests)
+    
 ENDIF()
 

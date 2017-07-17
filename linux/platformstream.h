@@ -119,14 +119,9 @@ public:
     }
 
     /** public submit buffer so the capture thread/function
-        can access it */
-    void threadSubmitBuffer(void *ptr, size_t bytes)
-    {
-        if (ptr != nullptr) 
-        {
-            Stream::submitBuffer((uint8_t*)ptr, bytes);
-        }
-    }
+        can access it. In additon, this function handles any 
+        conversion to RGB output buffers, if necessary */
+    void threadSubmitBuffer(void *ptr, size_t bytes);
 
 protected:
     int         m_deviceHandle;     ///< V4L2 device handle

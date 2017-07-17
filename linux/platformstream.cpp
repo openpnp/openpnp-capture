@@ -431,21 +431,65 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     LOG(LOG_INFO, "FOURCC = %s\n", fourCCToString(m_fmt.fmt.pix.pixelformat).c_str());
 
     // set the (max) size of the frame buffer in Stream class
-    m_frameBuffer.resize(m_width*m_height*4);
+    //
+    // Note: we only support 24-bit per pixel RGB
+    // buffers for now!
+    m_frameBuffer.resize(m_width*m_height*3);
 
     m_isOpen = true;
 
     // create the helper thread to read from the device
     m_quitThread = false;
 
-#if 0
+    // for now, assume we always have streaming driver support
+#ifdef __V4L2_NO_STREAMNING_SUPPORT
     m_helperThread = new std::thread(&captureThreadFunction, this,
         m_deviceHandle, m_width*m_height*4);
 #else
     m_helperThread = new std::thread(&captureThreadFunctionAsync, this,
         m_deviceHandle, m_width*m_height*4);
 #endif
+
     return true;
+}
+
+/*
+
+RGB formats .. https://lwn.net/Articles/218798/
+
+ -- V4L2 DEFINE --   FOURCC
+V4L2_PIX_FMT_RGB332  RGB1
+V4L2_PIX_FMT_RGB444  R444
+V4L2_PIX_FMT_RGB555  RGB0
+V4L2_PIX_FMT_RGB565  RGBP
+V4L2_PIX_FMT_RGB555X RGBQ
+V4L2_PIX_FMT_RGB565X RGBR
+V4L2_PIX_FMT_BGR24   BGR3
+V4L2_PIX_FMT_RGB24   RGB3
+V4L2_PIX_FMT_BGR32   BGR4
+V4L2_PIX_FMT_RGB32   RGB4
+V4L2_PIX_FMT_SBGGR8  BA81
+
+*/
+
+void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
+{
+    if (ptr != nullptr) 
+    {
+        switch(m_fmt.fmt.pix.pixelformat)
+        {
+        case V4L2_PIX_FMT_RGB24:
+            Stream::submitBuffer((uint8_t*)ptr, bytes);
+            break;
+        case 0x47504A4D:    // MJPG
+            Stream::submitBuffer((uint8_t*)ptr, bytes);
+            break;
+        default:
+            LOG(LOG_DEBUG, "ThreadSubmitBuffer: unsupported format %s (%08X)\n", fourCCToString(m_fmt.fmt.pix.pixelformat).c_str(),
+                m_fmt.fmt.pix.pixelformat);
+            break;
+        }        
+    }
 }
 
 uint32_t PlatformStream::getFOURCC()

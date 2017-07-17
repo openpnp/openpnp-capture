@@ -90,7 +90,7 @@ int main(int argc, char*argv[])
 
 #if 1
     std::vector<uint8_t> m_buffer;
-    m_buffer.resize(finfo.width*finfo.height*4);
+    m_buffer.resize(finfo.width*finfo.height*3);
 
     uint32_t counter = 0;
     uint32_t tries = 0;
