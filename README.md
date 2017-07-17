@@ -24,6 +24,14 @@ Not working in the windows version:
 * supported format enumeration.
 * focus control.
 
+## Buildin OpenPnP Capture
+
+### Dependencies
+* CMAKE 3.1 or better
+* MAKE (osx, linux)
+* Visual Studio 2013 + NMake or Ninja Build (windows)
+* libjpeg-turbo (linux) -- will be merged into the project at a later time
+
 ### Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
 
@@ -33,4 +41,10 @@ Go to the build directory and run nmake or ninja to build the library and the te
 TODO
 
 ### Build instructions (Linux)
-TODO
+Run 'bootstrap_linux.sh'. Run make.
+
+## Supporting other platforms
+* Implement all PlatformXXX classes, like in the win or linux directories.
+* PlatformContext handles device and internal frame buffer format enumeration.
+* PlatformStream is responsible for capturing and decoding the camera stream to a 8-bit per channel RGB frame buffer.
+* Statically link external dependencies.
