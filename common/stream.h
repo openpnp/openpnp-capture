@@ -72,7 +72,16 @@ public:
     virtual bool getExposureLimits(int32_t *min, int32_t *max) = 0;
 
 protected:
-    void submitBuffer(uint8_t* ptr, size_t bytes);
+    /** Thread-safe copying of the 24-bit RGB buffer pointed to
+        by 'ptr' with length 'bytes'.
+
+        If no bitmap conversion needs to take place, call this
+        function from the platform dependent code. Otherwise, re-
+        implement this function with the conversion to avoid
+        needing multiple frame buffers.
+
+    */
+    virtual void submitBuffer(const uint8_t* ptr, size_t bytes);
 
     Context*    m_owner;                    ///< The context object associated with this stream
 

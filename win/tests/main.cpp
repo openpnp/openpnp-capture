@@ -24,6 +24,25 @@ std::string FourCCToString(uint32_t fourcc)
     return v;
 }
 
+bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const uint8_t *bufferPtr, size_t bytes)
+{
+    char fname[100];
+    sprintf(fname, "frame_%d.ppm",frameNum);
+    
+    FILE *fout = fopen(fname, "wb");
+    if (fout == 0)
+    {
+        fprintf(stderr, "Cannot open %s for writing\n", fname);
+        return false;
+    }
+
+    fprintf(fout, "P6 %d %d 255\n", width, height); // PGM header
+    fwrite(bufferPtr, 1, bytes, fout);
+    fclose(fout);
+
+    return true;
+}
+
 int main(int argc, char*argv[])
 {    
     uint32_t deviceFormatID = 0;
@@ -89,73 +108,12 @@ int main(int argc, char*argv[])
 
     printf("Press Q to exit.\n");
     printf("Press + or - to change the exposure.\n");
+    printf("Press w to write the current frame to a PPM file.\n");
 
     // get current stream parameters 
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
-#if 0
-    std::vector<uint8_t> m_buffer;
-    m_buffer.resize(finfo.width*finfo.height*3);
-
-    Cap_setAutoExposure(ctx, streamID, 1);
-
-    uint32_t counter = 0;
-    uint32_t tries = 0;
-    while(counter < 30)
-    {
-        Sleep(50);
-        printf("%d", Cap_getStreamFrameCount(ctx, streamID));
-        if (Cap_hasNewFrame(ctx, streamID) == 1)
-        {
-            Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size());
-            counter++;
-        }
-        tries++;
-        if (tries == 1000)
-        {
-            break;
-        }
-    };
-        
-    if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
-    {
-        printf("Buffer captured!\n");
-
-        FILE *fout = fopen("image.ppm", "wb");
-        fprintf(fout, "P6 %d %d 255\n", finfo.width, finfo.height); // PGM header
-
-        // exchange BGR to RGB
-        uint32_t idx = 0;
-        for(uint32_t i=0; i<finfo.width*finfo.height; i++)
-        {
-            uint8_t b = m_buffer[idx];
-            uint8_t g = m_buffer[idx+1];
-            uint8_t r = m_buffer[idx+2];
-            m_buffer[idx++] = r;
-            m_buffer[idx++] = g;
-            m_buffer[idx++] = b;
-        }
-
-        // and upside-down :)
-        const uint32_t stride = 3;
-        const size_t lineBytes = finfo.width * stride;
-        uint8_t *row  = new uint8_t[lineBytes];
-        uint8_t *low  = &m_buffer[0];
-        uint8_t *high = &m_buffer[(finfo.height - 1) * lineBytes];
-
-        for (; low < high; low += lineBytes, high -= lineBytes) {
-            memcpy(row, low, lineBytes);
-            memcpy(low, high, lineBytes);
-            memcpy(high, row, lineBytes);
-        }
-        delete[] row;
-
-        fwrite(&m_buffer[0], 1, m_buffer.size(), fout);
-        fclose(fout);
-    }
-
-#endif
     Cap_setAutoExposure(ctx, streamID, 0);
 
     // try to create a message loop so the preview
@@ -164,8 +122,12 @@ int main(int argc, char*argv[])
     MSG msg;
     BOOL bRet;
 
+    std::vector<uint8_t> m_buffer;
+    m_buffer.resize(finfo.width*finfo.height*3);
+
     char c = 0;
     int32_t v = 0; // exposure value
+    uint32_t frameWriteCounter=0;
     while((c != 'q') && (c != 'Q'))
     {
         if (PeekMessage(&msg, NULL, 0, 0, 0) != 0)
@@ -198,10 +160,22 @@ int main(int argc, char*argv[])
                 v = 0;
                 Cap_setExposure(ctx, streamID, v);
                 printf("exposure = %d  \r", v);
-                break;        
+                break;
+            case 'w':
+                if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
+                {
+                    if (writeBufferAsPPM(frameWriteCounter, 
+                        finfo.width,
+                        finfo.height,
+                        &m_buffer[0],
+                        m_buffer.size()))
+                    {
+                        printf("Written frame to frame_%d.ppm\n", frameWriteCounter++);
+                    }
+                }
+                break;
             }            
         }
-
         Sleep(10);
     }
 

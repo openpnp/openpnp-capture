@@ -10,6 +10,9 @@
     Platform/implementation specific structures
     and typedefs.
 
+    The platform classes are also responsible for converting
+    the frames into 24-bit per pixel RGB frames.
+
 */
 
 #include <vector>
@@ -364,7 +367,7 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
                             
                             std::string fourCCString = fourCCToString(newFrameInfo.fourcc);
 
-                            LOG(LOG_INFO, "%d x %d  %d fps  %d bpp  FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
+                            LOG(LOG_INFO, "%d x %d  %d fps  %d bpp FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
                                 newFrameInfo.fps, newFrameInfo.bpp, fourCCString.c_str());
 
                             info->m_formats.push_back(newFrameInfo);
@@ -376,106 +379,6 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
             }
         }
     }
-
-#if 0
-    IEnumMediaTypes *pMediaEnum;
-    hr = capturePin->EnumMediaTypes(&pMediaEnum);
-    if (hr != S_OK)
-    {
-        LOG(LOG_INFO, "Could not enumerate media types!\n");
-        return false;        
-    }
-
-    ScopedComPtr<IEnumMediaTypes> mediaEnum(pMediaEnum);
-
-    AM_MEDIA_TYPE *pmt = NULL;
-    while (hr = mediaEnum->Next(1, &pmt, NULL), hr == S_OK)
-    { 
-        if (pmt->formattype == FORMAT_VideoInfo)
-        {
-            // Check the buffer size.
-            if (pmt->cbFormat >= sizeof(VIDEOINFOHEADER))
-            {
-                VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmt->pbFormat);
-                CapFormatInfo newFrameInfo;
-                if (pVih != nullptr)
-                {
-                    newFrameInfo.bpp = pVih->bmiHeader.biBitCount;
-                    if (pVih->bmiHeader.biCompression == BI_RGB)
-                    {
-                        newFrameInfo.fourcc = 'RGB ';
-                    }
-                    else if (pVih->bmiHeader.biCompression == BI_BITFIELDS)
-                    {
-                        newFrameInfo.fourcc = '   ';
-                    }
-                    else
-                    {
-                        newFrameInfo.fourcc = pVih->bmiHeader.biCompression;
-                    }
-
-                    newFrameInfo.width  = pVih->bmiHeader.biWidth;
-                    newFrameInfo.height = pVih->bmiHeader.biHeight;
-                    
-                    if (pVih->AvgTimePerFrame != 0)
-                    {
-                        // pVih->AvgTimePerFrame is in units of 100ns
-                        newFrameInfo.fps = static_cast<uint32_t>(10.0e6f/static_cast<float>(pVih->AvgTimePerFrame));
-                    }
-                    else
-                    {
-                        newFrameInfo.fps = 0;
-                    }
-                    
-                    std::string fourCCString = fourCCToString(newFrameInfo.fourcc);
-
-                    LOG(LOG_INFO, "%d x %d  %d fps  %d bpp  FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
-                        newFrameInfo.fps, newFrameInfo.bpp, fourCCString.c_str());
-
-                    info->m_formats.push_back(newFrameInfo);
-                }
-            }
-        }
-        _DeleteMediaType(pmt);
-    }
-
-#if 0
-    ScopedComPtr<IEnumPins> enumPins(pEnum);
-
-    while(enumPins->Next(1, &pPin, 0) == S_OK)
-    {
-        ScopedComPtr<IPin> pin(pPin);
-
-        PIN_INFO pinInfo;
-        hr = pin->QueryPinInfo(&pinInfo);
-        if (FAILED(hr))
-        {
-            LOG(LOG_ERR, "No frame information: QueryPinInfo failed.\n");
-            return false;
-        }
-
-        pinInfo.
-
-        PIN_DIRECTION PinDirThis;
-        hr = pin->QueryDirection(&PinDirThis);
-        if (FAILED(hr))
-        {
-            return hr;
-        }
-        if (PinDir == PinDirThis)
-        {
-            // Found a match. Return the IPin pointer to the caller.
-            *ppPin = pPin;
-            pEnum->Release();
-            return S_OK;
-        }
-        // Release the pin for the next time through the loop.
-        pPin->Release();
-
-
-    }
-    #endif    
-    #endif
 
     return true;
 }

@@ -500,3 +500,49 @@ bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax)
     }
     return false;
 }
+
+void PlatformStream::submitBuffer(const uint8_t *ptr, size_t bytes)
+{
+    m_bufferMutex.lock();
+    
+    if (m_frameBuffer.size() == 0)
+    {
+        LOG(LOG_ERR,"Stream::m_frameBuffer size is 0 - cant store frame buffers!\n");
+    }
+
+    // Generate warning every 100 frames if the frame buffer is not
+    // the expected size. 
+    
+    const uint32_t wantSize = m_width*m_height*3;
+    if ((bytes != wantSize) && ((m_frames % 100) == 0))
+    {
+        LOG(LOG_WARNING, "Warning: captureFrame received incorrect buffer size (got %d want %d)\n", bytes, wantSize);
+    }
+
+    if (bytes <= m_frameBuffer.size())
+    {
+        // The Win32 API delivers upside-down BGR frames.
+        // Conversion to regular RGB frames is done by
+        // byte-reversing the buffer
+            
+        for(size_t y=0; y<m_height; y++)
+        {
+            uint8_t *dst = &m_frameBuffer[(y*m_width)*3];
+            const uint8_t *src = ptr + (m_width*3)*(m_height-y-1);
+            for(uint32_t x=0; x<m_width; x++)
+            {
+                uint8_t b = *src++;
+                uint8_t g = *src++;
+                uint8_t r = *src++;
+                *dst++ = r;
+                *dst++ = g;
+                *dst++ = b;
+            }
+        }
+
+        m_newFrame = true; 
+        m_frames++;        
+    }
+
+    m_bufferMutex.unlock();
+}

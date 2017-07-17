@@ -138,6 +138,9 @@ public:
     virtual bool getExposureLimits(int32_t *min, int32_t *max) override;
 
 protected:
+    /** A re-implementation of Stream::submitBuffer with BGR to RGB conversion */
+    virtual void submitBuffer(const uint8_t *ptr, size_t bytes) override;
+
     void dumpCameraProperties();
 
     IFilterGraph2*  m_graph;

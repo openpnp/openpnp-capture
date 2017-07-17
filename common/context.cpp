@@ -115,7 +115,6 @@ int32_t Context::openStream(CapDeviceID id, CapFormatID formatID)
         return -1;        
     }
 
-    //Stream *s = new PlatformStream();
     Stream *s = createPlatformStream();
 
     if (!s->open(this, device, device->m_formats[formatID].width,
