@@ -28,15 +28,24 @@ bool MJPEGHelper::decompressFrame(const uint8_t *inBuffer,
     tjDecompressHeader2(m_decompressHandle, jpegPtr, inBytes, &width, &height, &jpegSubsamp);    
     if ((width != outBufWidth) || (height != outBufHeight))
     {
-        LOG(LOG_ERR, "tjDecompressHeader2 failed\n");
+        LOG(LOG_ERR, "tjDecompressHeader2 failed: %s\n", tjGetErrorStr());
         return false;
+    }
+    else
+    {
+        LOG(LOG_VERBOSE, "MJPG: %d %d size %d bytes\n", width, height, inBytes);
     }
 
     if (tjDecompress2(m_decompressHandle, jpegPtr, inBytes, outBuffer, 
         width, 0/*pitch*/, height, TJPF_RGB, TJFLAG_FASTDCT) != 0)
     {
-        LOG(LOG_ERR, "tjDecompress2 failed\n");
-        return false;
+        //FIXME: ignore the compress error for now
+        //       the ELP 720p camera keeps generating JPEG decode
+        //       errors.
+        LOG(LOG_WARNING, "tjDecompress2 failed: %s\n", tjGetErrorStr());
+        //return false;
+
+        return true;
     }
 
     return true;

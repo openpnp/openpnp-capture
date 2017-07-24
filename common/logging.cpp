@@ -25,7 +25,10 @@ void LOG(uint32_t logLevel, const char *format, ...)
         break;    
     case LOG_DEBUG:
         fprintf(stderr,"[DBG ] ");
-        break;                       
+        break;
+    case LOG_VERBOSE:
+        fprintf(stderr,"[VERB] ");
+        break;
     default:
         break;
     }
