@@ -23,6 +23,7 @@ typedef struct
     CapContext  ctx;
     int32_t     streamID;
     bool        takeSnapshot;
+    uint32_t    snapshotCounter;
 } TimerCallbackInfo;
  
 
@@ -41,6 +42,14 @@ static void activate(GtkApplication* app,
     gtk_window_set_title (GTK_WINDOW (window), "OpenPnP Capture");
     gtk_window_set_default_size (GTK_WINDOW (window), 640, 480);
     gtk_widget_show_all (window);
+}
+
+static void triggerSnapshot(GtkWidget *widget,
+    gpointer data)
+{
+    TimerCallbackInfo *id = (TimerCallbackInfo*)data;
+    id->takeSnapshot = true;
+    printf("Snapshot triggered!\n");
 }
 
 bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const uint8_t *bufferPtr, size_t bytes)
@@ -82,7 +91,7 @@ int updatePicture(gpointer data)
             if (id->takeSnapshot)
             {
                 id->takeSnapshot = false;
-                writeBufferAsPPM(0, id->cols, id->rows, g, id->cols * id->rows * 3);
+                writeBufferAsPPM(id->snapshotCounter++, id->cols, id->rows, g, id->cols * id->rows * 3);
             }
         }
         else
@@ -111,6 +120,9 @@ int main (int argc, char *argv[])
     // https://cboard.cprogramming.com/c-programming/172801-how-display-2d-array-image-using-gtk3plus.html
 
     GtkApplication *app;
+    GtkWidget *button;
+    GtkWidget *button_box;
+
     int status;
 
     uint32_t deviceFormatID = 0;
@@ -190,7 +202,8 @@ int main (int argc, char *argv[])
     id.stride += (4 - id.stride % 4) % 4; // ensure multiple of 4
     id.ctx  = ctx;
     id.streamID = streamID;
-    id.takeSnapshot = true;
+    id.takeSnapshot = false;
+    id.snapshotCounter = 0;
     
     guchar *pixels = (guchar *)calloc(finfo.height * id.stride, 1);
 
@@ -222,7 +235,15 @@ int main (int argc, char *argv[])
     gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
     g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 
-    gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(id.image));
+    
+
+    button_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
+    gtk_container_add(GTK_CONTAINER (window), button_box);
+
+    button = gtk_button_new_with_label ("Save Frame to .ppm");
+    g_signal_connect (button, "clicked", G_CALLBACK (triggerSnapshot), &id);
+    gtk_container_add(GTK_CONTAINER(button_box), GTK_WIDGET(id.image));
+    gtk_container_add(GTK_CONTAINER(button_box), button);
 
     g_timeout_add(250,         // milliseconds
                 updatePicture,  // handler function
