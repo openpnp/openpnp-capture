@@ -185,3 +185,45 @@ DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32
     }
     return CAPRESULT_ERR;
 }
+
+DLLPUBLIC CapResult Cap_getFocusLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->getStreamFocusLimits(stream, min, max))
+        {
+            return CAPRESULT_FOCUSNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC CapResult Cap_setFocus(CapContext ctx, CapStream stream, int32_t value)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->setStreamFocus(stream, value))
+        {
+            return CAPRESULT_FOCUSNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC CapResult Cap_setAutoFocus(CapContext ctx, CapStream stream, uint32_t bOnOff)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->setStreamAutoFocus(stream, (bOnOff==1)))
+        {
+            return CAPRESULT_FOCUSNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}

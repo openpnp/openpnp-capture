@@ -501,6 +501,59 @@ bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax)
     return false;
 }
 
+
+bool PlatformStream::setFocus(int32_t value)
+{
+    if (m_camControl != 0)
+    {
+        long flags, dummy;
+        if (m_camControl->Get(CameraControl_Focus, &dummy, &flags) != S_OK)
+        {
+            return false;
+        }
+        if (m_camControl->Set(CameraControl_Focus, value, flags) != S_OK)
+        {
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+
+bool PlatformStream::setAutoFocus(bool enabled)
+{
+    if (m_camControl != 0)
+    {
+        //FIXME: check return codes.
+        if (enabled)
+            m_camControl->Set(CameraControl_Focus, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+        else
+            m_camControl->Set(CameraControl_Focus, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+
+        return true;
+    }
+    return false;
+}
+
+
+bool PlatformStream::getFocusLimits(int32_t *emin, int32_t *emax)
+{
+    if ((m_camControl != 0) && (emin != nullptr) && (emax != nullptr))
+    {
+        //query focus
+		long flags, mmin, mmax, delta, defaultValue;
+        if (m_camControl->GetRange(CameraControl_Focus, &mmin, &mmax,
+            &delta, &defaultValue, &flags) == S_OK)
+        {   
+            *emin = mmin;
+            *emax = mmax;
+            return true;
+        }
+    }
+    return false;
+}
+
 void PlatformStream::submitBuffer(const uint8_t *ptr, size_t bytes)
 {
     m_bufferMutex.lock();

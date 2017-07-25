@@ -282,6 +282,30 @@ bool Context::getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *m
     return stream->getExposureLimits(min, max);
 }
 
+/** Get the focus min and max in 'camera' units */
+bool Context::getStreamFocusLimits(int32_t streamID, int32_t *min, int32_t *max)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->getFocusLimits(min, max);
+}
+
+/** Set the focus in 'camera' units */
+bool Context::setStreamFocus(int32_t streamID, int32_t value)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setFocus(value);
+}
+
+/** Set enable/disable the automatic focus */
+bool Context::setStreamAutoFocus(int32_t streamID, bool enable)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setAutoFocus(enable);
+}
+
 /** convert a FOURCC uint32_t to human readable form */
 std::string fourCCToString(uint32_t fourcc)
 {

@@ -94,6 +94,15 @@ public:
     /** get the min and max exposure settings in 'camera' units. */
     bool getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *max);
 
+    /** Get the focus min and max in 'camera' units */
+    bool getStreamFocusLimits(int32_t streamID, int32_t *min, int32_t *max);
+
+    /** Set the focus in 'camera' units */
+    bool setStreamFocus(int32_t streamID, int32_t value);
+
+    /** Set enable/disable the automatic focus */
+    bool setStreamAutoFocus(int32_t streamID, bool enable);
+
 protected:
     /** Enumerate all capture devices and put their 
         information (name, buffer formats etc) into 
