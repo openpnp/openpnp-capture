@@ -48,7 +48,9 @@ int main(int argc, char*argv[])
     uint32_t deviceFormatID = 0;
     uint32_t deviceID       = 0;
 
-    printf("OpenPNP Capture Test Program\n");
+    printf("==============================\n");
+    printf(" OpenPNP Capture Test Program\n");
+    printf("==============================\n");
     Cap_setLogLevel(7);
 
     if (argc == 1)
@@ -106,15 +108,46 @@ int main(int argc, char*argv[])
         return 1;
     }
 
-    printf("Press Q to exit.\n");
+    printf("Press q to exit.\n");
     printf("Press + or - to change the exposure.\n");
+    printf("Press f or g to change the focus.\n");
     printf("Press w to write the current frame to a PPM file.\n");
 
     // get current stream parameters 
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
+    //disable auto exposure and focus
     Cap_setAutoExposure(ctx, streamID, 0);
+    Cap_setAutoFocus(ctx, streamID, 0);
+
+    // set exposure in the middle of the range
+    int32_t exposure = 0;
+    int32_t exmax, exmin;
+    if (Cap_getExposureLimits(ctx, streamID, &exmin, &exmax) == CAPRESULT_OK)
+    {
+        exposure = (exmax + exmin) / 2;
+        Cap_setExposure(ctx, streamID, exposure);
+        printf("Set exposure to %d\n", exposure);
+    }
+    else
+    {
+        printf("Could not get exposure limits.\n");
+    }
+
+    // set focus in the middle of the range
+    int32_t focus = 0;
+    int32_t fomax, fomin;
+    if (Cap_getFocusLimits(ctx, streamID, &fomin, &fomax) == CAPRESULT_OK)
+    {
+        focus = (fomax + fomin) / 2;
+        Cap_setFocus(ctx, streamID, focus);
+        printf("Set focus to %d\n", focus);
+    }
+    else
+    {
+        printf("Could not get focus limits.\n");
+    }
 
     // try to create a message loop so the preview
     // window doesn't crash.. 
@@ -126,7 +159,6 @@ int main(int argc, char*argv[])
     m_buffer.resize(finfo.width*finfo.height*3);
 
     char c = 0;
-    int32_t v = 0; // exposure value
     uint32_t frameWriteCounter=0;
     while((c != 'q') && (c != 'Q'))
     {
@@ -147,19 +179,25 @@ int main(int argc, char*argv[])
             switch(c)
             {
             case '+':                
-                Cap_setExposure(ctx, streamID, ++v);
-                printf("exposure = %d  \r", v);
+                Cap_setExposure(ctx, streamID, ++exposure);
+                printf("exposure = %d  \r", exposure);
                 break;
             case '-':
-                printf("-");
-                Cap_setExposure(ctx, streamID, --v);
-                printf("exposure = %d  \r", v);
+                Cap_setExposure(ctx, streamID, --exposure);
+                printf("exposure = %d  \r", exposure);
                 break;
             case '0':
-                printf("0");
-                v = 0;
-                Cap_setExposure(ctx, streamID, v);
-                printf("exposure = %d  \r", v);
+                exposure = (exmax + exmin) / 2;
+                Cap_setExposure(ctx, streamID, exposure);
+                printf("exposure = %d  \r", exposure);
+                break;
+            case 'f':
+                Cap_setFocus(ctx, streamID, ++focus);
+                printf("focus = %d     \r", focus);
+                break;
+            case 'g':
+                Cap_setFocus(ctx, streamID, --focus);
+                printf("focus = %d     \r", focus);
                 break;
             case 'w':
                 if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
@@ -185,4 +223,5 @@ int main(int argc, char*argv[])
 
     return 0;
 }
+
 

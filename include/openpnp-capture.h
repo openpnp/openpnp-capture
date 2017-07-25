@@ -65,6 +65,10 @@ struct CapFormatInfo
 #define CAPRESULT_EXPOSURENOTSUPPORTED 4
 #define CAPRESULT_FOCUSNOTSUPPORTED 5
 
+/********************************************************************************** 
+     CONTEXT CREATION AND DEVICE ENUMERATION
+**********************************************************************************/
+
 /** initialize the capture library */
 DLLPUBLIC CapContext Cap_createContext(void);
 
@@ -93,6 +97,11 @@ DLLPUBLIC int32_t Cap_getNumFormats(CapContext ctx, CapDeviceID index);
 /** get the format information from a device. */
 DLLPUBLIC CapResult Cap_getFormatInfo(CapContext ctx, CapDeviceID index, CapFormatID id, CapFormatInfo *info); 
 
+
+/********************************************************************************** 
+     STREAM MANAGEMENT
+**********************************************************************************/
+
 /** open a capture stream to a device with specific format requirements 
 
     If the device is not capable of the requirements or the device
@@ -109,6 +118,11 @@ DLLPUBLIC CapResult Cap_closeStream(CapContext ctx, CapStream stream);
 /** returns 1 if the stream is open and capturing, else 0 */
 DLLPUBLIC uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream);
 
+
+/********************************************************************************** 
+     FRAME CAPTURING / INFO
+**********************************************************************************/
+
 /** this function copies the most recent RGB frame data
     to the given buffer.
 */
@@ -122,6 +136,9 @@ DLLPUBLIC uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream);
 DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
 
 
+/********************************************************************************** 
+     EXPOSURE CONTROLS 
+**********************************************************************************/
 
 /** Get the exposure min and max in 'camera' units */
 DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
@@ -131,6 +148,25 @@ DLLPUBLIC CapResult Cap_setExposure(CapContext ctx, CapStream stream, int32_t va
 
 /** Set enable/disable the automatic exposure */
 DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32_t bOnOff);
+
+
+/********************************************************************************** 
+     FOCUS CONTROLS
+**********************************************************************************/
+
+/** Get the focus min and max in 'camera' units */
+DLLPUBLIC CapResult Cap_getFocusLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
+
+/** Set the focus in 'camera' units */
+DLLPUBLIC CapResult Cap_setFocus(CapContext ctx, CapStream stream, int32_t value);
+
+/** Set enable/disable the automatic focus */
+DLLPUBLIC CapResult Cap_setAutoFocus(CapContext ctx, CapStream stream, uint32_t bOnOff);
+
+
+/********************************************************************************** 
+     DEBUGGING
+**********************************************************************************/
 
 DLLPUBLIC void Cap_setLogLevel(uint32_t level);
 

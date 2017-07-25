@@ -65,11 +65,23 @@ public:
         return m_frames;
     }
 
+    /** set the exposure in camera units */
     virtual bool setExposure(int32_t value) = 0;
 
+    /** set enable/disable auto exposure */
     virtual bool setAutoExposure(bool enabled) = 0;
 
+    /** get the exposure limits in camera units */
     virtual bool getExposureLimits(int32_t *min, int32_t *max) = 0;
+
+    /** set the focus in camera units */
+    virtual bool setFocus(int32_t value) = 0;
+
+    /** set enable/disable auto focus */
+    virtual bool setAutoFocus(bool enabled) = 0;
+
+    /** get the focus limits in camera units */
+    virtual bool getFocusLimits(int32_t *min, int32_t *max) = 0;
 
 protected:
     /** Thread-safe copying of the 24-bit RGB buffer pointed to

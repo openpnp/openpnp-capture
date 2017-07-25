@@ -137,6 +137,15 @@ public:
 
     virtual bool getExposureLimits(int32_t *min, int32_t *max) override;
 
+    /** set the focus in camera units */
+    virtual bool setFocus(int32_t value) override;
+
+    /** set enable/disable auto focus */
+    virtual bool setAutoFocus(bool enabled) override;
+
+    /** get the focus limits in camera units */
+    virtual bool getFocusLimits(int32_t *min, int32_t *max) override;
+
 protected:
     /** A re-implementation of Stream::submitBuffer with BGR to RGB conversion */
     virtual void submitBuffer(const uint8_t *ptr, size_t bytes) override;
