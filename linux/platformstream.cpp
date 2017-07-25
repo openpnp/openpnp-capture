@@ -452,6 +452,19 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     LOG(LOG_INFO, "Height = %d pixels\n", m_fmt.fmt.pix.height);
     LOG(LOG_INFO, "FOURCC = %s\n", fourCCToString(m_fmt.fmt.pix.pixelformat).c_str());
 
+    // set the desired frame rate
+    v4l2_streamparm sparam;
+    CLEAR(sparam);
+    sparam.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    sparam.parm.capture.timeperframe.numerator   = 1;
+    sparam.parm.capture.timeperframe.denominator = 10;
+    if (xioctl(m_deviceHandle, VIDIOC_S_PARM, &sparam) == -1)
+    {
+        LOG(LOG_CRIT, "Could not set the frame rate (errno = %d)\n", errno);
+        close();
+        return false;
+    }    
+
     // set the (max) size of the frame buffer in Stream class
     //
     // Note: we only support 24-bit per pixel RGB
@@ -494,6 +507,8 @@ V4L2_PIX_FMT_SBGGR8  BA81
 
 */
 
+//#define FRAMEDUMP
+
 void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
 {
     if (ptr != nullptr) 
@@ -504,6 +519,20 @@ void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
             Stream::submitBuffer((uint8_t*)ptr, bytes);
             break;
         case 0x47504A4D:    // MJPG
+            #ifdef FRAMEDUMP
+            {
+                static int32_t fcnt = 0;
+                char fname[100];
+                if (fcnt < 10)
+                {
+                    sprintf(fname,"frame_%d.dat", fcnt++);
+                    FILE *fout = fopen(fname, "wb");
+                    fwrite(ptr, 1, bytes, fout);
+                    fclose(fout);
+                }
+            }
+            #endif        
+
             m_bufferMutex.lock();
             if (m_mjpegHelper.decompressFrame((uint8_t*)ptr, bytes, &m_frameBuffer[0], m_width, m_height))
             {
