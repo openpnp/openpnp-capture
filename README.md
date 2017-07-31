@@ -10,21 +10,45 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 * Auto and manual focus control.
 * Simple, common C wrapper for the listed APIs.
 
-### Status
+# Status
 
-Working in the windows version:
-* device enumeration.
-* capturing from a device (using default frame size and format).
-* partial c interface.
-* exposure control.
+### Windows
 
-Not working in the windows version:
-* setting of frame size.
-* setting of video format, e.g. MJPG etc.
-* supported format enumeration.
-* focus control.
+| Feature       | Implemented   |
+| ------------- |:-------------:|
+| Device Enumeration | Yes |
+| Capturing | Yes |
+| MJPEG formats | Yes |
+| YUV formats | Yes |
+| Exposure control | Yes |
+| Focus control | Yes / Untested |
+| Framerate control | No |
 
-## Buildin OpenPnP Capture
+### Linux
+
+| Feature       | Implemented   |
+| ------------- |:-------------:|
+| Device Enumeration | Yes |
+| Capturing | Yes |
+| MJPEG formats | Yes |
+| YUV formats | Yes |
+| Exposure control | Yes |
+| Focus control | No |
+| Framerate control | No |
+
+### OSX
+
+| Feature       | Implemented   |
+| ------------- |:-------------:|
+| Device Enumeration | Yes |
+| Capturing | No |
+| MJPEG formats | No |
+| YUV formats | No |
+| Exposure control | No |
+| Focus control | No |
+| Framerate control | No |
+
+# Building OpenPnP Capture
 
 ### Dependencies
 * CMAKE 3.1 or better
