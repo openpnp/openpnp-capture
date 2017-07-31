@@ -65,6 +65,10 @@ public:
         return m_frames;
     }
 
+#if 0
+
+    // Depricated functions
+
     /** set the exposure in camera units */
     virtual bool setExposure(int32_t value) = 0;
 
@@ -82,6 +86,16 @@ public:
 
     /** get the focus limits in camera units */
     virtual bool getFocusLimits(int32_t *min, int32_t *max) = 0;
+#endif
+
+    /** get the limits of a camera/stream property (exposure, zoom etc) */
+    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) = 0;
+
+    /** set property (exposure, zoom etc) of camera/stream */
+    virtual bool setProperty(uint32_t propID, int32_t value) = 0;
+
+    /** set automatic state of property (exposure, zoom etc) of camera/stream */
+    virtual bool setAutoProperty(uint32_t propID, bool enabled) = 0;
 
 protected:
     /** Thread-safe copying of the 24-bit RGB buffer pointed to

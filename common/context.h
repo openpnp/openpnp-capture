@@ -85,6 +85,7 @@ public:
     /** returns the number of frames captured during the lifetime of the stream */
     uint32_t getStreamFrameCount(int32_t streamID);
 
+#if 0
     /** set the exposure of the camera in 'camera' units. */
     bool setStreamExposure(int32_t streamID, int32_t value);
 
@@ -102,6 +103,11 @@ public:
 
     /** Set enable/disable the automatic focus */
     bool setStreamAutoFocus(int32_t streamID, bool enable);
+#endif
+
+    bool getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max);
+    bool setStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool enable);
+    bool setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t value);
 
 protected:
     /** Enumerate all capture devices and put their 

@@ -21,9 +21,15 @@
 #include <map>
 #include <stdint.h>
 
+#include <Mfidl.h>
+#include <Mfapi.h>
+#pragma comment(lib, "Mfplat")
+#pragma comment(lib, "Mf.lib")
+#pragma comment(lib, "Mfuuid.lib")
+#pragma comment(lib, "strmiids")
+
 #include "openpnp-capture.h"
 
-#pragma comment(lib, "strmiids")
 #include "platformdeviceinfo.h"
 #include "../common/context.h"
 

@@ -49,6 +49,13 @@ typedef uint32_t CapResult;     ///< result defined by CAPRESULT_xxx
 typedef uint32_t CapDeviceID;   ///< unique device ID
 typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
 
+#define CAPPROPID_EXPOSURE 1
+#define CAPPROPID_FOCUS 2
+#define CAPPROPID_ZOOM 3
+#define CAPPROPID_WHITEBALANCE 4
+
+typedef uint32_t CapPropertyID; ///< property ID (exposure, zoom, focus etc.)
+
 struct CapFormatInfo
 {
     uint32_t width;     ///< width in pixels
@@ -62,8 +69,7 @@ struct CapFormatInfo
 #define CAPRESULT_ERR 1
 #define CAPRESULT_DEVICENOTFOUND 2
 #define CAPRESULT_FORMATNOTSUPPORTED 3
-#define CAPRESULT_EXPOSURENOTSUPPORTED 4
-#define CAPRESULT_FOCUSNOTSUPPORTED 5
+#define CAPRESULT_PROPERTYNOTSUPPORTED 4
 
 /********************************************************************************** 
      CONTEXT CREATION AND DEVICE ENUMERATION
@@ -137,37 +143,40 @@ DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
 
 
 /********************************************************************************** 
-     EXPOSURE CONTROLS 
+     NEW CAMERA CONTROL API FUNCTIONS
 **********************************************************************************/
 
-/** Get the exposure min and max in 'camera' units */
-DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
+/** get the min/max limits of a camera/stream property (e.g. zoom, exposure etc) */
+DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max);
 
-/** Set the exposure in 'camera' units */
-DLLPUBLIC CapResult Cap_setExposure(CapContext ctx, CapStream stream, int32_t value);
+/** set the value of a camera/stream property (e.g. zoom, exposure etc) */
+DLLPUBLIC CapResult Cap_setProperty(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t value);
 
-/** Set enable/disable the automatic exposure */
-DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32_t bOnOff);
-
-
-/********************************************************************************** 
-     FOCUS CONTROLS
-**********************************************************************************/
-
-/** Get the focus min and max in 'camera' units */
-DLLPUBLIC CapResult Cap_getFocusLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
-
-/** Set the focus in 'camera' units */
-DLLPUBLIC CapResult Cap_setFocus(CapContext ctx, CapStream stream, int32_t value);
-
-/** Set enable/disable the automatic focus */
-DLLPUBLIC CapResult Cap_setAutoFocus(CapContext ctx, CapStream stream, uint32_t bOnOff);
-
+/** set the automatic flag of a camera/stream property (e.g. zoom, focus etc) */
+DLLPUBLIC CapResult Cap_setAutoProperty(CapContext ctx, CapStream stream, CapPropertyID propID, uint32_t bOnOff);
 
 /********************************************************************************** 
      DEBUGGING
 **********************************************************************************/
 
 DLLPUBLIC void Cap_setLogLevel(uint32_t level);
+
+/** Return the version of the library as a string.
+    In addition to a version number, this should 
+    contain information on the platform,
+    e.g. Win32/Win64/Linux32/Linux64/OSX etc,
+    wether or not it is a release or debug
+    build and the build date.
+
+    When building the library, please set the 
+    following defines in the build environment:
+
+    __VERSION__
+    __PLATFORM__
+    __BUILDTYPE__
+    
+*/
+
+DLLPUBLIC const char* Cap_getLibraryVersion();
 
 #endif

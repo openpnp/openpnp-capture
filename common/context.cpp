@@ -261,6 +261,28 @@ bool Context::removeStream(int32_t ID)
     return false;
 }
 
+bool Context::getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->getPropertyLimits(propertyID, min, max);
+}
+
+bool Context::setStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool enable)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setAutoProperty(propertyID, enable);
+}
+
+bool Context::setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t value)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setProperty(propertyID, value);
+}
+
+#if 0
 bool Context::setStreamExposure(int32_t streamID, int32_t value)
 {
     Stream* stream = Context::lookupStreamByID(streamID);
@@ -305,6 +327,8 @@ bool Context::setStreamAutoFocus(int32_t streamID, bool enable)
     if (stream == nullptr) return false;
     return stream->setAutoFocus(enable);
 }
+
+#endif
 
 /** convert a FOURCC uint32_t to human readable form */
 std::string fourCCToString(uint32_t fourcc)

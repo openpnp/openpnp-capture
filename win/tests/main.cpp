@@ -50,6 +50,7 @@ int main(int argc, char*argv[])
 
     printf("==============================\n");
     printf(" OpenPNP Capture Test Program\n");
+    printf(" %s\n", Cap_getLibraryVersion());
     printf("==============================\n");
     Cap_setLogLevel(7);
 
@@ -111,6 +112,7 @@ int main(int argc, char*argv[])
     printf("Press q to exit.\n");
     printf("Press + or - to change the exposure.\n");
     printf("Press f or g to change the focus.\n");
+    printf("Press z or x to change the zoom.\n");
     printf("Press w to write the current frame to a PPM file.\n");
 
     // get current stream parameters 
@@ -118,16 +120,16 @@ int main(int argc, char*argv[])
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
     //disable auto exposure and focus
-    Cap_setAutoExposure(ctx, streamID, 0);
-    Cap_setAutoFocus(ctx, streamID, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
 
     // set exposure in the middle of the range
     int32_t exposure = 0;
     int32_t exmax, exmin;
-    if (Cap_getExposureLimits(ctx, streamID, &exmin, &exmax) == CAPRESULT_OK)
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &exmin, &exmax) == CAPRESULT_OK)
     {
         exposure = (exmax + exmin) / 2;
-        Cap_setExposure(ctx, streamID, exposure);
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, exposure);
         printf("Set exposure to %d\n", exposure);
     }
     else
@@ -138,15 +140,29 @@ int main(int argc, char*argv[])
     // set focus in the middle of the range
     int32_t focus = 0;
     int32_t fomax, fomin;
-    if (Cap_getFocusLimits(ctx, streamID, &fomin, &fomax) == CAPRESULT_OK)
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_FOCUS, &fomin, &fomax) == CAPRESULT_OK)
     {
         focus = (fomax + fomin) / 2;
-        Cap_setFocus(ctx, streamID, focus);
+        Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, focus);
         printf("Set focus to %d\n", focus);
     }
     else
     {
         printf("Could not get focus limits.\n");
+    }
+
+    // set zoom in the middle of the range
+    int32_t zoom = 0;
+    int32_t zomax, zomin;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_ZOOM, &zomin, &zomax) == CAPRESULT_OK)
+    {
+        zoom = zomin;
+        Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, zoom);
+        printf("Set zoom to %d\n", zoom);
+    }
+    else
+    {
+        printf("Could not get zoom limits.\n");
     }
 
     // try to create a message loop so the preview
@@ -179,26 +195,34 @@ int main(int argc, char*argv[])
             switch(c)
             {
             case '+':                
-                Cap_setExposure(ctx, streamID, ++exposure);
+                Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ++exposure);
                 printf("exposure = %d  \r", exposure);
                 break;
             case '-':
-                Cap_setExposure(ctx, streamID, --exposure);
+                Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, --exposure);
                 printf("exposure = %d  \r", exposure);
                 break;
             case '0':
                 exposure = (exmax + exmin) / 2;
-                Cap_setExposure(ctx, streamID, exposure);
+                Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, exposure);
                 printf("exposure = %d  \r", exposure);
                 break;
             case 'f':
-                Cap_setFocus(ctx, streamID, ++focus);
+                Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++focus);
                 printf("focus = %d     \r", focus);
                 break;
             case 'g':
-                Cap_setFocus(ctx, streamID, --focus);
+                Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, --focus);
                 printf("focus = %d     \r", focus);
                 break;
+            case 'z':
+                Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, ++zoom);
+                printf("zoom = %d     \r", zoom);
+                break;
+            case 'x':
+                Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, --zoom);
+                printf("zoom = %d     \r", zoom);
+                break;                        
             case 'w':
                 if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
                 {

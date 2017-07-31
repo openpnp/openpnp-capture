@@ -134,6 +134,8 @@ DLLPUBLIC uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream)
     return 0;
 }
 
+#if 0
+
 DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
 {
     if (ctx != 0)
@@ -226,4 +228,67 @@ DLLPUBLIC CapResult Cap_setAutoFocus(CapContext ctx, CapStream stream, uint32_t 
         return CAPRESULT_OK;
     }
     return CAPRESULT_ERR;
+}
+
+#endif
+
+DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->getStreamPropertyLimits(stream, propID, min, max))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC CapResult Cap_setProperty(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t value)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->setStreamProperty(stream, propID, value))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC CapResult Cap_setAutoProperty(CapContext ctx, CapStream stream, CapPropertyID propID, uint32_t bOnOff)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->setStreamAutoProperty(stream, propID, (bOnOff==1)))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC const char* Cap_getLibraryVersion()
+{
+    #ifndef __VERSION__
+    #define __VERSION__ "VERSION UNKNOWN"
+    #endif 
+    
+    #ifndef __PLATFORM
+    #define __PLATFORM__ "PLATFORM UNKNONW"
+    #endif
+
+    #ifndef ___BUILDTYPE__
+    #define __BUILDTYPE__ "BUILDTYPE UNKNOWN"
+    #endif
+
+    static const char versionString[] = __PLATFORM__ " " __VERSION__ " " __DATE__ " " __BUILDTYPE__;
+
+    return versionString;
 }

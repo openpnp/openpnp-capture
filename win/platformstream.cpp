@@ -77,6 +77,10 @@ void PlatformStream::close()
 {
     LOG(LOG_INFO, "closing stream\n");
 
+    #ifdef _DEBUG
+    RemoveFromRot(dwRotRegister);
+    #endif
+
     if (m_control != nullptr)
     {
         m_control->Stop();
@@ -199,6 +203,10 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         LOG(LOG_ERR, "Cannot retrieve device capabilities\n");
         return false;
     }
+    else
+    {
+        LOG(LOG_DEBUG,"PlatformStream::open() reveals %d stream capabilities\n", iCount);
+    }
 
     // Check the size to make sure we pass in the correct structure.
     if (iSize == sizeof(VIDEO_STREAM_CONFIG_CAPS))
@@ -225,6 +233,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
                         (pVih->bmiHeader.biHeight == height) &&
                         (pVih->bmiHeader.biCompression == fourCC))
                     {
+                        //TEST: FIXME
+                        pVih->bmiHeader.biCompression = 0x00000000;
                         streamConfig->SetFormat(pmtConfig);                        
                         formatSet = true;
                         LOG(LOG_INFO, "Capture format set!\n");
@@ -365,6 +375,16 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 	hr = m_sourceFilter->Run(0);
 
     m_isOpen = true;
+    dwRotRegister = 0;
+
+    #ifdef _DEBUG    
+    //SaveGraphFile(m_graph);
+    IGraphBuilder *captureGraph;
+    if (SUCCEEDED(m_capture->GetFiltergraph(&captureGraph)))
+    {
+        hr = AddToRot(captureGraph, &dwRotRegister);
+    }
+    #endif    
 
     return true;
 }
@@ -449,110 +469,119 @@ void PlatformStream::dumpCameraProperties()
     }
 }
 
-bool PlatformStream::setExposure(int32_t value) 
+
+/** get the limits of a camera/stream property (exposure, zoom etc) */
+bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int32_t *emax)
 {
-    if (m_camControl != 0)
+    if ((m_camControl == nullptr) || (emin == nullptr) || (emax == nullptr))
     {
-        long flags, dummy;
-        if (m_camControl->Get(CameraControl_Exposure, &dummy, &flags) != S_OK)
-        {
-            return false;
-        }
-        if (m_camControl->Set(CameraControl_Exposure, value, flags) != S_OK)
-        {
-            return false;
-        }
+        return false;
+    }
+
+    long prop = 0;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_FOCUS:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_ZOOM:
+        prop = CameraControl_Zoom;        
+        break;        
+    default:
+        return false;
+    }
+
+    //query exposure
+    long flags, mmin, mmax, delta, defaultValue;
+    if (m_camControl->GetRange(prop, &mmin, &mmax,
+        &delta, &defaultValue, &flags) == S_OK)
+    {   
+        *emin = mmin;
+        *emax = mmax;
         return true;
     }
     return false;
 }
 
 
-bool PlatformStream::setAutoExposure(bool enabled) 
+/** set property (exposure, zoom etc) of camera/stream */
+bool PlatformStream::setProperty(uint32_t propID, int32_t value)
 {
-    if (m_camControl != 0)
+    if (m_camControl == nullptr)
     {
-        //FIXME: check return codes.
-        if (enabled)
-            m_camControl->Set(CameraControl_Exposure, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-        else
-            m_camControl->Set(CameraControl_Exposure, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-
-        return true;
+        return false;
     }
-    return false;
+
+    long prop = 0;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_FOCUS:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_ZOOM:
+        prop = CameraControl_Zoom;        
+        break;        
+    default:
+        return false;
+    }
+
+    long flags, dummy;
+
+    // first we get the property so we can retain the flag settings
+    if (m_camControl->Get(prop, &dummy, &flags) != S_OK)
+    {
+        return false;
+    }
+
+    // now we set the property.
+    if (m_camControl->Set(prop, value, flags) != S_OK)
+    {
+        return false;
+    }    
+
+    return true;
 }
 
 
-bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax) 
+/** set automatic state of property (exposure, zoom etc) of camera/stream */
+bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
 {
-    if ((m_camControl != 0) && (emin != nullptr) && (emax != nullptr))
+    if (m_camControl == 0)
     {
-        //query exposure
-		long flags, mmin, mmax, delta, defaultValue;
-        if (m_camControl->GetRange(CameraControl_Exposure, &mmin, &mmax,
-            &delta, &defaultValue, &flags) == S_OK)
-        {   
-            *emin = mmin;
-            *emax = mmax;
-            return true;
-        }
+        return false;
     }
-    return false;
+
+    long prop = 0;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_FOCUS:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_ZOOM:
+        prop = CameraControl_Zoom;        
+        break;        
+    default:
+        return false;
+    }
+
+    //FIXME: check return codes.
+    if (enabled)
+        m_camControl->Set(prop, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+    else
+        m_camControl->Set(prop, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+
+    return true;
 }
 
-
-bool PlatformStream::setFocus(int32_t value)
-{
-    if (m_camControl != 0)
-    {
-        long flags, dummy;
-        if (m_camControl->Get(CameraControl_Focus, &dummy, &flags) != S_OK)
-        {
-            return false;
-        }
-        if (m_camControl->Set(CameraControl_Focus, value, flags) != S_OK)
-        {
-            return false;
-        }
-        return true;
-    }
-    return false;
-}
-
-
-bool PlatformStream::setAutoFocus(bool enabled)
-{
-    if (m_camControl != 0)
-    {
-        //FIXME: check return codes.
-        if (enabled)
-            m_camControl->Set(CameraControl_Focus, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-        else
-            m_camControl->Set(CameraControl_Focus, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-
-        return true;
-    }
-    return false;
-}
-
-
-bool PlatformStream::getFocusLimits(int32_t *emin, int32_t *emax)
-{
-    if ((m_camControl != 0) && (emin != nullptr) && (emax != nullptr))
-    {
-        //query focus
-		long flags, mmin, mmax, delta, defaultValue;
-        if (m_camControl->GetRange(CameraControl_Focus, &mmin, &mmax,
-            &delta, &defaultValue, &flags) == S_OK)
-        {   
-            *emin = mmin;
-            *emax = mmax;
-            return true;
-        }
-    }
-    return false;
-}
 
 void PlatformStream::submitBuffer(const uint8_t *ptr, size_t bytes)
 {
@@ -598,4 +627,95 @@ void PlatformStream::submitBuffer(const uint8_t *ptr, size_t bytes)
     }
 
     m_bufferMutex.unlock();
+}
+
+
+HRESULT PlatformStream::AddToRot(IUnknown *pUnkGraph, DWORD *pdwRegister)
+{
+    IMoniker * pMoniker = NULL;
+    IRunningObjectTable *pROT = NULL;
+
+    if (FAILED(GetRunningObjectTable(0, &pROT))) 
+    {
+        LOG(LOG_DEBUG,"AddToRot failed to get running object table\n");
+        return E_FAIL;
+    }
+    
+    const size_t STRING_LENGTH = 256;
+
+    WCHAR wsz[STRING_LENGTH];
+ 
+    StringCchPrintfW(
+        wsz, STRING_LENGTH, 
+        L"FilterGraph %08x pid %08x", 
+        (DWORD_PTR)pUnkGraph, 
+        GetCurrentProcessId()
+    );
+    
+    HRESULT hr = CreateItemMoniker(L"!", wsz, &pMoniker);
+    if (SUCCEEDED(hr)) 
+    {
+        hr = pROT->Register(ROTFLAGS_REGISTRATIONKEEPSALIVE, pUnkGraph,
+            pMoniker, pdwRegister);
+        pMoniker->Release();
+        LOG(LOG_DEBUG,"Graph registered in running object table\n", hr);
+    }
+    else
+    {
+        LOG(LOG_DEBUG,"AddToRot failed to register graph (HRESULT=%08X)\n", hr);
+    }
+    pROT->Release();
+    
+    return hr;
+}
+
+
+void PlatformStream::RemoveFromRot(DWORD pdwRegister)
+{
+    IRunningObjectTable *pROT;
+    if (SUCCEEDED(GetRunningObjectTable(0, &pROT))) 
+    {
+        pROT->Revoke(pdwRegister);
+        pROT->Release();
+    }
+}
+
+HRESULT PlatformStream::SaveGraphFile(IGraphBuilder *pGraph)
+{
+    const WCHAR wszStreamName[] = L"ActiveMovieGraph"; 
+    const WCHAR wszPath[] = L"filtergraph.grf";
+    HRESULT hr;
+    
+    IStorage *pStorage = NULL;
+    hr = StgCreateDocfile(
+        wszPath,
+        STGM_CREATE | STGM_TRANSACTED | STGM_READWRITE | STGM_SHARE_EXCLUSIVE,
+        0, &pStorage);
+    if(FAILED(hr)) 
+    {
+        return hr;
+    }
+
+    IStream *pStream;
+    hr = pStorage->CreateStream(
+        wszStreamName,
+        STGM_WRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
+        0, 0, &pStream);
+    if (FAILED(hr)) 
+    {
+        pStorage->Release();    
+        return hr;
+    }
+
+    IPersistStream *pPersist = NULL;
+    pGraph->QueryInterface(IID_IPersistStream, (void**)&pPersist);
+    hr = pPersist->Save(pStream, TRUE);
+    pStream->Release();
+    pPersist->Release();
+    if (SUCCEEDED(hr)) 
+    {
+        hr = pStorage->Commit(STGC_DEFAULT);
+    }
+    pStorage->Release();
+    return hr;
 }

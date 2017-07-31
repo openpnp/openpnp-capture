@@ -16,6 +16,7 @@
 */
 
 #include <vector>
+#include <stdio.h>
 
 #include "../common/logging.h"
 #include "scopedcomptr.h"
@@ -53,6 +54,7 @@ PlatformContext::~PlatformContext()
     CoUninitialize();
 }
 
+#if 1
 bool PlatformContext::enumerateDevices()
 {
     ICreateDevEnum*		dev_enum = nullptr;
@@ -152,6 +154,265 @@ bool PlatformContext::enumerateDevices()
     }
     return true;
 }
+#else
+
+
+std::wstring PlatformContext::AttributeGetString(IMFAttributes *pAttributes, REFGUID guidkey)
+{
+    HRESULT hr = S_OK;
+    UINT32 cchLength = 0;
+    WCHAR *pString = nullptr;
+    std::wstring retString;
+
+    hr = pAttributes->GetStringLength(guidkey, &cchLength);
+    
+    if (SUCCEEDED(hr))
+    {
+        pString = new WCHAR[cchLength + 1];
+        if (pString == NULL)
+        {
+            hr = E_OUTOFMEMORY;
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = pAttributes->GetString(
+            guidkey, pString, cchLength + 1, &cchLength);
+
+        retString = std::wstring(pString);
+    }
+
+    if (pString)
+    {
+        delete [] pString;
+    }
+    return retString;
+}
+
+HRESULT EnumerateCaptureFormats(IMFMediaSource *pSource)
+{
+    IMFPresentationDescriptor *pPD = NULL;
+    IMFStreamDescriptor *pSD = NULL;
+    IMFMediaTypeHandler *pHandler = NULL;
+    IMFMediaType *pType = NULL;
+
+    HRESULT hr = pSource->CreatePresentationDescriptor(&pPD);
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    DWORD indexCount = 0;
+
+    hr = pPD->GetStreamDescriptorCount(&indexCount);
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    LOG(LOG_DEBUG, "Threre are %d stream descriptors\n", indexCount);
+
+    for(uint32_t idx=0; idx<indexCount; idx++)
+    {
+        BOOL fSelected;
+        hr = pPD->GetStreamDescriptorByIndex(idx, &fSelected, &pSD);
+        if (FAILED(hr))
+        {
+            goto done;
+        }
+
+        // skip non-selected indeces.. 
+        // Note: no idea what the unselected
+        //       stuff is for .. ?!?
+        //if (!fSelected)
+        //{
+        //    SafeRelease(&pSD);
+        //    continue;
+        //}
+
+        LOG(LOG_DEBUG, "  Descriptor %d (selected=%d)\n", idx, fSelected);
+
+        hr = pSD->GetMediaTypeHandler(&pHandler);
+        if (FAILED(hr))
+        {
+            goto done;
+        }
+
+        DWORD cTypes = 0;
+        hr = pHandler->GetMediaTypeCount(&cTypes);
+        if (FAILED(hr))
+        {
+            goto done;
+        }
+
+        LOG(LOG_INFO,"  %d media types\n", cTypes);
+
+        for (DWORD i = 0; i < cTypes; i++)
+        {
+            pType = nullptr;
+
+            hr = pHandler->GetMediaTypeByIndex(i, &pType);
+            if (FAILED(hr))
+            {
+                goto done;
+            }
+
+            AM_MEDIA_TYPE *myFormat = nullptr;
+            hr = pType->GetRepresentation(FORMAT_MFVideoFormat, (void**)&myFormat);
+            if (SUCCEEDED(hr))
+            {
+                MFVIDEOFORMAT *mfvFormat = reinterpret_cast<MFVIDEOFORMAT *>(myFormat->pbFormat);
+                if (mfvFormat->dwSize != sizeof(MFVIDEOFORMAT))
+                {
+                    LOG(LOG_WARNING, "MFVideoFormat is not the correct size!\n");
+                }
+
+                std::string formatType;         
+                if (IsEqualGUID(mfvFormat->guidFormat, MFVideoFormat_MJPG))
+                {
+                    formatType = "MJPG";
+                }
+                else if (IsEqualGUID(mfvFormat->guidFormat, MFVideoFormat_NV12))
+                {
+                    formatType = "NV12";
+                }
+                else if (IsEqualGUID(mfvFormat->guidFormat, MFVideoFormat_YUY2))
+                {
+                    formatType = "YUY2";
+                }
+                else
+                {
+                    GUID guid = mfvFormat->guidFormat;
+                    char guidstr[100];
+                    sprintf(guidstr, "{%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX}",
+                        guid.Data1, guid.Data2, guid.Data3, 
+                        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+                        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+
+                    formatType = std::string(guidstr);
+                }
+
+                LOG(LOG_INFO, "  %d x %d  %d fps ", 
+                    mfvFormat->videoInfo.dwWidth, 
+                    mfvFormat->videoInfo.dwHeight,
+                    mfvFormat->videoInfo.FramesPerSecond);
+
+                LOG(LOG_INFO, "%s\n", formatType.c_str());
+                pType->FreeRepresentation(FORMAT_MFVideoFormat, myFormat);
+            }
+            else
+            {
+                goto done;
+            }
+
+            SafeRelease(&pType);
+        }
+        SafeRelease(&pSD);        
+        SafeRelease(&pHandler);
+    } // index loop
+
+done:
+    SafeRelease(&pPD);
+    SafeRelease(&pSD);
+    SafeRelease(&pHandler);    
+    SafeRelease(&pType);
+    return hr;
+}
+
+// using Media Foundation API
+bool PlatformContext::enumerateDevices()
+{
+    IMFMediaSource *pSource = nullptr;
+    IMFAttributes *pAttributes = nullptr;
+    IMFActivate **ppDevices = nullptr;
+
+    // Create an attribute store to specify the enumeration parameters.
+    HRESULT hr = MFCreateAttributes(&pAttributes, 1);
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    // Source type: video capture devices
+    hr = pAttributes->SetGUID(
+        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, 
+        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID
+        );
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    // Enumerate devices.
+    UINT32 count;
+    hr = MFEnumDeviceSources(pAttributes, &ppDevices, &count);
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    LOG(LOG_DEBUG, "Found %d capture devices.\n", count);
+
+    if (count == 0)
+    {
+        hr = E_FAIL;
+        goto done;
+    }
+
+    for(uint32_t i=0; i<count; i++)
+    {
+        // MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME
+        // MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK
+        uint32_t strLen = 0;
+        HRESULT hr = ppDevices[i]->GetStringLength(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &strLen);
+        if (SUCCEEDED(hr))
+        {
+            platformDeviceInfo *info = new platformDeviceInfo();
+            info->m_name = wstringToString(AttributeGetString(ppDevices[i], MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME));
+            info->m_devicePath = AttributeGetString(ppDevices[i], MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK);
+            info->m_moniker = 0;
+            LOG(LOG_INFO, "device: %s\n", info->m_name.c_str());
+            LOG(LOG_INFO, "        %s\n", wstringToString(info->m_devicePath).c_str());
+            m_devices.push_back(info);
+
+            hr = ppDevices[0]->ActivateObject(IID_PPV_ARGS(&pSource));
+            if (FAILED(hr))
+            {
+                LOG(LOG_ERR, "Failed to activate MF object (HRESULT=%08X)\n", hr);
+                goto done;
+            }
+
+            EnumerateCaptureFormats(pSource);
+            SafeRelease(&pSource);
+        }
+    }
+
+#if 0
+    // Create the media source object.
+    hr = ppDevices[0]->ActivateObject(IID_PPV_ARGS(&pSource));
+    if (FAILED(hr))
+    {
+        goto done;
+    }
+
+    *ppSource = pSource;
+    (*ppSource)->AddRef();
+#endif
+done:
+    SafeRelease(&pAttributes);
+
+    for (DWORD i = 0; i < count; i++)
+    {
+        SafeRelease(&ppDevices[i]);
+    }
+    CoTaskMemFree(ppDevices);
+    SafeRelease(&pSource);
+    return true;
+}
+
+#endif
+
 
 std::string PlatformContext::wstringToString(const std::wstring &wstr)
 {
