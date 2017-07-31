@@ -25,8 +25,6 @@ public:
         }
     }
 
-    //std::string     m_name;         ///< UTF-8 printable name
-
     std::wstring    m_filterName;   ///< DirectShow internal device name
     std::wstring    m_devicePath;   ///< unique device path
     IMoniker*       m_moniker;      ///< DirectShow object for capture device

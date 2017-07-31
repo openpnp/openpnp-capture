@@ -21,11 +21,15 @@
 #include <map>
 #include <stdint.h>
 
+#if 0
+// Media Foundation libraries
 #include <Mfidl.h>
 #include <Mfapi.h>
 #pragma comment(lib, "Mfplat")
 #pragma comment(lib, "Mf.lib")
 #pragma comment(lib, "Mfuuid.lib")
+#endif
+
 #pragma comment(lib, "strmiids")
 
 #include "openpnp-capture.h"
