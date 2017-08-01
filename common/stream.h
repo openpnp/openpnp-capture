@@ -4,9 +4,25 @@
 
     Platform independent stream class
 
-    Created by Niels Moseley on 7/6/17.
-    Copyright © 2017 Niels Moseley. All rights reserved.
+    Copyright (c) 2017 Jason von Nieda, Niels Moseley.
 
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 */
 
 #ifndef stream_h
@@ -64,29 +80,6 @@ public:
     {
         return m_frames;
     }
-
-#if 0
-
-    // Depricated functions
-
-    /** set the exposure in camera units */
-    virtual bool setExposure(int32_t value) = 0;
-
-    /** set enable/disable auto exposure */
-    virtual bool setAutoExposure(bool enabled) = 0;
-
-    /** get the exposure limits in camera units */
-    virtual bool getExposureLimits(int32_t *min, int32_t *max) = 0;
-
-    /** set the focus in camera units */
-    virtual bool setFocus(int32_t value) = 0;
-
-    /** set enable/disable auto focus */
-    virtual bool setAutoFocus(bool enabled) = 0;
-
-    /** get the focus limits in camera units */
-    virtual bool getFocusLimits(int32_t *min, int32_t *max) = 0;
-#endif
 
     /** get the limits of a camera/stream property (exposure, zoom etc) */
     virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) = 0;
