@@ -192,7 +192,7 @@ int main (int argc, char *argv[])
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
-    Cap_setAutoExposure(ctx, streamID, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
 
     // create GTK image
     TimerCallbackInfo id;
