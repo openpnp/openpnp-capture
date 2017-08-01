@@ -603,6 +603,9 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
     case CAPPROPID_FOCUS:
         ctrl.id = V4L2_CID_FOCUS_AUTO;
         break;
+    case CAPPROPID_WHITEBALANCE:
+        ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
+        break;
     default:
         return false;
     }

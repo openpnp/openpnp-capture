@@ -131,6 +131,7 @@ int main (int argc, char *argv[])
     gtk_init(&argc, &argv);
 
     printf("OpenPNP Capture Test Program\n");
+    printf("%s\n", Cap_getLibraryVersion());
     Cap_setLogLevel(7);
 
     if (argc >= 2)
@@ -193,6 +194,7 @@ int main (int argc, char *argv[])
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
 
     // create GTK image
     TimerCallbackInfo id;
