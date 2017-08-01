@@ -16,11 +16,32 @@ project (openpnp-capture)
 # force C++11 standard
 set(CMAKE_CXX_STANDARD 11)
 
+
+# library version
+add_definitions(-D__VERSION__="v0.01")
+
+# determine number of bits of compiler
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  set( COMPILERBITS "64 bit")
+else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  set( COMPILERBITS "32 bit")
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
+# check the build type and set the build type string
+if(CMAKE_BUILD_TYPE MATCHES Release)
+    add_definitions(-D__BUILDTYPE__="release")
+else(CMAKE_BUILD_TYPE MATCHES Release)
+    add_definitions(-D__BUILDTYPE__="debug")
+endif(CMAKE_BUILD_TYPE MATCHES Release)
+
+
 # add include directory 
 include_directories(include)
 
 IF (WIN32)
-
+    # set the platform identification string
+    add_definitions(-D__PLATFORM__="Win ${COMPILERBITS}")
+    
     # add files for WIN32
     set (SOURCE common/libmain.cpp
                 common/context.cpp
@@ -36,6 +57,9 @@ IF (WIN32)
     add_subdirectory(win/tests)
 
 ELSEIF(APPLE)
+    # set the platform identification string
+    add_definitions(-D__PLATFORM__="OSX ${COMPILERBITS}")
+
     set (SOURCE common/libmain.cpp
                 common/context.cpp
                 common/logging.cpp
@@ -58,7 +82,9 @@ ELSEIF(APPLE)
     add_subdirectory(mac/tests)
 
 ELSEIF(UNIX)
-    
+    # set the platform identification string
+    add_definitions(-D__PLATFORM__="Linux ${COMPILERBITS}")
+
     set (SOURCE common/libmain.cpp
                 common/context.cpp
                 common/logging.cpp

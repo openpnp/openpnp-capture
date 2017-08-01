@@ -212,6 +212,9 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     if (iSize == sizeof(VIDEO_STREAM_CONFIG_CAPS))
     {
         bool formatSet = false;
+        LOG(LOG_VERBOSE, "Searching for correct frame buffer mode..\n");
+        LOG(LOG_VERBOSE, "Looking for %d %d  %s..\n", width, height, 
+            fourCCToString(fourCC).c_str());
         // Use the video capabilities structure.
         for (int iFormat = 0; iFormat < iCount; iFormat++)
         {
@@ -229,18 +232,37 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
                 {
                     VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmtConfig->pbFormat);
 
+                    /* Note: pVih->bmiHeader.biCompression is usually the fourCC
+                       except when it is equal to BI_RGB, BI_RLE8, BI_RLE4,
+                       BI_BITFIELDS, BI_JPEG or BI_PNG
+                    */
+
+                    uint32_t format4CC = pVih->bmiHeader.biCompression;
+                    switch(format4CC)
+                    {
+                    case BI_RGB:
+                        format4CC = 'RGB ';
+                        break;
+                    }
+
+                    LOG(LOG_VERBOSE, "  %d x %d %s\n", pVih->bmiHeader.biWidth, 
+                        pVih->bmiHeader.biHeight,
+                        fourCCToString(format4CC).c_str());
+
                     if ((pVih->bmiHeader.biWidth == width) &&
                         (pVih->bmiHeader.biHeight == height) &&
-                        (pVih->bmiHeader.biCompression == fourCC))
+                        (format4CC == fourCC))
                     {
                         //TEST: FIXME
-                        pVih->bmiHeader.biCompression = 0x00000000;
+                        //pVih->bmiHeader.biCompression = 0x00000000;
                         streamConfig->SetFormat(pmtConfig);                        
                         formatSet = true;
                         LOG(LOG_INFO, "Capture format set!\n");
                         break;
                     }
                 }
+                
+
                 // Delete the media type when you are done.
                 _DeleteMediaType(pmtConfig);
             }
@@ -485,7 +507,7 @@ bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int3
         prop = CameraControl_Exposure;
         break;
     case CAPPROPID_FOCUS:
-        prop = CameraControl_Exposure;
+        prop = CameraControl_Focus;
         break;
     case CAPPROPID_ZOOM:
         prop = CameraControl_Zoom;        
@@ -522,7 +544,7 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
         prop = CameraControl_Exposure;
         break;
     case CAPPROPID_FOCUS:
-        prop = CameraControl_Exposure;
+        prop = CameraControl_Focus;
         break;
     case CAPPROPID_ZOOM:
         prop = CameraControl_Zoom;        
@@ -564,7 +586,7 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
         prop = CameraControl_Exposure;
         break;
     case CAPPROPID_FOCUS:
-        prop = CameraControl_Exposure;
+        prop = CameraControl_Focus;
         break;
     case CAPPROPID_ZOOM:
         prop = CameraControl_Zoom;        

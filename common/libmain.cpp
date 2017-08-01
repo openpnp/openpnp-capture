@@ -297,15 +297,15 @@ DLLPUBLIC const char* Cap_getLibraryVersion()
     #define __VERSION__ "VERSION UNKNOWN"
     #endif 
     
-    #ifndef __PLATFORM
+    #ifndef __PLATFORM__
     #define __PLATFORM__ "PLATFORM UNKNONW"
     #endif
 
-    #ifndef ___BUILDTYPE__
+    #ifndef __BUILDTYPE__
     #define __BUILDTYPE__ "BUILDTYPE UNKNOWN"
     #endif
 
-    static const char versionString[] = __PLATFORM__ " " __VERSION__ " " __DATE__ " " __BUILDTYPE__;
+    static const char versionString[] = __PLATFORM__ " " __BUILDTYPE__ " " __VERSION__ " " __DATE__ " ";
 
     return versionString;
 }
