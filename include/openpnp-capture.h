@@ -239,7 +239,7 @@ DLLPUBLIC void Cap_setLogLevel(uint32_t level);
     When building the library, please set the 
     following defines in the build environment:
 
-    __VERSION__
+    __LIBVER__
     __PLATFORM__
     __BUILDTYPE__
     

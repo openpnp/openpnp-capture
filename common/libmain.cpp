@@ -293,8 +293,8 @@ DLLPUBLIC CapResult Cap_setAutoProperty(CapContext ctx, CapStream stream, CapPro
 
 DLLPUBLIC const char* Cap_getLibraryVersion()
 {
-    #ifndef __VERSION__
-    #define __VERSION__ "VERSION UNKNOWN"
+    #ifndef __LIBVER__
+    #define __LIBVER__ "VERSION UNKNOWN"
     #endif 
     
     #ifndef __PLATFORM__
@@ -305,7 +305,7 @@ DLLPUBLIC const char* Cap_getLibraryVersion()
     #define __BUILDTYPE__ "BUILDTYPE UNKNOWN"
     #endif
 
-    static const char versionString[] = __PLATFORM__ " " __BUILDTYPE__ " " __VERSION__ " " __DATE__ " ";
+    static const char versionString[] = __PLATFORM__ " " __BUILDTYPE__ " " __LIBVER__ " " __DATE__ " ";
 
     return versionString;
 }

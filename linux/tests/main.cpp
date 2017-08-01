@@ -50,6 +50,8 @@ int main(int argc, char*argv[])
     uint32_t deviceID       = 0;
 
     printf("OpenPNP Capture Test Program\n");
+    printf("%s\n", Cap_getLibraryVersion());
+    
     Cap_setLogLevel(7);
 
     if (argc >= 2)

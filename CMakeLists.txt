@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 
 # library version
-add_definitions(-D__VERSION__="v0.01")
+add_definitions(-D__LIBVER__="v0.01")
 
 # determine number of bits of compiler
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
