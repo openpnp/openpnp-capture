@@ -253,8 +253,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
                         (pVih->bmiHeader.biHeight == height) &&
                         (format4CC == fourCC))
                     {
-                        //TEST: FIXME
-                        //pVih->bmiHeader.biCompression = 0x00000000;
                         streamConfig->SetFormat(pmtConfig);                        
                         formatSet = true;
                         LOG(LOG_INFO, "Capture format set!\n");
@@ -289,11 +287,13 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;  
     }
 
+#if 0
     // FIXME/TODO: we should still be able to work with the camera when the
     //       IAMCameraControl was not implemented.    
     // disable auto exposure
     m_camControl->Set(CameraControl_Exposure, -7, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_ABSOLUTE);
     dumpCameraProperties();
+#endif
 
     // create video processing control interface
     m_videoProcAmp = nullptr;

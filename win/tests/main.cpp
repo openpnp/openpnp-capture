@@ -8,10 +8,10 @@
 #include <stdio.h>
 #include <conio.h>
 #include <windows.h> // for Sleep
+#include <chrono>    
 
 #include "openpnp-capture.h"
 #include "../common/context.h"
-
 
 std::string FourCCToString(uint32_t fourcc)
 {
@@ -42,6 +42,22 @@ bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const 
 
     return true;
 }
+
+
+void estimateFrameRate(CapContext ctx, int32_t streamID)
+{
+    std::chrono::time_point<std::chrono::system_clock> tstart, tend;
+    tstart = std::chrono::system_clock::now();
+    uint32_t fstart = Cap_getStreamFrameCount(ctx, streamID);
+    Sleep(2000);    // 2-second wait
+    uint32_t fend = Cap_getStreamFrameCount(ctx, streamID);
+    tend = std::chrono::system_clock::now();
+    std::chrono::duration<double> fsec = tend-tstart;
+    uint32_t frames = fend - fstart;
+    printf("Frames = %d\n", frames);
+    std::chrono::milliseconds d = std::chrono::duration_cast<std::chrono::milliseconds>(fsec);
+    printf("Measured fps=%5.2f\n", 1000.0f*frames/static_cast<float>(d.count()));
+}   
 
 int main(int argc, char*argv[])
 {    
@@ -109,12 +125,14 @@ int main(int argc, char*argv[])
         return 1;
     }
 
+    printf("=== KEY MAPPINGS ===\n");
     printf("Press q to exit.\n");
     printf("Press + or - to change the exposure.\n");
     printf("Press f or g to change the focus.\n");
     printf("Press z or x to change the zoom.\n");
     printf("Press a or s to change the gain.\n");
     printf("Press [ or ] to change the white balance.\n");
+    printf("Press p to estimate the actual frame rate.\n");
     printf("Press w to write the current frame to a PPM file.\n");
 
     // get current stream parameters 
@@ -277,7 +295,11 @@ int main(int argc, char*argv[])
                 gain += gstep;
                 Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
                 printf("gain = %d     \r", gain);
-                break;                 
+                break;
+            case 'p':
+                printf("Estimating frame rate..\n");
+                estimateFrameRate(ctx, streamID);
+                break;             
             case 'w':
                 if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
                 {

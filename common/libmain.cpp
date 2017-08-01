@@ -151,8 +151,6 @@ DLLPUBLIC uint32_t Cap_hasNewFrame(CapContext ctx, CapStream stream)
     return 0;
 }
 
-#if 0
-
 DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
 {
     if (ctx != 0)
@@ -162,6 +160,8 @@ DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
     }    
     return 0;    
 }
+
+#if 0
 
 DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max)
 {
