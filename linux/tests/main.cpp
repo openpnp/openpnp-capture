@@ -50,6 +50,8 @@ int main(int argc, char*argv[])
     uint32_t deviceID       = 0;
 
     printf("OpenPNP Capture Test Program\n");
+    printf("%s\n", Cap_getLibraryVersion());
+    
     Cap_setLogLevel(7);
 
     if (argc >= 2)
@@ -106,7 +108,7 @@ int main(int argc, char*argv[])
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
-    Cap_setAutoExposure(ctx, streamID, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
 
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(finfo.width*finfo.height*3);
@@ -161,16 +163,16 @@ int main(int argc, char*argv[])
         {
         case '+':
             printf("+");
-            Cap_setExposure(ctx, streamID, ++v);
+            Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ++v);
             break;
         case '-':
             printf("-");
-            Cap_setExposure(ctx, streamID, --v);
+            Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, --v);
             break;
         case '0':
             printf("0");
             v = 0;
-            Cap_setExposure(ctx, streamID, v);
+            Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, v);
             break; 
         case 'w':
             if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)

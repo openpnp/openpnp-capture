@@ -4,8 +4,25 @@
 
     Windows platform code
 
-    Niels Moseley
+    Copyright (c) 2017 Jason von Nieda, Niels Moseley.
 
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 */
 
 #define BUILD_OPENPNP_LIBRARY
@@ -144,6 +161,8 @@ DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
     return 0;    
 }
 
+#if 0
+
 DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max)
 {
     if (ctx != 0)
@@ -226,4 +245,67 @@ DLLPUBLIC CapResult Cap_setAutoFocus(CapContext ctx, CapStream stream, uint32_t 
         return CAPRESULT_OK;
     }
     return CAPRESULT_ERR;
+}
+
+#endif
+
+DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->getStreamPropertyLimits(stream, propID, min, max))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC CapResult Cap_setProperty(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t value)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->setStreamProperty(stream, propID, value))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC CapResult Cap_setAutoProperty(CapContext ctx, CapStream stream, CapPropertyID propID, uint32_t bOnOff)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->setStreamAutoProperty(stream, propID, (bOnOff==1)))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC const char* Cap_getLibraryVersion()
+{
+    #ifndef __LIBVER__
+    #define __LIBVER__ "VERSION UNKNOWN"
+    #endif 
+    
+    #ifndef __PLATFORM__
+    #define __PLATFORM__ "PLATFORM UNKNONW"
+    #endif
+
+    #ifndef __BUILDTYPE__
+    #define __BUILDTYPE__ "BUILDTYPE UNKNOWN"
+    #endif
+
+    static const char versionString[] = __PLATFORM__ " " __BUILDTYPE__ " " __LIBVER__ " " __DATE__ " ";
+
+    return versionString;
 }

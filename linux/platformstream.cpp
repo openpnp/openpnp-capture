@@ -561,52 +561,97 @@ uint32_t PlatformStream::getFOURCC()
     }
 }
 
-
-bool PlatformStream::setExposure(int32_t value) 
+bool PlatformStream::setProperty(uint32_t propID, int32_t value)
 {
     v4l2_control ctrl;
     CLEAR(ctrl);
 
-    ctrl.id = V4L2_CID_EXPOSURE;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        ctrl.id = V4L2_CID_EXPOSURE;
+        break;
+    case CAPPROPID_FOCUS:
+        ctrl.id = V4L2_CID_FOCUS_ABSOLUTE;
+        break;
+    case CAPPROPID_ZOOM:
+        ctrl.id = V4L2_CID_ZOOM_ABSOLUTE;
+        break;
+    default:
+        return false;
+    }
+
     ctrl.value = value;
     if (xioctl(m_deviceHandle, VIDIOC_S_CTRL, &ctrl)==-1)
     {
-        LOG(LOG_ERR,"setAutoExposure failed on VIDIOC_S_CTRL (errno %d)\n", errno);
+        LOG(LOG_ERR,"setProperty (ID=%d) failed on VIDIOC_S_CTRL (errno %d)\n", propID, errno);
         return false;        
     }
     return true;
 }
 
-
-bool PlatformStream::setAutoExposure(bool enabled) 
+bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
 {
     v4l2_control ctrl;
     CLEAR(ctrl);
 
-    ctrl.id = V4L2_CID_AUTOGAIN;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        ctrl.id = V4L2_CID_AUTOGAIN;
+        break;
+    case CAPPROPID_FOCUS:
+        ctrl.id = V4L2_CID_FOCUS_AUTO;
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
+        break;
+    default:
+        return false;
+    }
+
     ctrl.value = enabled ? 1 : 0;
     if (xioctl(m_deviceHandle, VIDIOC_S_CTRL, &ctrl)==-1)
     {
-        LOG(LOG_ERR,"setAutoExposure failed on VIDIOC_S_CTRL (errno %d)\n", errno);
+        LOG(LOG_ERR,"setAutoProperty (ID=%d) failed on VIDIOC_S_CTRL (errno %d)\n", propID, errno);
         return false;        
     }
-    return true;
+    return true;    
 }
 
-
-bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax) 
+bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
 {
     v4l2_queryctrl ctrl;
     CLEAR(ctrl);
 
-    ctrl.id = V4L2_CID_EXPOSURE;
+    if ((emin == nullptr) || (emax == nullptr))
+    {
+        return false;
+    }
+
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        ctrl.id = V4L2_CID_EXPOSURE;
+        break;
+    case CAPPROPID_FOCUS:
+        ctrl.id = V4L2_CID_FOCUS_ABSOLUTE;
+        break;
+    case CAPPROPID_ZOOM:
+        ctrl.id = V4L2_CID_ZOOM_ABSOLUTE;
+        break;
+    default:
+        return false;
+    }
+
     if (xioctl(m_deviceHandle, VIDIOC_QUERYCTRL, &ctrl) == -1)
     {
-        LOG(LOG_ERR,"getExposureLimited failed on VIDIOC_QUERYCTRL (errno %d)\n", errno);
+        LOG(LOG_ERR,"getPropertyLimits (ID=%d) failed on VIDIOC_QUERYCTRL (errno %d)\n", propID, errno);
         return false;
     }
     *emin = ctrl.minimum;
     *emax = ctrl.maximum;
     return true;
 }
+
 

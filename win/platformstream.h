@@ -131,24 +131,31 @@ public:
     /** Return the FOURCC media type of the stream */
     virtual uint32_t getFOURCC() override;
 
-    virtual bool setExposure(int32_t value) override;
+    /** get the limits of a camera/stream property (exposure, zoom etc) */
+    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) override;
 
-    virtual bool setAutoExposure(bool enabled) override;
+    /** set property (exposure, zoom etc) of camera/stream */
+    virtual bool setProperty(uint32_t propID, int32_t value) override;
 
-    virtual bool getExposureLimits(int32_t *min, int32_t *max) override;
-
-    /** set the focus in camera units */
-    virtual bool setFocus(int32_t value) override;
-
-    /** set enable/disable auto focus */
-    virtual bool setAutoFocus(bool enabled) override;
-
-    /** get the focus limits in camera units */
-    virtual bool getFocusLimits(int32_t *min, int32_t *max) override;
+    /** set automatic state of property (exposure, zoom etc) of camera/stream */
+    virtual bool setAutoProperty(uint32_t propID, bool enabled) override;
 
 protected:
     /** A re-implementation of Stream::submitBuffer with BGR to RGB conversion */
     virtual void submitBuffer(const uint8_t *ptr, size_t bytes) override;
+
+    /** Add the Direct show filter graph to the object list so
+        GraphEdt.exe can see it - for debugging purposes only.
+        See: https://msdn.microsoft.com/en-us/library/windows/desktop/dd390650(v=vs.85).aspx    
+    */
+    HRESULT AddToRot(IUnknown *pUnkGraph, DWORD *pdwRegister);
+
+    /** Remove the Direct show filter graph from the object list 
+         - for debugging purposes only. */
+    void RemoveFromRot(DWORD pdwRegister);
+
+    /** Write filter graph to 'filtergraph.grf' file - for debugging purposes only.*/
+    HRESULT SaveGraphFile(IGraphBuilder *pGraph);
 
     void dumpCameraProperties();
 
@@ -159,12 +166,15 @@ protected:
     ISampleGrabber* m_sampleGrabber;
     ICaptureGraphBuilder2* m_capture;
     IAMCameraControl* m_camControl;
+    IAMVideoProcAmp* m_videoProcAmp;
 
     /** Each time a new frame is available, the DirectShow subsystem
         will call the callback handler */
     StreamCallbackHandler *m_callbackHandler;
 
     VIDEOINFOHEADER m_videoInfo;            ///< video information of current captured stream
+
+    DWORD dwRotRegister;    ///< for exposing the filtergraph to GraphEdt
 };
 
 #endif

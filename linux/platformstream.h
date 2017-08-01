@@ -106,11 +106,18 @@ public:
     /** Return the FOURCC media type of the stream */
     virtual uint32_t getFOURCC() override;
 
+    virtual bool setProperty(uint32_t propID, int32_t value) override;
+    virtual bool setAutoProperty(uint32_t propID, bool enabled) override;
+    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) override;
+
+#if 0
     virtual bool setExposure(int32_t value) override;
 
     virtual bool setAutoExposure(bool enabled) override;
 
     virtual bool getExposureLimits(int32_t *min, int32_t *max) override;
+#endif
+
 
     /** called by the capture thread/function to query if it
         should quit */

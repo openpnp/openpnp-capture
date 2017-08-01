@@ -16,6 +16,7 @@
 */
 
 #include <vector>
+#include <stdio.h>
 
 #include "../common/logging.h"
 #include "scopedcomptr.h"
@@ -52,6 +53,7 @@ PlatformContext::~PlatformContext()
 {
     CoUninitialize();
 }
+
 
 bool PlatformContext::enumerateDevices()
 {
@@ -153,6 +155,7 @@ bool PlatformContext::enumerateDevices()
     return true;
 }
 
+
 std::string PlatformContext::wstringToString(const std::wstring &wstr)
 {
     return wcharPtrToString(wstr.c_str());
@@ -170,9 +173,7 @@ std::string PlatformContext::wcharPtrToString(const wchar_t *sstr)
 } 
 
 
-
 // Release the format block for a media type.
-
 void _FreeMediaType(AM_MEDIA_TYPE& mt)
 {
     if (mt.cbFormat != 0)

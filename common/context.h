@@ -2,12 +2,28 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Created by Niels Moseley on 7/11/17.
-    Copyright © 2017 Niels Moseley. All rights reserved.
-
     Platform independent context class to keep track
     of the global state.
 
+    Copyright (c) 2017 Jason von Nieda, Niels Moseley.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 */
 
 #ifndef openpnp_context_h
@@ -85,23 +101,9 @@ public:
     /** returns the number of frames captured during the lifetime of the stream */
     uint32_t getStreamFrameCount(int32_t streamID);
 
-    /** set the exposure of the camera in 'camera' units. */
-    bool setStreamExposure(int32_t streamID, int32_t value);
-
-    /** enable/disable the automatic exposure setting in the camera. */
-    bool setStreamAutoExposure(int32_t streamID, bool enable);
-
-    /** get the min and max exposure settings in 'camera' units. */
-    bool getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *max);
-
-    /** Get the focus min and max in 'camera' units */
-    bool getStreamFocusLimits(int32_t streamID, int32_t *min, int32_t *max);
-
-    /** Set the focus in 'camera' units */
-    bool setStreamFocus(int32_t streamID, int32_t value);
-
-    /** Set enable/disable the automatic focus */
-    bool setStreamAutoFocus(int32_t streamID, bool enable);
+    bool getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max);
+    bool setStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool enable);
+    bool setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t value);
 
 protected:
     /** Enumerate all capture devices and put their 

@@ -2,9 +2,30 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Jason von Nieda
-    Niels Moseley
+    Copyright (c) 2017 Jason von Nieda, Niels Moseley.
 
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
+/*!
+*  @file
+*  @brief C API for OpenPnP Capture Library
 */
 
 #ifndef openpnp_capture_h
@@ -49,6 +70,14 @@ typedef uint32_t CapResult;     ///< result defined by CAPRESULT_xxx
 typedef uint32_t CapDeviceID;   ///< unique device ID
 typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
 
+#define CAPPROPID_EXPOSURE 1
+#define CAPPROPID_FOCUS 2
+#define CAPPROPID_ZOOM 3
+#define CAPPROPID_WHITEBALANCE 4
+#define CAPPROPID_GAIN 5
+
+typedef uint32_t CapPropertyID; ///< property ID (exposure, zoom, focus etc.)
+
 struct CapFormatInfo
 {
     uint32_t width;     ///< width in pixels
@@ -62,39 +91,59 @@ struct CapFormatInfo
 #define CAPRESULT_ERR 1
 #define CAPRESULT_DEVICENOTFOUND 2
 #define CAPRESULT_FORMATNOTSUPPORTED 3
-#define CAPRESULT_EXPOSURENOTSUPPORTED 4
-#define CAPRESULT_FOCUSNOTSUPPORTED 5
+#define CAPRESULT_PROPERTYNOTSUPPORTED 4
 
 /********************************************************************************** 
      CONTEXT CREATION AND DEVICE ENUMERATION
 **********************************************************************************/
 
-/** initialize the capture library */
+/** Initialize the capture library
+    @return The context ID.
+*/
 DLLPUBLIC CapContext Cap_createContext(void);
 
-/** un-initialize the capture library */
+/** Un-initialize the capture library context
+    @param ctx The ID of the context to destroy.
+    @return The context ID.
+*/
 DLLPUBLIC CapResult Cap_releaseContext(CapContext ctx);
 
-/** get the number of capture devices on the system.
+/** Get the number of capture devices on the system.
     note: this can change dynamically due to the
-    pluggin and unplugging of USB devices */
+    pluggin and unplugging of USB devices.
+    @param ctx The ID of the context.
+    @return The number of capture devices found.
+*/
 DLLPUBLIC uint32_t Cap_getDeviceCount(CapContext ctx);
 
-/** get the name of a capture device.
+/** Get the name of a capture device.
     Note: this name may or may not be unique
     or persistent across system reboots. 
 
     if a device with the given index does not exist,
     NULL is returned.
+    @param ctx The ID of the context.
+    @param index The device index of the capture device.
+    @return a pointer to an UTF-8 string containting the name of the capture device.
 */
 DLLPUBLIC const char* Cap_getDeviceName(CapContext ctx, CapDeviceID index);
 
-/** return the number of formats supported by a certain device.
+/** Returns the number of formats supported by a certain device.
     returns -1 if device does not exist.
+
+    @param ctx The ID of the context.
+    @param index The device index of the capture device.
+    @return The number of formats supported or -1 if the device does not exist.
 */
 DLLPUBLIC int32_t Cap_getNumFormats(CapContext ctx, CapDeviceID index);
 
-/** get the format information from a device. */
+/** Get the format information from a device. 
+    @param ctx The ID of the context.
+    @param index The device index of the capture device.
+    @param id The index/ID of the frame buffer format (0 .. number returned by Cap_getNumFormats() minus 1 ).
+    @param info pointer to a CapFormatInfo structure to be filled with data.
+    @return The CapResult.
+*/
 DLLPUBLIC CapResult Cap_getFormatInfo(CapContext ctx, CapDeviceID index, CapFormatID id, CapFormatInfo *info); 
 
 
@@ -102,20 +151,30 @@ DLLPUBLIC CapResult Cap_getFormatInfo(CapContext ctx, CapDeviceID index, CapForm
      STREAM MANAGEMENT
 **********************************************************************************/
 
-/** open a capture stream to a device with specific format requirements 
-
-    If the device is not capable of the requirements or the device
-    does not exits, -1 is returned.
+/** Open a capture stream to a device with specific format requirements 
 
     Although the (internal) frame buffer format is set via the fourCC ID,
     the frames returned by Cap_captureFrame are always 24-bit RGB.
+
+    @param ctx The ID of the context.
+    @param index The device index of the capture device.
+    @param formatID The index/ID of the frame buffer format (0 .. number returned by Cap_getNumFormats() minus 1 ).
+    @return The stream ID or -1 if the device does not exist or the stream format ID is incorrect.
 */
 DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, CapFormatID formatID);
 
-/** close a capture stream */
+/** Close a capture stream 
+    @param ctx The ID of the context.
+    @param stream The stream ID.
+    @return CapResult
+*/
 DLLPUBLIC CapResult Cap_closeStream(CapContext ctx, CapStream stream);
 
-/** returns 1 if the stream is open and capturing, else 0 */
+/** Check if a stream is open, i.e. is capturing data. 
+    @param ctx The ID of the context.
+    @param stream The stream ID.
+    @return 1 if the stream is open and capturing, else 0. 
+*/
 DLLPUBLIC uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream);
 
 
@@ -137,37 +196,56 @@ DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
 
 
 /********************************************************************************** 
-     EXPOSURE CONTROLS 
+     NEW CAMERA CONTROL API FUNCTIONS
 **********************************************************************************/
 
-/** Get the exposure min and max in 'camera' units */
-DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
+/** get the min/max limits of a camera/stream property (e.g. zoom, exposure etc) */
+DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max);
 
-/** Set the exposure in 'camera' units */
-DLLPUBLIC CapResult Cap_setExposure(CapContext ctx, CapStream stream, int32_t value);
+/** set the value of a camera/stream property (e.g. zoom, exposure etc) */
+DLLPUBLIC CapResult Cap_setProperty(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t value);
 
-/** Set enable/disable the automatic exposure */
-DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32_t bOnOff);
-
-
-/********************************************************************************** 
-     FOCUS CONTROLS
-**********************************************************************************/
-
-/** Get the focus min and max in 'camera' units */
-DLLPUBLIC CapResult Cap_getFocusLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max);
-
-/** Set the focus in 'camera' units */
-DLLPUBLIC CapResult Cap_setFocus(CapContext ctx, CapStream stream, int32_t value);
-
-/** Set enable/disable the automatic focus */
-DLLPUBLIC CapResult Cap_setAutoFocus(CapContext ctx, CapStream stream, uint32_t bOnOff);
-
+/** set the automatic flag of a camera/stream property (e.g. zoom, focus etc) */
+DLLPUBLIC CapResult Cap_setAutoProperty(CapContext ctx, CapStream stream, CapPropertyID propID, uint32_t bOnOff);
 
 /********************************************************************************** 
      DEBUGGING
 **********************************************************************************/
 
+/**
+    Set the logging level.
+
+    LOG LEVEL ID  | LEVEL 
+    ------------- | -------------
+    LOG_EMERG     | 0
+    LOG_ALERT     | 1
+    LOG_CRIT      | 2
+    LOG_ERR       | 3
+    LOG_WARNING   | 4
+    LOG_NOTICE    | 5
+    LOG_INFO      | 6    
+    LOG_DEBUG     | 7
+    LOG_VERBOSE   | 8
+
+*/
 DLLPUBLIC void Cap_setLogLevel(uint32_t level);
+
+/** Return the version of the library as a string.
+    In addition to a version number, this should 
+    contain information on the platform,
+    e.g. Win32/Win64/Linux32/Linux64/OSX etc,
+    wether or not it is a release or debug
+    build and the build date.
+
+    When building the library, please set the 
+    following defines in the build environment:
+
+    __LIBVER__
+    __PLATFORM__
+    __BUILDTYPE__
+    
+*/
+
+DLLPUBLIC const char* Cap_getLibraryVersion();
 
 #endif

@@ -21,9 +21,19 @@
 #include <map>
 #include <stdint.h>
 
-#include "openpnp-capture.h"
+#if 0
+// Media Foundation libraries
+#include <Mfidl.h>
+#include <Mfapi.h>
+#pragma comment(lib, "Mfplat")
+#pragma comment(lib, "Mf.lib")
+#pragma comment(lib, "Mfuuid.lib")
+#endif
 
 #pragma comment(lib, "strmiids")
+
+#include "openpnp-capture.h"
+
 #include "platformdeviceinfo.h"
 #include "../common/context.h"
 

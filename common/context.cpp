@@ -2,11 +2,27 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Created by Niels Moseley on 7/6/17.
-    Copyright © 2017 Niels Moseley. All rights reserved.
-
     Platform independent context class.
 
+    Copyright (c) 2017 Jason von Nieda, Niels Moseley.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 */
 
 #include <vector>
@@ -261,6 +277,28 @@ bool Context::removeStream(int32_t ID)
     return false;
 }
 
+bool Context::getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->getPropertyLimits(propertyID, min, max);
+}
+
+bool Context::setStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool enable)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setAutoProperty(propertyID, enable);
+}
+
+bool Context::setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t value)
+{
+    Stream* stream = Context::lookupStreamByID(streamID);
+    if (stream == nullptr) return false;
+    return stream->setProperty(propertyID, value);
+}
+
+#if 0
 bool Context::setStreamExposure(int32_t streamID, int32_t value)
 {
     Stream* stream = Context::lookupStreamByID(streamID);
@@ -305,6 +343,8 @@ bool Context::setStreamAutoFocus(int32_t streamID, bool enable)
     if (stream == nullptr) return false;
     return stream->setAutoFocus(enable);
 }
+
+#endif
 
 /** convert a FOURCC uint32_t to human readable form */
 std::string fourCCToString(uint32_t fourcc)

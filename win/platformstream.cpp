@@ -77,6 +77,10 @@ void PlatformStream::close()
 {
     LOG(LOG_INFO, "closing stream\n");
 
+    #ifdef _DEBUG
+    RemoveFromRot(dwRotRegister);
+    #endif
+
     if (m_control != nullptr)
     {
         m_control->Stop();
@@ -199,11 +203,18 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         LOG(LOG_ERR, "Cannot retrieve device capabilities\n");
         return false;
     }
+    else
+    {
+        LOG(LOG_DEBUG,"PlatformStream::open() reveals %d stream capabilities\n", iCount);
+    }
 
     // Check the size to make sure we pass in the correct structure.
     if (iSize == sizeof(VIDEO_STREAM_CONFIG_CAPS))
     {
         bool formatSet = false;
+        LOG(LOG_VERBOSE, "Searching for correct frame buffer mode..\n");
+        LOG(LOG_VERBOSE, "Looking for %d %d  %s..\n", width, height, 
+            fourCCToString(fourCC).c_str());
         // Use the video capabilities structure.
         for (int iFormat = 0; iFormat < iCount; iFormat++)
         {
@@ -221,9 +232,26 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
                 {
                     VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pmtConfig->pbFormat);
 
+                    /* Note: pVih->bmiHeader.biCompression is usually the fourCC
+                       except when it is equal to BI_RGB, BI_RLE8, BI_RLE4,
+                       BI_BITFIELDS, BI_JPEG or BI_PNG
+                    */
+
+                    uint32_t format4CC = pVih->bmiHeader.biCompression;
+                    switch(format4CC)
+                    {
+                    case BI_RGB:
+                        format4CC = 'RGB ';
+                        break;
+                    }
+
+                    LOG(LOG_VERBOSE, "  %d x %d %s\n", pVih->bmiHeader.biWidth, 
+                        pVih->bmiHeader.biHeight,
+                        fourCCToString(format4CC).c_str());
+
                     if ((pVih->bmiHeader.biWidth == width) &&
                         (pVih->bmiHeader.biHeight == height) &&
-                        (pVih->bmiHeader.biCompression == fourCC))
+                        (format4CC == fourCC))
                     {
                         streamConfig->SetFormat(pmtConfig);                        
                         formatSet = true;
@@ -231,6 +259,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
                         break;
                     }
                 }
+                
+
                 // Delete the media type when you are done.
                 _DeleteMediaType(pmtConfig);
             }
@@ -249,6 +279,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 
 
     // create camera control interface for exposure control etc . 
+    m_camControl = nullptr;
     hr = m_sourceFilter->QueryInterface(IID_IAMCameraControl, (void **)&m_camControl); 
     if (hr != S_OK) 
     {
@@ -256,11 +287,22 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;  
     }
 
+#if 0
     // FIXME/TODO: we should still be able to work with the camera when the
     //       IAMCameraControl was not implemented.    
     // disable auto exposure
     m_camControl->Set(CameraControl_Exposure, -7, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_ABSOLUTE);
     dumpCameraProperties();
+#endif
+
+    // create video processing control interface
+    m_videoProcAmp = nullptr;
+    hr = m_sourceFilter->QueryInterface(IID_IAMVideoProcAmp, (void **)&m_videoProcAmp); 
+    if (hr != S_OK) 
+    {
+        // note: this is not an error, but in inconvenience
+        LOG(LOG_WARNING,"Could not create IAMVideoProcAmp\n");
+    }
 
     //create a samplegrabber filter for the device
     hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER,IID_IBaseFilter, (void**)&m_sampleGrabberFilter);
@@ -365,6 +407,16 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 	hr = m_sourceFilter->Run(0);
 
     m_isOpen = true;
+    dwRotRegister = 0;
+
+    #ifdef _DEBUG    
+    //SaveGraphFile(m_graph);
+    IGraphBuilder *captureGraph;
+    if (SUCCEEDED(m_capture->GetFiltergraph(&captureGraph)))
+    {
+        hr = AddToRot(captureGraph, &dwRotRegister);
+    }
+    #endif    
 
     return true;
 }
@@ -449,48 +501,42 @@ void PlatformStream::dumpCameraProperties()
     }
 }
 
-bool PlatformStream::setExposure(int32_t value) 
+
+/** get the limits of a camera/stream property (exposure, zoom etc) */
+bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int32_t *emax)
 {
-    if (m_camControl != 0)
+    if ((m_camControl == nullptr) || (emin == nullptr) || (emax == nullptr))
     {
-        long flags, dummy;
-        if (m_camControl->Get(CameraControl_Exposure, &dummy, &flags) != S_OK)
-        {
-            return false;
-        }
-        if (m_camControl->Set(CameraControl_Exposure, value, flags) != S_OK)
-        {
-            return false;
-        }
-        return true;
+        return false;
     }
-    return false;
-}
 
-
-bool PlatformStream::setAutoExposure(bool enabled) 
-{
-    if (m_camControl != 0)
+    long prop = 0;
+    switch(propID)
     {
-        //FIXME: check return codes.
-        if (enabled)
-            m_camControl->Set(CameraControl_Exposure, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-        else
-            m_camControl->Set(CameraControl_Exposure, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-
-        return true;
+    case CAPPROPID_EXPOSURE:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_FOCUS:
+        prop = CameraControl_Focus;
+        break;
+    case CAPPROPID_ZOOM:
+        prop = CameraControl_Zoom;        
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        prop = VideoProcAmp_WhiteBalance;
+        break;     
+    case CAPPROPID_GAIN:
+        prop = VideoProcAmp_Gain; 
+        break;            
+    default:
+        return false;
     }
-    return false;
-}
 
-
-bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax) 
-{
-    if ((m_camControl != 0) && (emin != nullptr) && (emax != nullptr))
+    //query exposure
+    long flags, mmin, mmax, delta, defaultValue;
+    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
     {
-        //query exposure
-		long flags, mmin, mmax, delta, defaultValue;
-        if (m_camControl->GetRange(CameraControl_Exposure, &mmin, &mmax,
+        if (m_camControl->GetRange(prop, &mmin, &mmax,
             &delta, &defaultValue, &flags) == S_OK)
         {   
             *emin = mmin;
@@ -498,52 +544,18 @@ bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax)
             return true;
         }
     }
-    return false;
-}
-
-
-bool PlatformStream::setFocus(int32_t value)
-{
-    if (m_camControl != 0)
+    else
     {
-        long flags, dummy;
-        if (m_camControl->Get(CameraControl_Focus, &dummy, &flags) != S_OK)
+        //note: m_videoProcAmp only exists if the camera
+        //      supports hardware accelleration of 
+        //      video frame processing, such as
+        //      white balance etc.
+        if (m_videoProcAmp == nullptr)
         {
             return false;
         }
-        if (m_camControl->Set(CameraControl_Focus, value, flags) != S_OK)
-        {
-            return false;
-        }
-        return true;
-    }
-    return false;
-}
 
-
-bool PlatformStream::setAutoFocus(bool enabled)
-{
-    if (m_camControl != 0)
-    {
-        //FIXME: check return codes.
-        if (enabled)
-            m_camControl->Set(CameraControl_Focus, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-        else
-            m_camControl->Set(CameraControl_Focus, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
-
-        return true;
-    }
-    return false;
-}
-
-
-bool PlatformStream::getFocusLimits(int32_t *emin, int32_t *emax)
-{
-    if ((m_camControl != 0) && (emin != nullptr) && (emax != nullptr))
-    {
-        //query focus
-		long flags, mmin, mmax, delta, defaultValue;
-        if (m_camControl->GetRange(CameraControl_Focus, &mmin, &mmax,
+        if (m_videoProcAmp->GetRange(prop, &mmin, &mmax,
             &delta, &defaultValue, &flags) == S_OK)
         {   
             *emin = mmin;
@@ -551,8 +563,152 @@ bool PlatformStream::getFocusLimits(int32_t *emin, int32_t *emax)
             return true;
         }
     }
+
     return false;
 }
+
+
+/** set property (exposure, zoom etc) of camera/stream */
+bool PlatformStream::setProperty(uint32_t propID, int32_t value)
+{
+    if (m_camControl == nullptr)
+    {
+        return false;
+    }
+
+    long prop = 0;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_FOCUS:
+        prop = CameraControl_Focus;
+        break;
+    case CAPPROPID_ZOOM:
+        prop = CameraControl_Zoom;        
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        prop = VideoProcAmp_WhiteBalance;
+        break;
+    case CAPPROPID_GAIN:
+        prop = VideoProcAmp_Gain; 
+        break;         
+    default:
+        return false;
+    }
+
+    long flags, dummy;
+    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
+    {
+        // first we get the property so we can retain the flag settings
+        if (m_camControl->Get(prop, &dummy, &flags) != S_OK)
+        {
+            return false;
+        }
+
+        // now we set the property.
+        if (m_camControl->Set(prop, value, flags) != S_OK)
+        {
+            return false;
+        }   
+    }
+    else
+    {
+        //note: m_videoProcAmp only exists if the camera
+        //      supports hardware accelleration of 
+        //      video frame processing, such as
+        //      white balance etc.
+        if (m_videoProcAmp == nullptr)
+        {
+            return false;
+        }
+
+        // first we get the property so we can retain the flag settings
+        if (m_videoProcAmp->Get(prop, &dummy, &flags) != S_OK)
+        {
+            return false;
+        }
+
+        // now we set the property.
+        if (m_videoProcAmp->Set(prop, value, flags) != S_OK)
+        {
+            return false;
+        } 
+
+    }
+
+    return true;
+}
+
+
+/** set automatic state of property (exposure, zoom etc) of camera/stream */
+bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
+{
+    if (m_camControl == 0)
+    {
+        return false;
+    }
+
+    long prop = 0;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_FOCUS:
+        prop = CameraControl_Focus;
+        break;
+    case CAPPROPID_ZOOM:
+        prop = CameraControl_Zoom;        
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        prop = VideoProcAmp_WhiteBalance; 
+        break;
+    case CAPPROPID_GAIN:
+        prop = VideoProcAmp_Gain; 
+        break;        
+    default:
+        return false;
+    }
+
+    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
+    {
+        //FIXME: check return codes.
+        if (enabled)
+            m_camControl->Set(prop, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+        else
+            m_camControl->Set(prop, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+    }
+    else
+    {
+        //note: m_videoProcAmp only exists if the camera
+        //      supports hardware accelleration of 
+        //      video frame processing, such as
+        //      white balance etc.
+        if (m_videoProcAmp == nullptr)
+        {
+            return false;
+        }
+
+        // get the current value so we can just set the auto flag
+        // but leave the actualy setting itself intact.
+        long currentValue, flags;
+        if (FAILED(m_videoProcAmp->Get(prop, &currentValue, &flags)))
+        {
+            return false;
+        }
+
+        //FIXME: check return codes.
+        if (enabled)
+            m_videoProcAmp->Set(prop, currentValue, VideoProcAmp_Flags_Auto);
+        else
+            m_videoProcAmp->Set(prop, currentValue, VideoProcAmp_Flags_Manual);
+    }
+
+    return true;
+}
+
 
 void PlatformStream::submitBuffer(const uint8_t *ptr, size_t bytes)
 {
@@ -598,4 +754,95 @@ void PlatformStream::submitBuffer(const uint8_t *ptr, size_t bytes)
     }
 
     m_bufferMutex.unlock();
+}
+
+
+HRESULT PlatformStream::AddToRot(IUnknown *pUnkGraph, DWORD *pdwRegister)
+{
+    IMoniker * pMoniker = NULL;
+    IRunningObjectTable *pROT = NULL;
+
+    if (FAILED(GetRunningObjectTable(0, &pROT))) 
+    {
+        LOG(LOG_DEBUG,"AddToRot failed to get running object table\n");
+        return E_FAIL;
+    }
+    
+    const size_t STRING_LENGTH = 256;
+
+    WCHAR wsz[STRING_LENGTH];
+ 
+    StringCchPrintfW(
+        wsz, STRING_LENGTH, 
+        L"FilterGraph %08x pid %08x", 
+        (DWORD_PTR)pUnkGraph, 
+        GetCurrentProcessId()
+    );
+    
+    HRESULT hr = CreateItemMoniker(L"!", wsz, &pMoniker);
+    if (SUCCEEDED(hr)) 
+    {
+        hr = pROT->Register(ROTFLAGS_REGISTRATIONKEEPSALIVE, pUnkGraph,
+            pMoniker, pdwRegister);
+        pMoniker->Release();
+        LOG(LOG_DEBUG,"Graph registered in running object table\n", hr);
+    }
+    else
+    {
+        LOG(LOG_DEBUG,"AddToRot failed to register graph (HRESULT=%08X)\n", hr);
+    }
+    pROT->Release();
+    
+    return hr;
+}
+
+
+void PlatformStream::RemoveFromRot(DWORD pdwRegister)
+{
+    IRunningObjectTable *pROT;
+    if (SUCCEEDED(GetRunningObjectTable(0, &pROT))) 
+    {
+        pROT->Revoke(pdwRegister);
+        pROT->Release();
+    }
+}
+
+HRESULT PlatformStream::SaveGraphFile(IGraphBuilder *pGraph)
+{
+    const WCHAR wszStreamName[] = L"ActiveMovieGraph"; 
+    const WCHAR wszPath[] = L"filtergraph.grf";
+    HRESULT hr;
+    
+    IStorage *pStorage = NULL;
+    hr = StgCreateDocfile(
+        wszPath,
+        STGM_CREATE | STGM_TRANSACTED | STGM_READWRITE | STGM_SHARE_EXCLUSIVE,
+        0, &pStorage);
+    if(FAILED(hr)) 
+    {
+        return hr;
+    }
+
+    IStream *pStream;
+    hr = pStorage->CreateStream(
+        wszStreamName,
+        STGM_WRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
+        0, 0, &pStream);
+    if (FAILED(hr)) 
+    {
+        pStorage->Release();    
+        return hr;
+    }
+
+    IPersistStream *pPersist = NULL;
+    pGraph->QueryInterface(IID_IPersistStream, (void**)&pPersist);
+    hr = pPersist->Save(pStream, TRUE);
+    pStream->Release();
+    pPersist->Release();
+    if (SUCCEEDED(hr)) 
+    {
+        hr = pStorage->Commit(STGC_DEFAULT);
+    }
+    pStorage->Release();
+    return hr;
 }
