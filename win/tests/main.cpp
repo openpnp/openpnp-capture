@@ -113,15 +113,19 @@ int main(int argc, char*argv[])
     printf("Press + or - to change the exposure.\n");
     printf("Press f or g to change the focus.\n");
     printf("Press z or x to change the zoom.\n");
+    printf("Press a or s to change the gain.\n");
+    printf("Press [ or ] to change the white balance.\n");
     printf("Press w to write the current frame to a PPM file.\n");
 
     // get current stream parameters 
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
-    //disable auto exposure and focus
+    //disable auto exposure, focus and white balance
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
 
     // set exposure in the middle of the range
     int32_t exposure = 0;
@@ -163,6 +167,37 @@ int main(int argc, char*argv[])
     else
     {
         printf("Could not get zoom limits.\n");
+    }
+
+    // set white balance in the middle of the range
+    int32_t wbalance = 0;
+    int32_t wbmax, wbmin;
+    int32_t wbstep = 0;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_WHITEBALANCE, &wbmin, &wbmax) == CAPRESULT_OK)
+    {
+        wbalance = (wbmax+wbmin)/2;
+        wbstep = (wbmax-wbmin) / 20;
+        Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
+        printf("Set white balance to %d\n", wbalance);
+    }
+    else
+    {
+        printf("Could not get white balance limits.\n");
+    }
+
+    // set gain in the middle of the range
+    int32_t gain = 0;
+    int32_t gmax, gmin;
+    int32_t gstep = 0;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_GAIN, &gmin, &gmax) == CAPRESULT_OK)
+    {
+        gstep = (gmax-gmin) / 20;
+        Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
+        printf("Set gain to %d (min=%d max=%d)\n", gain, gmin, gmax);
+    }
+    else
+    {
+        printf("Could not get gain limits.\n");
     }
 
     // try to create a message loop so the preview
@@ -222,7 +257,27 @@ int main(int argc, char*argv[])
             case 'x':
                 Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, --zoom);
                 printf("zoom = %d     \r", zoom);
-                break;                        
+                break;  
+            case '[':
+                wbalance -= wbstep;
+                Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
+                printf("wbal = %d     \r", wbalance);
+                break;              
+            case ']':
+                wbalance += wbstep; 
+                Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
+                printf("wbal = %d     \r", wbalance);
+                break;  
+            case 'a':
+                gain -= gstep;
+                Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
+                printf("gain = %d     \r", gain);
+                break;              
+            case 's':
+                gain += gstep;
+                Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
+                printf("gain = %d     \r", gain);
+                break;                 
             case 'w':
                 if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
                 {

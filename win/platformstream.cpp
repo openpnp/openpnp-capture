@@ -281,6 +281,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 
 
     // create camera control interface for exposure control etc . 
+    m_camControl = nullptr;
     hr = m_sourceFilter->QueryInterface(IID_IAMCameraControl, (void **)&m_camControl); 
     if (hr != S_OK) 
     {
@@ -293,6 +294,15 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     // disable auto exposure
     m_camControl->Set(CameraControl_Exposure, -7, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_ABSOLUTE);
     dumpCameraProperties();
+
+    // create video processing control interface
+    m_videoProcAmp = nullptr;
+    hr = m_sourceFilter->QueryInterface(IID_IAMVideoProcAmp, (void **)&m_videoProcAmp); 
+    if (hr != S_OK) 
+    {
+        // note: this is not an error, but in inconvenience
+        LOG(LOG_WARNING,"Could not create IAMVideoProcAmp\n");
+    }
 
     //create a samplegrabber filter for the device
     hr = CoCreateInstance(CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER,IID_IBaseFilter, (void**)&m_sampleGrabberFilter);
@@ -511,20 +521,49 @@ bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int3
         break;
     case CAPPROPID_ZOOM:
         prop = CameraControl_Zoom;        
-        break;        
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        prop = VideoProcAmp_WhiteBalance;
+        break;     
+    case CAPPROPID_GAIN:
+        prop = VideoProcAmp_Gain; 
+        break;            
     default:
         return false;
     }
 
     //query exposure
     long flags, mmin, mmax, delta, defaultValue;
-    if (m_camControl->GetRange(prop, &mmin, &mmax,
-        &delta, &defaultValue, &flags) == S_OK)
-    {   
-        *emin = mmin;
-        *emax = mmax;
-        return true;
+    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
+    {
+        if (m_camControl->GetRange(prop, &mmin, &mmax,
+            &delta, &defaultValue, &flags) == S_OK)
+        {   
+            *emin = mmin;
+            *emax = mmax;
+            return true;
+        }
     }
+    else
+    {
+        //note: m_videoProcAmp only exists if the camera
+        //      supports hardware accelleration of 
+        //      video frame processing, such as
+        //      white balance etc.
+        if (m_videoProcAmp == nullptr)
+        {
+            return false;
+        }
+
+        if (m_videoProcAmp->GetRange(prop, &mmin, &mmax,
+            &delta, &defaultValue, &flags) == S_OK)
+        {   
+            *emin = mmin;
+            *emax = mmax;
+            return true;
+        }
+    }
+
     return false;
 }
 
@@ -548,24 +587,56 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
         break;
     case CAPPROPID_ZOOM:
         prop = CameraControl_Zoom;        
-        break;        
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        prop = VideoProcAmp_WhiteBalance;
+        break;
+    case CAPPROPID_GAIN:
+        prop = VideoProcAmp_Gain; 
+        break;         
     default:
         return false;
     }
 
     long flags, dummy;
-
-    // first we get the property so we can retain the flag settings
-    if (m_camControl->Get(prop, &dummy, &flags) != S_OK)
+    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
     {
-        return false;
+        // first we get the property so we can retain the flag settings
+        if (m_camControl->Get(prop, &dummy, &flags) != S_OK)
+        {
+            return false;
+        }
+
+        // now we set the property.
+        if (m_camControl->Set(prop, value, flags) != S_OK)
+        {
+            return false;
+        }   
     }
-
-    // now we set the property.
-    if (m_camControl->Set(prop, value, flags) != S_OK)
+    else
     {
-        return false;
-    }    
+        //note: m_videoProcAmp only exists if the camera
+        //      supports hardware accelleration of 
+        //      video frame processing, such as
+        //      white balance etc.
+        if (m_videoProcAmp == nullptr)
+        {
+            return false;
+        }
+
+        // first we get the property so we can retain the flag settings
+        if (m_videoProcAmp->Get(prop, &dummy, &flags) != S_OK)
+        {
+            return false;
+        }
+
+        // now we set the property.
+        if (m_videoProcAmp->Set(prop, value, flags) != S_OK)
+        {
+            return false;
+        } 
+
+    }
 
     return true;
 }
@@ -590,16 +661,50 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
         break;
     case CAPPROPID_ZOOM:
         prop = CameraControl_Zoom;        
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        prop = VideoProcAmp_WhiteBalance; 
+        break;
+    case CAPPROPID_GAIN:
+        prop = VideoProcAmp_Gain; 
         break;        
     default:
         return false;
     }
 
-    //FIXME: check return codes.
-    if (enabled)
-        m_camControl->Set(prop, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
+    {
+        //FIXME: check return codes.
+        if (enabled)
+            m_camControl->Set(prop, 0, CameraControl_Flags_Auto | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+        else
+            m_camControl->Set(prop, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+    }
     else
-        m_camControl->Set(prop, 0, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_RELATIVE);
+    {
+        //note: m_videoProcAmp only exists if the camera
+        //      supports hardware accelleration of 
+        //      video frame processing, such as
+        //      white balance etc.
+        if (m_videoProcAmp == nullptr)
+        {
+            return false;
+        }
+
+        // get the current value so we can just set the auto flag
+        // but leave the actualy setting itself intact.
+        long currentValue, flags;
+        if (FAILED(m_videoProcAmp->Get(prop, &currentValue, &flags)))
+        {
+            return false;
+        }
+
+        //FIXME: check return codes.
+        if (enabled)
+            m_videoProcAmp->Set(prop, currentValue, VideoProcAmp_Flags_Auto);
+        else
+            m_videoProcAmp->Set(prop, currentValue, VideoProcAmp_Flags_Manual);
+    }
 
     return true;
 }

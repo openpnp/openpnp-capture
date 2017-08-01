@@ -166,6 +166,7 @@ protected:
     ISampleGrabber* m_sampleGrabber;
     ICaptureGraphBuilder2* m_capture;
     IAMCameraControl* m_camControl;
+    IAMVideoProcAmp* m_videoProcAmp;
 
     /** Each time a new frame is available, the DirectShow subsystem
         will call the callback handler */
