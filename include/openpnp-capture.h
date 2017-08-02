@@ -117,8 +117,8 @@ DLLPUBLIC CapResult Cap_releaseContext(CapContext ctx);
 DLLPUBLIC uint32_t Cap_getDeviceCount(CapContext ctx);
 
 /** Get the name of a capture device.
-    Note: this name may or may not be unique
-    or persistent across system reboots. 
+    This name is meant to be displayed in GUI applications,
+    i.e. its human readable.
 
     if a device with the given index does not exist,
     NULL is returned.
@@ -127,6 +127,29 @@ DLLPUBLIC uint32_t Cap_getDeviceCount(CapContext ctx);
     @return a pointer to an UTF-8 string containting the name of the capture device.
 */
 DLLPUBLIC const char* Cap_getDeviceName(CapContext ctx, CapDeviceID index);
+
+/** Get the unique name of a capture device.
+    The string contains a unique concatenation
+    of the device name and other parameters.
+    These parameters are platform dependent.
+
+    Note: when a USB camera does not expose a serial number,
+          platforms might have trouble uniquely identifying 
+          a camera. In such cases, the USB port location can
+          be used to add a unique feature to the string.
+          This, however, has the down side that the ID of
+          the camera changes when the USB port location 
+          changes. Unfortunately, there isn't much to
+          do about this.
+
+    if a device with the given index does not exist,
+    NULL is returned.
+    @param ctx The ID of the context.
+    @param index The device index of the capture device.
+    @return a pointer to an UTF-8 string containting the unique ID of the capture device.
+*/
+DLLPUBLIC const char* Cap_getDeviceUniqueID(CapContext ctx, CapDeviceID index);
+
 
 /** Returns the number of formats supported by a certain device.
     returns -1 if device does not exist.

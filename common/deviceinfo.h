@@ -37,6 +37,7 @@ public:
     virtual ~deviceInfo() {}
 
     std::string                 m_name;     ///< UTF-8 printable name
+    std::string                 m_uniqueID; ///< UTF-8 string uniquely identifying a camera
     std::vector<CapFormatInfo>  m_formats;  ///< available buffer formats
 };
 

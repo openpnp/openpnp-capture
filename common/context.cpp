@@ -64,6 +64,21 @@ const char* Context::getDeviceName(CapDeviceID id) const
     return m_devices[id]->m_name.c_str();
 }
 
+const char* Context::getDeviceUniqueID(CapDeviceID id) const
+{
+    if (id >= m_devices.size())
+    {
+        LOG(LOG_ERR,"Device with ID %d not found", id);
+        return NULL; // no such device ID!
+    }
+    if (m_devices[id] == nullptr)
+    {
+        LOG(LOG_ERR,"Internal device pointer is NULL");
+        return NULL; // device pointer is NULL!
+    }
+    return m_devices[id]->m_uniqueID.c_str();    
+}
+
 uint32_t Context::getDeviceCount() const
 {
     return m_devices.size();
@@ -297,54 +312,6 @@ bool Context::setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t v
     if (stream == nullptr) return false;
     return stream->setProperty(propertyID, value);
 }
-
-#if 0
-bool Context::setStreamExposure(int32_t streamID, int32_t value)
-{
-    Stream* stream = Context::lookupStreamByID(streamID);
-    if (stream == nullptr) return false;
-    return stream->setExposure(value);
-}
-
-bool Context::setStreamAutoExposure(int32_t streamID, bool enable)
-{
-    Stream* stream = Context::lookupStreamByID(streamID);
-    if (stream == nullptr) return false;
-    return stream->setAutoExposure(enable);
-}
-
-bool Context::getStreamExposureLimits(int32_t streamID, int32_t *min, int32_t *max)
-{
-    Stream* stream = Context::lookupStreamByID(streamID);
-    if (stream == nullptr) return false;
-    return stream->getExposureLimits(min, max);
-}
-
-/** Get the focus min and max in 'camera' units */
-bool Context::getStreamFocusLimits(int32_t streamID, int32_t *min, int32_t *max)
-{
-    Stream* stream = Context::lookupStreamByID(streamID);
-    if (stream == nullptr) return false;
-    return stream->getFocusLimits(min, max);
-}
-
-/** Set the focus in 'camera' units */
-bool Context::setStreamFocus(int32_t streamID, int32_t value)
-{
-    Stream* stream = Context::lookupStreamByID(streamID);
-    if (stream == nullptr) return false;
-    return stream->setFocus(value);
-}
-
-/** Set enable/disable the automatic focus */
-bool Context::setStreamAutoFocus(int32_t streamID, bool enable)
-{
-    Stream* stream = Context::lookupStreamByID(streamID);
-    if (stream == nullptr) return false;
-    return stream->setAutoFocus(enable);
-}
-
-#endif
 
 /** convert a FOURCC uint32_t to human readable form */
 std::string fourCCToString(uint32_t fourcc)

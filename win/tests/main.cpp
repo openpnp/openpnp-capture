@@ -93,6 +93,7 @@ int main(int argc, char*argv[])
     for(uint32_t i=0; i<deviceCount; i++)
     {
         printf("ID %d -> %s\n", i, Cap_getDeviceName(ctx,i));
+        printf("Unique:  %s\n", Cap_getDeviceUniqueID(ctx,i));
 
         // show all supported frame buffer formats
         int32_t nFormats = Cap_getNumFormats(ctx, i);
