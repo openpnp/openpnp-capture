@@ -73,6 +73,7 @@ bool PlatformContext::enumerateDevices()
         {
             LOG(LOG_INFO,"Name: '%s'\n", video_cap.card);
             LOG(LOG_INFO,"Path: '%s'\n", fname);
+            LOG(LOG_INFO,"Bus : '%s'\n", video_cap.bus_info);
             LOG(LOG_INFO,"capflags = %08X\n", video_cap.capabilities);
             LOG(LOG_INFO,"devflags = %08X\n", video_cap.device_caps);
 
@@ -106,6 +107,8 @@ bool PlatformContext::enumerateDevices()
             platformDeviceInfo* dinfo = new platformDeviceInfo();
             dinfo->m_name = std::string((const char*)video_cap.card);
             dinfo->m_devicePath = std::string(fname);
+            dinfo->m_uniqueID = dinfo->m_name + " ";
+            dinfo->m_uniqueID.append((const char*)video_cap.bus_info);
             
             // enumerate the frame formats
             v4l2_fmtdesc fmtdesc;
