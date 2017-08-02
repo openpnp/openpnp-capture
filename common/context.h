@@ -66,6 +66,28 @@ public:
     /** Get the UTF-8 device name of a device with index/ID id */
     const char* getDeviceName(CapDeviceID id) const;
 
+
+    /** Get the UTF-8 unique name of a capture device.
+        The string contains a unique concatenation
+        of the device name and other parameters.
+        These parameters are platform dependent.
+
+        Note: when a USB camera does not expose a serial number,
+            platforms might have trouble uniquely identifying 
+            a camera. In such cases, the USB port location can
+            be used to add a unique feature to the string.
+            This, however, has the down side that the ID of
+            the camera changes when the USB port location 
+            changes. Unfortunately, there isn't much to
+            do about this.
+
+        if a device with the given index does not exist,
+        NULL is returned.
+        @param id The device index of the capture device.
+        @return a pointer to an UTF-8 string containting the unique ID of the capture device.
+    */
+    const char* getDeviceUniqueID(CapDeviceID id) const;
+
     /** Return the number of devices found */
     uint32_t getDeviceCount() const;
 
@@ -101,8 +123,32 @@ public:
     /** returns the number of frames captured during the lifetime of the stream */
     uint32_t getStreamFrameCount(int32_t streamID);
 
+    /** Get the minimum and maximum settings for a property.
+        @param streamID the ID of the stream.
+        @param propretyID the ID of the property.
+        @param min a pointer to an int32_t that will receive the minimum setting.
+        @param max a pointer to an int32_t that will receive the maximum setting.
+        @return true if min and max were written.
+    */
     bool getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max);
+
+    /** Turn on or off a property that support an automatic setting,
+        such as exposure or white balance.
+
+        @param streamID the ID of the stream.
+        @param propretyID the ID of the property.
+        @param enable the desired new state of the auto setting.
+        @return true if succesful.
+    */    
     bool setStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool enable);
+
+    /** Set the value of a property, such as exposure or white balance.
+
+        @param streamID the ID of the stream.
+        @param propretyID the ID of the property.
+        @param value the new value of the property.
+        @return true if succesful.
+    */        
     bool setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t value);
 
 protected:

@@ -124,6 +124,7 @@ bool PlatformContext::enumerateDevices()
 
                     // convert wchar string to UTF-8 to pass to JAVA                    
                     info->m_name = wcharPtrToString(BStringPtr);
+                    info->m_uniqueID = info->m_name;
                 }                
             }
             else
@@ -138,8 +139,14 @@ bool PlatformContext::enumerateDevices()
                 if (BStringPtr)
                 {
                     info->m_devicePath = std::wstring(BStringPtr);
-                    LOG(LOG_INFO, "     -> PATH %s\n", wcharPtrToString(BStringPtr).c_str());                    
+                    info->m_uniqueID.append(" ");
+                    info->m_uniqueID.append(wcharPtrToString(BStringPtr));
+                    LOG(LOG_INFO, "     -> PATH %s\n", wcharPtrToString(BStringPtr).c_str());
                 } 
+                else
+                {
+                    LOG(LOG_WARNING, "     device path not found!");  
+                }
             }
 
             enumerateFrameInfo(moniker, info);

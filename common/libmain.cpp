@@ -75,6 +75,15 @@ DLLPUBLIC const char* Cap_getDeviceName(CapContext ctx, CapDeviceID id)
     return 0;
 }
 
+DLLPUBLIC const char* Cap_getDeviceUniqueID(CapContext ctx, CapDeviceID id)
+{
+    if (ctx != 0)
+    {
+        return reinterpret_cast<Context*>(ctx)->getDeviceUniqueID(id);
+    }
+    return 0;    
+}
+
 DLLPUBLIC int32_t Cap_getNumFormats(CapContext ctx, CapDeviceID id)
 {
     if (ctx != 0)
@@ -160,94 +169,6 @@ DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
     }    
     return 0;    
 }
-
-#if 0
-
-DLLPUBLIC CapResult Cap_getExposureLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max)
-{
-    if (ctx != 0)
-    {
-        Context *c = reinterpret_cast<Context*>(ctx);
-        if (!c->getStreamExposureLimits(stream, min, max))
-        {
-            return CAPRESULT_EXPOSURENOTSUPPORTED;
-        }
-        return CAPRESULT_OK;
-    }
-    return CAPRESULT_ERR;
-}
-
-DLLPUBLIC CapResult Cap_setExposure(CapContext ctx, CapStream stream, int32_t value)
-{
-    if (ctx != 0)
-    {
-        Context *c = reinterpret_cast<Context*>(ctx);
-        if (!c->setStreamExposure(stream, value))
-        {
-            return CAPRESULT_EXPOSURENOTSUPPORTED;
-        }
-        return CAPRESULT_OK;
-    }
-    return CAPRESULT_ERR;
-}
-
-DLLPUBLIC CapResult Cap_setAutoExposure(CapContext ctx, CapStream stream, uint32_t bOnOff)
-{
-    if (ctx != 0)
-    {
-        Context *c = reinterpret_cast<Context*>(ctx);
-        if (!c->setStreamAutoExposure(stream, (bOnOff==1)))
-        {
-            return CAPRESULT_EXPOSURENOTSUPPORTED;
-        }
-        return CAPRESULT_OK;
-    }
-    return CAPRESULT_ERR;
-}
-
-DLLPUBLIC CapResult Cap_getFocusLimits(CapContext ctx, CapStream stream, int32_t *min, int32_t *max)
-{
-    if (ctx != 0)
-    {
-        Context *c = reinterpret_cast<Context*>(ctx);
-        if (!c->getStreamFocusLimits(stream, min, max))
-        {
-            return CAPRESULT_FOCUSNOTSUPPORTED;
-        }
-        return CAPRESULT_OK;
-    }
-    return CAPRESULT_ERR;
-}
-
-DLLPUBLIC CapResult Cap_setFocus(CapContext ctx, CapStream stream, int32_t value)
-{
-    if (ctx != 0)
-    {
-        Context *c = reinterpret_cast<Context*>(ctx);
-        if (!c->setStreamFocus(stream, value))
-        {
-            return CAPRESULT_FOCUSNOTSUPPORTED;
-        }
-        return CAPRESULT_OK;
-    }
-    return CAPRESULT_ERR;
-}
-
-DLLPUBLIC CapResult Cap_setAutoFocus(CapContext ctx, CapStream stream, uint32_t bOnOff)
-{
-    if (ctx != 0)
-    {
-        Context *c = reinterpret_cast<Context*>(ctx);
-        if (!c->setStreamAutoFocus(stream, (bOnOff==1)))
-        {
-            return CAPRESULT_FOCUSNOTSUPPORTED;
-        }
-        return CAPRESULT_OK;
-    }
-    return CAPRESULT_ERR;
-}
-
-#endif
 
 DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max)
 {

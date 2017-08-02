@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <unistd.h>
+#include <chrono>   
 
 #include "openpnp-capture.h"
 #include "../common/context.h"
@@ -43,6 +44,21 @@ bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const 
 
     return true;
 }
+
+void estimateFrameRate(CapContext ctx, int32_t streamID)
+{
+    std::chrono::time_point<std::chrono::system_clock> tstart, tend;
+    tstart = std::chrono::system_clock::now();
+    uint32_t fstart = Cap_getStreamFrameCount(ctx, streamID);
+    usleep(2000000);    // 2-second wait
+    uint32_t fend = Cap_getStreamFrameCount(ctx, streamID);
+    tend = std::chrono::system_clock::now();
+    std::chrono::duration<double> fsec = tend-tstart;
+    uint32_t frames = fend - fstart;
+    printf("Frames = %d\n", frames);
+    std::chrono::milliseconds d = std::chrono::duration_cast<std::chrono::milliseconds>(fsec);
+    printf("Measured fps=%5.2f\n", 1000.0f*frames/static_cast<float>(d.count()));
+} 
 
 int main(int argc, char*argv[])
 {    
@@ -108,50 +124,88 @@ int main(int argc, char*argv[])
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
+    //disable auto exposure, focus and white balance
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
+
+    // set exposure in the middle of the range
+    int32_t exposure = 0;
+    int32_t exmax, exmin;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &exmin, &exmax) == CAPRESULT_OK)
+    {
+        exposure = (exmax + exmin) / 2;
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, exposure);
+        printf("Set exposure to %d\n", exposure);
+    }
+    else
+    {
+        printf("Could not get exposure limits.\n");
+    }
+
+    // set focus in the middle of the range
+    int32_t focus = 0;
+    int32_t fomax, fomin;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_FOCUS, &fomin, &fomax) == CAPRESULT_OK)
+    {
+        focus = (fomax + fomin) / 2;
+        Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, focus);
+        printf("Set focus to %d\n", focus);
+    }
+    else
+    {
+        printf("Could not get focus limits.\n");
+    }
+
+    // set zoom in the middle of the range
+    int32_t zoom = 0;
+    int32_t zomax, zomin;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_ZOOM, &zomin, &zomax) == CAPRESULT_OK)
+    {
+        zoom = zomin;
+        Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, zoom);
+        printf("Set zoom to %d\n", zoom);
+    }
+    else
+    {
+        printf("Could not get zoom limits.\n");
+    }
+
+    // set white balance in the middle of the range
+    int32_t wbalance = 0;
+    int32_t wbmax, wbmin;
+    int32_t wbstep = 0;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_WHITEBALANCE, &wbmin, &wbmax) == CAPRESULT_OK)
+    {
+        wbalance = (wbmax+wbmin)/2;
+        wbstep = (wbmax-wbmin) / 20;
+        Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
+        printf("Set white balance to %d\n", wbalance);
+    }
+    else
+    {
+        printf("Could not get white balance limits.\n");
+    }
+
+    // set gain in the middle of the range
+    int32_t gain = 0;
+    int32_t gmax, gmin;
+    int32_t gstep = 0;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_GAIN, &gmin, &gmax) == CAPRESULT_OK)
+    {
+        gstep = (gmax-gmin) / 20;
+        Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
+        printf("Set gain to %d (min=%d max=%d)\n", gain, gmin, gmax);
+    }
+    else
+    {
+        printf("Could not get gain limits.\n");
+    }
+
 
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(finfo.width*finfo.height*3);
-
-#if 0    
-    if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
-    {
-        printf("Buffer captured!\n");
-
-        FILE *fout = fopen("image.ppm", "wb");
-        fprintf(fout, "P6 %d %d 255\n", finfo.width, finfo.height); // PGM header
-
-        // exchange BGR to RGB
-        uint32_t idx = 0;
-        for(uint32_t i=0; i<finfo.width*finfo.height; i++)
-        {
-            uint8_t b = m_buffer[idx];
-            uint8_t g = m_buffer[idx+1];
-            uint8_t r = m_buffer[idx+2];
-            m_buffer[idx++] = r;
-            m_buffer[idx++] = g;
-            m_buffer[idx++] = b;
-        }
-
-        // and upside-down :)
-        const uint32_t stride = 3;
-        const size_t lineBytes = finfo.width * stride;
-        uint8_t *row  = new uint8_t[lineBytes];
-        uint8_t *low  = &m_buffer[0];
-        uint8_t *high = &m_buffer[(finfo.height - 1) * lineBytes];
-
-        for (; low < high; low += lineBytes, high -= lineBytes) {
-            memcpy(row, low, lineBytes);
-            memcpy(low, high, lineBytes);
-            memcpy(high, row, lineBytes);
-        }
-        delete[] row;
-
-        fwrite(&m_buffer[0], 1, m_buffer.size(), fout);
-        fclose(fout);
-    }
-
-#endif
 
     char c = 0;
     int32_t v = 0;
@@ -159,6 +213,7 @@ int main(int argc, char*argv[])
     while((c != 'q') && (c != 'Q'))
     {
         c = getchar();
+        //fgets(&c, 1, stdin);
         switch(c)
         {
         case '+':
@@ -174,6 +229,46 @@ int main(int argc, char*argv[])
             v = 0;
             Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, v);
             break; 
+        case 'f':
+            Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++focus);
+            printf("focus = %d     \r", focus);
+            break;
+        case 'g':
+            Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, --focus);
+            printf("focus = %d     \r", focus);
+            break;
+        case 'z':
+            Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, ++zoom);
+            printf("zoom = %d     \r", zoom);
+            break;
+        case 'x':
+            Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, --zoom);
+            printf("zoom = %d     \r", zoom);
+            break;  
+        case '[':
+            wbalance -= wbstep;
+            Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
+            printf("wbal = %d     \r", wbalance);
+            break;              
+        case ']':
+            wbalance += wbstep; 
+            Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
+            printf("wbal = %d     \r", wbalance);
+            break;  
+        case 'a':
+            gain -= gstep;
+            Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
+            printf("gain = %d     \r", gain);
+            break;              
+        case 's':
+            gain += gstep;
+            Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
+            printf("gain = %d     \r", gain);
+            break;
+        case 'p':
+            printf("Estimating frame rate..\n");
+            estimateFrameRate(ctx, streamID);
+            break;            
         case 'w':
             if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
             {

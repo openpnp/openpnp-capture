@@ -10,6 +10,7 @@
 #include <memory.h>
 #include <unistd.h>
 #include <gtk/gtk.h>
+#include <chrono> 
 
 #include "openpnp-capture.h"
 #include "../common/context.h"
@@ -24,7 +25,10 @@ typedef struct
     int32_t     streamID;
     bool        takeSnapshot;
     uint32_t    snapshotCounter;
-} TimerCallbackInfo;
+
+    int32_t     zoom,gain,exposure,wbalance,focus;
+    int32_t     gstep,wbstep;
+} CallbackInfo;
  
 
 void free_pixels(guchar *pixels, gpointer data) 
@@ -47,7 +51,7 @@ static void activate(GtkApplication* app,
 static void triggerSnapshot(GtkWidget *widget,
     gpointer data)
 {
-    TimerCallbackInfo *id = (TimerCallbackInfo*)data;
+    CallbackInfo *id = (CallbackInfo*)data;
     id->takeSnapshot = true;
     printf("Snapshot triggered!\n");
 }
@@ -76,7 +80,7 @@ int updatePicture(gpointer data)
     //static int N = 0;
     //if (N > 100) return FALSE; // stop timer
  
-    TimerCallbackInfo *id = (TimerCallbackInfo*)data;
+    CallbackInfo *id = (CallbackInfo*)data;
     GdkPixbuf *pb = gtk_image_get_pixbuf(id->image);
     gdk_pixbuf_fill(pb, 0); // clear to black
     guchar *g = gdk_pixbuf_get_pixels(pb);
@@ -100,6 +104,121 @@ int updatePicture(gpointer data)
         }
     }
     return TRUE; // continue timer
+}
+
+void estimateFrameRate(CapContext ctx, int32_t streamID)
+{
+    std::chrono::time_point<std::chrono::system_clock> tstart, tend;
+    tstart = std::chrono::system_clock::now();
+    uint32_t fstart = Cap_getStreamFrameCount(ctx, streamID);
+    usleep(2000000);    // 2-second wait
+    uint32_t fend = Cap_getStreamFrameCount(ctx, streamID);
+    tend = std::chrono::system_clock::now();
+    std::chrono::duration<double> fsec = tend-tstart;
+    uint32_t frames = fend - fstart;
+    printf("Frames = %d\n", frames);
+    std::chrono::milliseconds d = std::chrono::duration_cast<std::chrono::milliseconds>(fsec);
+    printf("Measured fps=%5.2f\n", 1000.0f*frames/static_cast<float>(d.count()));
+    fflush(stdout);
+}
+
+
+
+gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data) 
+{
+    if (data == nullptr)
+    {
+        return FALSE;
+    }
+
+    if (event == nullptr)
+    {
+        return FALSE;
+    }
+
+    CallbackInfo *ptr = (CallbackInfo*)data;
+    CapContext ctx = ptr->ctx;
+    int32_t streamID = ptr->streamID;
+
+    switch(event->keyval)
+    {
+    case 'q':
+        gtk_main_quit();
+        return TRUE;
+    case '+':
+        printf("+");
+        fflush(stdout);
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ++ptr->exposure);
+        return TRUE;
+    case '-':
+        printf("-");
+        fflush(stdout);
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, --ptr->exposure);
+        return TRUE;
+    case '0':
+        printf("0");
+        fflush(stdout);
+        ptr->exposure = 0;
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ptr->exposure);
+        return TRUE;
+    case 'f':
+        Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++ptr->focus);
+        printf("focus = %d     \r", ptr->focus);
+        fflush(stdout);
+        return TRUE;
+    case 'g':
+        Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, --ptr->focus);
+        printf("focus = %d     \r", ptr->focus);
+        fflush(stdout);
+        return TRUE;
+    case 'z':
+        Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, ++ptr->zoom);
+        printf("zoom = %d     \r", ptr->zoom);
+        fflush(stdout);
+        return TRUE;
+    case 'x':
+        Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, --ptr->zoom);
+        printf("zoom = %d     \r", ptr->zoom);
+        fflush(stdout);
+        return TRUE;
+    case '[':
+        ptr->wbalance -= ptr->wbstep;
+        Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, ptr->wbalance);
+        printf("wbal = %d     \r", ptr->wbalance);
+        fflush(stdout);
+        return TRUE;
+    case ']':
+        ptr->wbalance += ptr->wbstep; 
+        Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, ptr->wbalance);
+        printf("wbal = %d     \r", ptr->wbalance);
+        fflush(stdout);
+        return TRUE;
+    case 'a':
+        ptr->gain -= ptr->gstep;
+        Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, ptr->gain);
+        printf("gain = %d     \r", ptr->gain);
+        fflush(stdout);
+        return TRUE;
+    case 's':
+        ptr->gain += ptr->gstep;
+        Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, ptr->gain);
+        printf("gain = %d     \r", ptr->gain);
+        fflush(stdout);
+        return TRUE;
+    case 'p':
+        printf("Estimating frame rate..\n");
+        estimateFrameRate(ctx, streamID);
+        fflush(stdout);
+        return TRUE;
+    case 'w':
+        printf("Writing frame to disk..\n");
+        ptr->takeSnapshot = true;
+        return TRUE;
+ 
+    default: 
+        return FALSE;
+    }
+    return FALSE;
 }
 
 
@@ -130,9 +249,18 @@ int main (int argc, char *argv[])
 
     gtk_init(&argc, &argv);
 
-    printf("OpenPNP Capture Test Program\n");
-    printf("%s\n", Cap_getLibraryVersion());
+    printf("==============================\n");
+    printf(" OpenPNP Capture Test Program\n");
+    printf(" %s\n", Cap_getLibraryVersion());
+    printf("==============================\n");
+
     Cap_setLogLevel(7);
+
+    if (argc == 1)
+    {
+        printf("Usage: openpnp-capture-test <camera ID> <frame format ID>\n");
+        printf("\n..continuing with default camera parameters.\n\n");
+    }
 
     if (argc >= 2)
     {
@@ -151,7 +279,8 @@ int main (int argc, char *argv[])
     for(uint32_t i=0; i<deviceCount; i++)
     {
         printf("ID %d -> %s\n", i, Cap_getDeviceName(ctx,i));
-
+        printf("Unique:  %s\n", Cap_getDeviceUniqueID(ctx,i));
+        
         // show all supported frame buffer formats
         int32_t nFormats = Cap_getNumFormats(ctx, i);
 
@@ -192,12 +321,89 @@ int main (int argc, char *argv[])
     // get current stream parameters 
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
-
+    
+    //disable auto exposure, focus and white balance
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
+
+    // set exposure in the middle of the range
+    int32_t exposure = 0;
+    int32_t exmax, exmin;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &exmin, &exmax) == CAPRESULT_OK)
+    {
+        exposure = (exmax + exmin) / 2;
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, exposure);
+        printf("Set exposure to %d\n", exposure);
+    }
+    else
+    {
+        printf("Could not get exposure limits.\n");
+    }
+
+    // set focus in the middle of the range
+    int32_t focus = 0;
+    int32_t fomax, fomin;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_FOCUS, &fomin, &fomax) == CAPRESULT_OK)
+    {
+        focus = (fomax + fomin) / 2;
+        Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, focus);
+        printf("Set focus to %d\n", focus);
+    }
+    else
+    {
+        printf("Could not get focus limits.\n");
+    }
+
+    // set zoom in the middle of the range
+    int32_t zoom = 0;
+    int32_t zomax, zomin;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_ZOOM, &zomin, &zomax) == CAPRESULT_OK)
+    {
+        zoom = zomin;
+        Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, zoom);
+        printf("Set zoom to %d\n", zoom);
+    }
+    else
+    {
+        printf("Could not get zoom limits.\n");
+    }
+
+    // set white balance in the middle of the range
+    int32_t wbalance = 0;
+    int32_t wbmax, wbmin;
+    int32_t wbstep = 0;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_WHITEBALANCE, &wbmin, &wbmax) == CAPRESULT_OK)
+    {
+        wbalance = (wbmax+wbmin)/2;
+        wbstep = (wbmax-wbmin) / 20;
+        Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
+        printf("Set white balance to %d\n", wbalance);
+    }
+    else
+    {
+        printf("Could not get white balance limits.\n");
+    }
+
+    // set gain in the middle of the range
+    int32_t gain = 0;
+    int32_t gmax, gmin;
+    int32_t gstep = 0;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_GAIN, &gmin, &gmax) == CAPRESULT_OK)
+    {
+        gstep = (gmax-gmin) / 20;
+        Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
+        printf("Set gain to %d (min=%d max=%d)\n", gain, gmin, gmax);
+    }
+    else
+    {
+        printf("Could not get gain limits.\n");
+    }
+
 
     // create GTK image
-    TimerCallbackInfo id;
+    CallbackInfo id;
     id.rows = finfo.height;
     id.cols = finfo.width;
     id.stride = finfo.width * 3;
@@ -207,6 +413,15 @@ int main (int argc, char *argv[])
     id.takeSnapshot = false;
     id.snapshotCounter = 0;
     
+    id.exposure = exposure;
+    id.gain = gain;
+    id.wbalance = wbalance;
+    id.focus = focus;
+    id.gstep = gstep;
+    id.wbstep = wbstep;
+    id.zoom = zoom;
+
+
     guchar *pixels = (guchar *)calloc(finfo.height * id.stride, 1);
 
     GdkPixbuf *pb = gdk_pixbuf_new_from_data
@@ -250,6 +465,20 @@ int main (int argc, char *argv[])
     g_timeout_add(250,         // milliseconds
                 updatePicture,  // handler function
                 &id);        // data
+
+    gtk_widget_add_events(window, GDK_KEY_PRESS_MASK);
+    g_signal_connect(window, "key-press-event", G_CALLBACK (on_key_press), &id);
+
+    printf("=== KEY MAPPINGS ===\n");
+    printf("Press q to exit.\n");
+    printf("Press + or - to change the exposure.\n");
+    printf("Press f or g to change the focus.\n");
+    printf("Press z or x to change the zoom.\n");
+    printf("Press a or s to change the gain.\n");
+    printf("Press [ or ] to change the white balance.\n");
+    printf("Press p to estimate the actual frame rate.\n");
+    printf("Press w to write the current frame to a PPM file.\n");
+    fflush(stdout);
 
     gtk_widget_show_all(window);
     gtk_main();

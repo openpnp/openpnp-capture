@@ -287,13 +287,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;  
     }
 
-#if 0
-    // FIXME/TODO: we should still be able to work with the camera when the
-    //       IAMCameraControl was not implemented.    
-    // disable auto exposure
-    m_camControl->Set(CameraControl_Exposure, -7, CameraControl_Flags_Manual | KSPROPERTY_CAMERACONTROL_FLAGS_ABSOLUTE);
     dumpCameraProperties();
-#endif
 
     // create video processing control interface
     m_videoProcAmp = nullptr;
@@ -361,7 +355,11 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }       
 
-    hr = m_capture->RenderStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, m_sourceFilter, m_sampleGrabberFilter, NULL);
+    /* Note: Although I had expected to have to use 'PIN_CATEGORY_CAPTURE',
+       using 'PIN_CATEGORY_PREVIEW' gives 30 fps at HD res on a Microsoft LifeCam 3000,
+       whereas 'PIN_CATEGORY_CAPTURE' results in 2.5 fps !?!
+    */
+    hr = m_capture->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_sourceFilter, m_sampleGrabberFilter, NULL);
     if (hr < 0)
     {
         LOG(LOG_ERR,"Error calling RenderStream (HRESULT=%08X)\n", hr);
@@ -369,7 +367,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     }
 
     LONGLONG start=0, stop=MAXLONGLONG;
-    hr = m_capture->ControlStream(&PIN_CATEGORY_CAPTURE, &MEDIATYPE_Video, m_sourceFilter, &start, &stop, 1,2);
+    hr = m_capture->ControlStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_sourceFilter, &start, &stop, 1,2);
     if (hr < 0)
     {
         LOG(LOG_ERR,"Could not start the video stream (HRESULT=%08X)\n", hr);
