@@ -7,3 +7,9 @@ before_build:
 
 build:
   project: build\ALL_BUILD.vcxproj
+
+artifacts:
+- path: build\win\tests\Debug\openpnp-capture-test.exe
+  name: openpnp-capture-test.exe
+- path: build\Debug\openpnp-capture.dll
+  name: openpnp-capture.dll
