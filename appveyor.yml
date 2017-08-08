@@ -6,4 +6,4 @@ before_build:
   - cmake -G "Visual Studio 14 2015 Win64" ..
 
 build:
-  project: build ALL_BUILD.vcxproj
+  project: build\ALL_BUILD.vcxproj
