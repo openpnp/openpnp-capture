@@ -13,7 +13,8 @@ configuration:
   - Release
 
 artifacts:
-- path: build\win\tests\Debug\openpnp-capture-test.exe
+- path: build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe
   name: openpnp-capture-test.exe
-- path: build\Debug\openpnp-capture.dll
+- path: build\$(CONFIGURATION)\openpnp-capture.dll
   name: openpnp-capture.dll
+  
