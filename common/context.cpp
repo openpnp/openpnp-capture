@@ -46,6 +46,14 @@ Context::~Context()
         delete iter->second;
         iter++;
     }
+
+    //delete capture devices
+    auto iter2 = m_devices.begin();
+    while(iter2 != m_devices.end())
+    {
+        delete *iter2;
+        iter2++;
+    }
     LOG(LOG_DEBUG, "Context destroyed\n");
 }
 

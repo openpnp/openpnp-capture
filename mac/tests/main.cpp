@@ -25,6 +25,7 @@ int main(int argc, char*argv[])
     for(uint32_t deviceIndex = 0; deviceIndex < deviceCount; deviceIndex++)
     {
         printf("Device [%d/%d] Name: %s\n", deviceIndex, deviceCount, Cap_getDeviceName(ctx, deviceIndex));
+        printf("Unique ID: %s\n", Cap_getDeviceUniqueID(ctx, deviceIndex));
         uint32_t formatCount = Cap_getNumFormats(ctx, deviceIndex);
         printf("  Number of formats: %d\n", formatCount);
         for (uint32_t formatIndex = 0; formatIndex < formatCount; formatIndex++) {
