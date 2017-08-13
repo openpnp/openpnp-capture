@@ -12,7 +12,9 @@ addons:
   apt:
     packages:
     - libgtk-3-dev
-    - libjpeg-turbo-dev
+
+install:
+  - if [ $TRAVIS_OS_NAME = osx ]; then brew install brew install libjpeg-turbo; fi
 
 before_script:
   - mkdir build
