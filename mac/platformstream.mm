@@ -53,28 +53,26 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     return true;
 }
 
+bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) 
+{
+    return false;
+}
+
+bool PlatformStream::setProperty(uint32_t propID, int32_t value) 
+{
+    return false;
+}
+
+bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
+{
+    return false;
+}
+
 uint32_t PlatformStream::getFOURCC()
 {
     return 0;
 }
 
-
-bool PlatformStream::setExposure(int32_t value) 
-{
-    return false;
-}
-
-
-bool PlatformStream::setAutoExposure(bool enabled) 
-{
-    return false;
-}
-
-
-bool PlatformStream::getExposureLimits(int32_t *emin, int32_t *emax) 
-{
-    return false;
-}
 
 std::string PlatformStream::genFOURCCstring(uint32_t v)
 {
