@@ -6,7 +6,9 @@ os:
 
 compiler:
   - gcc
-  - clang
+  # Uncomment below if we decide to build with clang as well as gcc. Will require modifying deployments
+  # so that we don't overwrite the gcc binaries with the clang ones.
+  #- clang
 
 addons:
   apt:
