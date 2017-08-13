@@ -113,7 +113,7 @@ ELSEIF(UNIX)
     # because of a bug in the library distribution that does not create the correct
     # symlink. See https://github.com/OpenKinect/libfreenect2/issues/36
     ADD_LIBRARY(turbojpeg SHARED IMPORTED)
-    SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0)
+    SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.0.0)
 
     target_link_libraries(openpnp-capture turbojpeg)
     
