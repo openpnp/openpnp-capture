@@ -112,6 +112,8 @@ ELSEIF(UNIX)
     # this lets us specify the full path of the turbojpeg library. this is required
     # because of a bug in the library distribution that does not create the correct
     # symlink. See https://github.com/OpenKinect/libfreenect2/issues/36
+    # Note: We should be able to specify this on the command line, as well, so we don't have
+    # to hardcode the path here.
     ADD_LIBRARY(turbojpeg SHARED IMPORTED)
     SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.0.0)
 
