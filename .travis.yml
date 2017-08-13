@@ -8,6 +8,11 @@ compiler:
   - gcc
   - clang
 
+addons:
+  apt:
+    packages:
+    - gtk+
+
 before_script:
   - mkdir build
   - cd build
