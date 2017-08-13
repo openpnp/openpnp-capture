@@ -15,7 +15,7 @@ addons:
     - libjpeg-turbo8-dev
 
 install:
-  - if [ $TRAVIS_OS_NAME = osx ]; then brew install brew install libjpeg-turbo; fi
+  - if [ $TRAVIS_OS_NAME = osx ]; then brew install libjpeg-turbo; fi
 
 before_script:
   - mkdir build
