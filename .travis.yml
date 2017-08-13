@@ -2,8 +2,7 @@ language: cpp
 
 os:
   - linux
-  # temporarily disable osx builds caue it's very slow.
-  # - osx
+  - osx
 
 compiler:
   - gcc
