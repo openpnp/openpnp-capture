@@ -29,7 +29,7 @@ before_deploy:
   - mkdir build/deploy
   - if [ $TRAVIS_OS_NAME = osx ]; then mkdir build/deploy/mac; build/libopenpnp-capture.dylib build/deploy/mac; cp build/mac/tests/openpnp-capture-test build/deploy/mac; fi
   - if [ $TRAVIS_OS_NAME = linux ]; then mkdir build/deploy/linux; build/libopenpnp-capture.so build/deploy/linux; cp build/linux/tests/openpnp-capture-test build/deploy/linux; fi
-  
+
 deploy:
   provider: s3
   access_key_id:
@@ -40,3 +40,10 @@ deploy:
   bucket: openpnp-capture
   region: us-west-2
   local_dir: build/deploy
+  on:
+    branch:
+    - develop
+    - master
+    - test
+    - travis-ci
+    
