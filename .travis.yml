@@ -2,7 +2,8 @@ language: cpp
 
 os:
   - linux
-  - osx
+  # temporarily disable osx builds caue it's very slow.
+  # - osx
 
 compiler:
   - gcc
@@ -12,10 +13,12 @@ addons:
   apt:
     packages:
     - libgtk-3-dev
+    - libturbojpeg
     - libjpeg-turbo8-dev
 
 install:
   - if [ $TRAVIS_OS_NAME = osx ]; then brew install libjpeg-turbo; fi
+  - find /usr/lib -name libturbo* -print
 
 before_script:
   - mkdir build
