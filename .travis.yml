@@ -27,8 +27,8 @@ script: make
 
 before_deploy:
   - mkdir deploy
-  - if [ $TRAVIS_OS_NAME = osx ]; then mkdir deploy/$TRAVIS_BRANCH/mac; cp libopenpnp-capture.dylib deploy/$TRAVIS_BRANCH/mac; cp mac/tests/openpnp-capture-test deploy/$TRAVIS_BRANCH/mac; fi
-  - if [ $TRAVIS_OS_NAME = linux ]; then mkdir deploy/$TRAVIS_BRANCH/linux; cp libopenpnp-capture.so deploy/$TRAVIS_BRANCH/linux; cp linux/tests/openpnp-capture-test deploy/$TRAVIS_BRANCH/linux; fi
+  - if [ $TRAVIS_OS_NAME = osx ]; then mkdir -p deploy/$TRAVIS_BRANCH/mac; cp libopenpnp-capture.dylib deploy/$TRAVIS_BRANCH/mac; cp mac/tests/openpnp-capture-test deploy/$TRAVIS_BRANCH/mac; fi
+  - if [ $TRAVIS_OS_NAME = linux ]; then mkdir -p deploy/$TRAVIS_BRANCH/linux; cp libopenpnp-capture.so deploy/$TRAVIS_BRANCH/linux; cp linux/tests/openpnp-capture-test deploy/$TRAVIS_BRANCH/linux; fi
 
 deploy:
   provider: s3
