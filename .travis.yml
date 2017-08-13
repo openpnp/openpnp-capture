@@ -39,7 +39,7 @@ deploy:
   skip_cleanup: true
   bucket: openpnp-capture
   region: us-west-2
-  local_dir: build/deploy
+  local_dir: deploy
   on:
     branch:
     - develop
