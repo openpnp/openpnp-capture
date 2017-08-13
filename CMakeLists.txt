@@ -98,6 +98,23 @@ ELSEIF(UNIX)
     find_package(Threads REQUIRED)
     add_library(openpnp-capture SHARED ${SOURCE})
     target_link_libraries(openpnp-capture Threads::Threads)
+
+    # this will force using the static lib, which will will eventually want to 
+    # do for all dependencies so we don't have to distribute them with our .so
+    # find_library(TURBOJPEG_LIB NAMES turbojpeg.a turbojpeg)
+
+    # but libturbojpeg is not compiled with -fPIC which means it can't be static
+    # linked into a shared lib. So instead we will eventually have to build it
+    # ourselves with -fPIC and then we can use this to specify the location:
+    # ADD_LIBRARY(turbojpeg STATIC IMPORTED)
+    # SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION ../libjpegturbo/whatever/libjpegturbo.a)
+
+    # this lets us specify the full path of the turbojpeg library. this is required
+    # because of a bug in the library distribution that does not create the correct
+    # symlink. See https://github.com/OpenKinect/libfreenect2/issues/36
+    ADD_LIBRARY(turbojpeg SHARED IMPORTED)
+    SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0)
+
     target_link_libraries(openpnp-capture turbojpeg)
     
     # add linux-specific test application
