@@ -2,6 +2,7 @@
 #define platformdeviceinfo_h
 
 #include <string>
+#include <vector>
 
 #include "../common/deviceinfo.h"
 #include "../common/logging.h"
@@ -24,9 +25,18 @@ public:
             LOG(LOG_DEBUG, "m_captureDevice released\n");
             CFRelease(m_captureDevice);
         }
+        #if 0
+        auto iter = m_platformFormats.begin();
+        while(iter != m_platformFormats.end())
+        {
+            delete *iter;
+            iter++;
+        }
+        #endif
     }
 
     CFTypeRef m_captureDevice;   ///< pointer to AVCaptureDevice
+    std::vector<AVCaptureDeviceFormat*> m_platformFormats; ///< formats supported by the device
 };
 
 #endif

@@ -13,13 +13,55 @@
 #include "openpnp-capture.h"
 #include "../common/context.h"
 
+bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const uint8_t *bufferPtr, size_t bytes)
+{
+    char fname[100];
+    sprintf(fname, "frame_%d.ppm",frameNum);
+    
+    FILE *fout = fopen(fname, "wb");
+    if (fout == 0)
+    {
+        fprintf(stderr, "Cannot open %s for writing\n", fname);
+        return false;
+    }
+
+    fprintf(fout, "P6 %d %d 255\n", width, height); // PGM header
+    fwrite(bufferPtr, 1, bytes, fout);
+    fclose(fout);
+
+    return true;
+}
+
 int main(int argc, char*argv[])
 {    
-    printf("OpenPNP Capture Test Program\n");
+    uint32_t deviceFormatID = 0;
+    uint32_t deviceID       = 0;
+
+    printf("==============================\n");
+    printf(" OpenPNP Capture Test Program\n");
+    printf(" %s\n", Cap_getLibraryVersion());
+    printf("==============================\n");
     Cap_setLogLevel(7);
+
+    if (argc == 1)
+    {
+        printf("Usage: openpnp-capture-test <camera ID> <frame format ID>\n");
+        printf("\n..continuing with default camera parameters.\n\n");
+    }
+
+    if (argc >= 2)
+    {
+        deviceID = atoi(argv[1]);
+    }
+    
+    if (argc >= 3)
+    {
+        deviceFormatID = atoi(argv[2]);
+    }
 
     CapContext ctx = Cap_createContext();
 
+#if 0    
     uint32_t deviceCount = Cap_getDeviceCount(ctx);
     printf("Number of devices: %d\n", deviceCount);
     for(uint32_t deviceIndex = 0; deviceIndex < deviceCount; deviceIndex++)
@@ -39,17 +81,81 @@ int main(int argc, char*argv[])
         }
     }
 
-//    int32_t streamID = Cap_openStream(ctx, 0, 0, 0, 0);
-//    printf("Stream ID = %d\n", streamID);
-//    
-//    if (Cap_isOpenStream(ctx, streamID) == 1)
-//    {
-//        printf("Stream is open\n");
-//    }
-//    else
-//    {
-//        printf("Stream is closed (?)\n");
-//    }
+#else
+
+    uint32_t deviceCount = Cap_getDeviceCount(ctx);
+    printf("Number of devices: %d\n", deviceCount);
+    for(uint32_t i=0; i<deviceCount; i++)
+    {
+        printf("ID %d -> %s\n", i, Cap_getDeviceName(ctx,i));
+        printf("Unique:  %s\n", Cap_getDeviceUniqueID(ctx,i));
+
+        // show all supported frame buffer formats
+        int32_t nFormats = Cap_getNumFormats(ctx, i);
+
+        printf("  Number of formats: %d\n", nFormats);
+
+        std::string fourccString;
+        for(int32_t j=0; j<nFormats; j++)
+        {
+            CapFormatInfo finfo;
+            Cap_getFormatInfo(ctx, i, j, &finfo);
+            //fourccString = FourCCToString(finfo.fourcc);
+            std::string fourcc;
+            for (int i = 3; i >= 0; i--) {
+                fourcc += (char) ((finfo.fourcc >> (8 * i)) & 0xff);
+            }
+            printf("  Format ID %d: %d x %d pixels  FOURCC=%s\n",
+                j, finfo.width, finfo.height, fourcc.c_str());
+        }
+    }
+
+#endif 
+
+    // get current stream parameters 
+    CapFormatInfo finfo;
+    Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
+
+    // try to open the first camera device found
+    //DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, CapFormatID formatID);
+    
+    int32_t streamID = Cap_openStream(ctx, deviceID, deviceFormatID);
+    printf("Stream ID = %d\n", streamID);
+
+    if (Cap_isOpenStream(ctx, streamID) == 1)
+    {
+        printf("Stream is open\n");
+    }
+    else
+    {
+        printf("Stream is closed (?)\n");
+        return 1;
+    }
+
+    //disable auto exposure, focus and white balance
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
+
+    std::vector<uint8_t> m_buffer;
+    m_buffer.resize(finfo.width*finfo.height*3);
+    uint32_t counter = 0;
+    while(counter < 30)
+    {
+        if (Cap_hasNewFrame(ctx, streamID) == 1)
+        {
+            Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size());
+            writeBufferAsPPM(counter, finfo.width, finfo.height, &m_buffer[0], m_buffer.size());
+            counter++;
+            printf("Captured frames: %d\r", counter);
+            fflush(stdout);
+        }
+    };    
+
+    printf("\n\n");
+    Cap_closeStream(ctx, streamID);
+
 //
 //    printf("Press Q to exit..\n");
 //

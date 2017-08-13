@@ -17,10 +17,29 @@
 #include <stdint.h>
 #include "../common/logging.h"
 #include "../common/stream.h"
-
+#import <AVFoundation/AVFoundation.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <CoreMedia/CoreMedia.h>
+#import <CoreVideo/CoreVideo.h>
 
 class Context;          // pre-declaration
 class PlatformStream;  // pre-declaration
+
+/** An OBJC++ interface to handle callbacks from the
+    video sub-system on OSX */
+@interface PlatformAVCaptureDelegate :
+NSObject<AVCaptureVideoDataOutputSampleBufferDelegate>
+{
+@public
+    PlatformStream *m_stream;
+}
+- (void)captureOutput:(AVCaptureOutput *)out
+    didDropSampleBuffer:(CMSampleBufferRef)sampleBuffer
+    fromConnection:(AVCaptureConnection *)connection;
+- (void)captureOutput:(AVCaptureOutput *)captureOutput
+    didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
+    fromConnection:(AVCaptureConnection *)connection;
+@end
 
 
 class PlatformStream : public Stream
@@ -49,7 +68,16 @@ public:
     /** set automatic state of property (exposure, zoom etc) of camera/stream */
     virtual bool setAutoProperty(uint32_t propID, bool enabled) override;
 
+    /** public function to handle callbacks from ObjC++ */
+    virtual void callback(const uint8_t* ptr, uint32_t bytes);
+
 protected:
+    PlatformAVCaptureDelegate* m_captureDelegate;
+    AVCaptureSession*   m_nativeSession;
+    dispatch_queue_t    m_queue;
+
+    std::vector<uint8_t> m_tmpBuffer;  ///< intermediate buffer for 32->24 bit conversion
+
     /** generate FOURCC string from a uint32 */
     std::string genFOURCCstring(uint32_t v);
 };
