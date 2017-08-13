@@ -1,0 +1,51 @@
+language: cpp
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  # Uncomment below if we decide to build with clang as well as gcc. Will require modifying deployments
+  # so that we don't overwrite the gcc binaries with the clang ones.
+  #- clang
+
+addons:
+  apt:
+    packages:
+    - libgtk-3-dev
+    - libturbojpeg
+    - libjpeg-turbo8-dev
+
+install:
+  - if [ $TRAVIS_OS_NAME = osx ]; then brew install libjpeg-turbo; fi
+
+before_script:
+  - mkdir build
+  - cd build
+  - cmake ..
+
+script: make
+
+before_deploy:
+  - mkdir deploy
+  - if [ $TRAVIS_OS_NAME = osx ]; then mkdir -p deploy/$TRAVIS_BRANCH/mac; cp libopenpnp-capture.dylib deploy/$TRAVIS_BRANCH/mac; cp mac/tests/openpnp-capture-test deploy/$TRAVIS_BRANCH/mac; fi
+  - if [ $TRAVIS_OS_NAME = linux ]; then mkdir -p deploy/$TRAVIS_BRANCH/linux; cp libopenpnp-capture.so deploy/$TRAVIS_BRANCH/linux; cp linux/tests/openpnp-capture-test deploy/$TRAVIS_BRANCH/linux; fi
+
+deploy:
+  provider: s3
+  access_key_id:
+    secure: "fjx3sOgOd+l9tNR8tDY319unsW93D901ppJAop6OsCMRqk2hLLj2BVHl4IWmE/gejDn0HPiFWKUMC7mF3RS8s8Dw4Hj5CnRzf8+IyarctvoweAU4LGwinLLHyHY9iWB5dyD7k16C57nArIUo0B+FGhvomhTjixIRq8rH2HLaGspHhZ/BUf57pctnZm+Uejn/EKtplc3jsxzg/116JpDBeOhQNpYnU/KbI6UBaCcExN2d3kaQK8Fj1TJdgw5bkM8VWLGa6TGNdALXlbo1EfnmNl3kzAewikycu4HrvFs/GpB1bJ79LgWsoNuB3nHc+sfUNWag1PhHMcIZrcpI6zpopQOkzgohFt8pijvC8Tns4ne7kUVed9SAsx3b0/Og13o3bAywqKfPZtcguaGkCI84Iutxh+F1yg1pCndcKrDx5th+N0I6ke4VbFyaaoZ0/Pp3a17+sqcWQEA+UXcUGT0Mk6AH5k/NJHzSQIhWwsauRXyOomJG4cEeLtnhEHe2THwIz0mgd3d3i2GN46L0+I5vdpVuJb3DS0IuiUSZ4SZMAChXfjxxkrQlmQNauMarQnHW7hkCio+hLpqqQEQeLlkxN/f6gawE8uyNw8rLulmOj2BnnCypWEtzBKHVBH298EyZyxpmmVBPCJKqq5rNw54dY9b7tYVuXc1hDkIGqELUkvM="
+  secret_access_key:
+    secure: "kMBKElwIasvExGhVBHybV7oKz27UM1Tv8jb2MxHCcAdSheTANqg0Gw+u+GSGKDz9Pcg75KBXqlGB7ZSn5ML53GaxB3xRDpeKFqvtcDrvG5Nv9EVZBRBrTY4EkIZ9iDr1/xhVHuGKNFjFKOTtZmTxfZIHxhvk8iiMYFXKQDGJIbkaaeacoxuWnWJDdp4T5YWwz34iZR9n07gpW6o6UF7LZvQgdsIwU94TpJw6/QpY2hB7Zv+nZYf0oXg6jyzsOXBHr7YcziXTC2TVXxHOrUyEfzpceCsZyNFNJKxGE5qtCdzL0YDskhV4rJyilROWDjZt+P8dg5uGZTF1KwgY52owZyi+PrZZmCHOyAMGihFofPi7huJLVhZQt49hWZXbVSj8OEXKsxDAza1G5ZZFfgdMiNtdaeND12180c/6vn+l2eibYV4IO0j6nfqV4Z0WX+DEv3yguk2rOZHd/IQokEbtcaqN9uXkCuMRW4f7vBv4n8heHX/Q/mV4dYUsD9giasgGAIekkwudi9maXzLEFYkU2/oTzqHn/ci6SQmY6adSrqq6NbRPvwSAc8Gq4ryKVVdacSe8e4TcMljPog2XNc0ugZav9ZEyjrCS5eg7/Bj7PtEoZ8jA7fFYQhvpTZus9jeT1CfmMCTI8CVx0l14dTvCFHpGSIGjrZhuOP8xHNLYj7w="
+  skip_cleanup: true
+  bucket: openpnp-capture
+  region: us-west-2
+  local_dir: deploy
+  on:
+    branch:
+    - develop
+    - master
+    - test
+    - travis-ci
+

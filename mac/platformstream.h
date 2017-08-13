@@ -37,15 +37,17 @@ public:
     /** Close a capture stream */
     virtual void close() override;
 
+    /** get the limits of a camera/stream property (exposure, zoom etc) */
+    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) override;
+
+    /** set property (exposure, zoom etc) of camera/stream */
+    virtual bool setProperty(uint32_t propID, int32_t value) override;
+
+    /** set automatic state of property (exposure, zoom etc) of camera/stream */
+    virtual bool setAutoProperty(uint32_t propID, bool enabled) override;
+
     /** Return the FOURCC media type of the stream */
     virtual uint32_t getFOURCC() override;
-
-    virtual bool setExposure(int32_t value) override;
-
-    virtual bool setAutoExposure(bool enabled) override;
-
-    virtual bool getExposureLimits(int32_t *min, int32_t *max) override;
-
 protected:
     /** generate FOURCC string from a uint32 */
     std::string genFOURCCstring(uint32_t v);
