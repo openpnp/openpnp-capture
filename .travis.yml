@@ -26,9 +26,9 @@ before_script:
 script: make
 
 before_deploy:
-  - mkdir build/deploy
-  - if [ $TRAVIS_OS_NAME = osx ]; then mkdir build/deploy/mac; build/libopenpnp-capture.dylib build/deploy/mac; cp build/mac/tests/openpnp-capture-test build/deploy/mac; fi
-  - if [ $TRAVIS_OS_NAME = linux ]; then mkdir build/deploy/linux; build/libopenpnp-capture.so build/deploy/linux; cp build/linux/tests/openpnp-capture-test build/deploy/linux; fi
+  - mkdir deploy
+  - if [ $TRAVIS_OS_NAME = osx ]; then mkdir deploy/mac; libopenpnp-capture.dylib deploy/mac; cp mac/tests/openpnp-capture-test deploy/mac; fi
+  - if [ $TRAVIS_OS_NAME = linux ]; then mkdir deploy/linux; libopenpnp-capture.so deploy/linux; cp linux/tests/openpnp-capture-test deploy/linux; fi
 
 deploy:
   provider: s3
@@ -46,4 +46,4 @@ deploy:
     - master
     - test
     - travis-ci
-    
+
