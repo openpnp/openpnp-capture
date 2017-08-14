@@ -73,6 +73,12 @@ bool Stream::captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes)
 
 void Stream::submitBuffer(const uint8_t *ptr, size_t bytes)
 {
+    // sanity check
+    if (ptr == nullptr)
+    {
+        return;
+    }
+    
     m_bufferMutex.lock();
     
     if (m_frameBuffer.size() == 0)
