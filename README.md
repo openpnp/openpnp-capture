@@ -74,3 +74,23 @@ Run 'bootstrap_linux.sh'. Run make.
 * PlatformContext handles device and internal frame buffer format enumeration.
 * PlatformStream is responsible for capturing and decoding the camera stream to a 8-bit per channel RGB frame buffer.
 * Statically link external dependencies.
+
+# Downloading Binaries
+
+openpnp-capture is not ready for release, but you can download test binaries that are built automatically.
+
+## Windows
+1. Go to https://ci.appveyor.com/project/vonnieda/openpnp-capture
+2. Click the Release or Debug build.
+3. Select Artifacts.
+4. Download the individual listed files.
+
+## Linux
+* https://s3-us-west-2.amazonaws.com/openpnp-capture/master/linux/libopenpnp-capture.so
+* https://s3-us-west-2.amazonaws.com/openpnp-capture/master/linux/openpnp-capture-test
+
+## OSX
+* https://s3-us-west-2.amazonaws.com/openpnp-capture/master/mac/libopenpnp-capture.dylib
+* https://s3-us-west-2.amazonaws.com/openpnp-capture/master/mac/openpnp-capture-test
+
+

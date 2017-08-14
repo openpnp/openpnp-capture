@@ -12,17 +12,13 @@
         didDropSampleBuffer:(CMSampleBufferRef)sampleBuffer
         fromConnection:(AVCaptureConnection *)connection
 {
-	//UNUSED_PARAMETER(out);
-	//UNUSED_PARAMETER(sampleBuffer);
-	//UNUSED_PARAMETER(connection);
+
 }
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput
         didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         fromConnection:(AVCaptureConnection *)connection
 {
-	//UNUSED_PARAMETER(captureOutput);
-	//UNUSED_PARAMETER(connection);
 
     // check the number of samples/frames
 	CMItemCount count = CMSampleBufferGetNumSamples(sampleBuffer);
@@ -65,30 +61,6 @@
             CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
         }
     }
-
-#if 0
-	CMItemCount count = CMSampleBufferGetNumSamples(sampleBuffer);
-	if (count < 1 || !capture)
-		return;
-
-	obs_source_frame *frame = &capture->frame;
-
-	CMTime target_pts =
-		CMSampleBufferGetOutputPresentationTimeStamp(sampleBuffer);
-	CMTime target_pts_nano = CMTimeConvertScale(target_pts, NANO_TIMESCALE,
-			kCMTimeRoundingMethod_Default);
-	frame->timestamp = target_pts_nano.value;
-
-	if (!update_frame(capture, frame, sampleBuffer)) {
-		obs_source_output_video(capture->source, nullptr);
-		return;
-	}
-
-	obs_source_output_video(capture->source, frame);
-
-	CVImageBufferRef img = CMSampleBufferGetImageBuffer(sampleBuffer);
-	CVPixelBufferUnlockBaseAddress(img, kCVPixelBufferLock_ReadOnly);
-#endif
 }
 
 @end
@@ -106,6 +78,7 @@ Stream* createPlatformStream()
 PlatformStream::PlatformStream() :
     Stream()
 {
+    m_fourCC = 0;
     m_nativeSession = nullptr;
 }
 
@@ -126,6 +99,7 @@ void PlatformStream::close()
         m_nativeSession = nullptr;
     }
 
+    m_fourCC = 0;
     m_isOpen = false;
 }
 
@@ -194,6 +168,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
             if (myFourCC == fourCC)
             {
                 bestFormat = dinfo->m_platformFormats[i];
+                m_fourCC = myFourCC;
+                break;
             }
         } 
     }
@@ -285,11 +261,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     return true;
 }
 
-uint32_t PlatformStream::getFOURCC()
-{
-    return 0;
-}
-
 std::string PlatformStream::genFOURCCstring(uint32_t v)
 {
     std::string result;
@@ -307,6 +278,19 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *m
     return false;
 }
 
+uint32_t PlatformStream::getFOURCC()
+{
+    //note: OSX stores the fourcc in reverse byte order
+    // compared to Windows or Linux so we swap the 
+    // bytes here to be compatible
+
+    uint32_t tmp = m_fourCC;
+    tmp = ((tmp >> 16) & 0x0000ffff) | ((tmp << 16) & 0xffff0000);
+    tmp = ((tmp & 0x00ff00ff)<<8) | ((tmp & 0xff00ff00)>>8);
+
+    return tmp;
+}
+
 /** set property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setProperty(uint32_t propID, int32_t value)
 {
@@ -316,7 +300,7 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
 /** set automatic state of property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
 {
-    return false;
+    return 0;
 }
 
 void PlatformStream::callback(const uint8_t *ptr, uint32_t bytes)

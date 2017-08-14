@@ -72,6 +72,7 @@ public:
     virtual void callback(const uint8_t* ptr, uint32_t bytes);
 
 protected:
+    /* AVFoundation objects to control the camera on OSX */
     PlatformAVCaptureDelegate* m_captureDelegate;
     AVCaptureSession*   m_nativeSession;
     dispatch_queue_t    m_queue;
@@ -80,6 +81,8 @@ protected:
 
     /** generate FOURCC string from a uint32 */
     std::string genFOURCCstring(uint32_t v);
+
+    uint32_t m_fourCC;  ///< current fourCC code for capture stream
 };
 
 #endif
