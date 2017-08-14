@@ -1,0 +1,4 @@
+-library openpnp-capture 
+../include/openpnp-capture.h 
+-runtime JNA 
+-package org.openpnp.capture.library
