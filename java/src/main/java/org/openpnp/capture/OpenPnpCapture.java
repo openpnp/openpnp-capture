@@ -1,8 +1,8 @@
 package org.openpnp.capture;
 
+import org.openpnp.capture.library.CapFormatInfo;
 import org.openpnp.capture.library.OpenpnpCaptureLibrary;
 
-import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
 public class OpenPnpCapture {
@@ -16,9 +16,15 @@ public class OpenPnpCapture {
         OpenPnpCapture capture = new OpenPnpCapture();
         Pointer context = OpenpnpCaptureLibrary.INSTANCE.Cap_createContext();
         int deviceCount = OpenpnpCaptureLibrary.INSTANCE.Cap_getDeviceCount(context);
-        for (int i = 0; i < deviceCount; i++) {
-            String deviceName = OpenpnpCaptureLibrary.INSTANCE.Cap_getDeviceName(context, i).getString(0);
-            System.out.println(String.format("%d %s", i, deviceName));
+        for (int deviceIndex = 0; deviceIndex < deviceCount; deviceIndex++) {
+            String deviceName = OpenpnpCaptureLibrary.INSTANCE.Cap_getDeviceName(context, deviceIndex).getString(0);
+            System.out.println(String.format("%d %s", deviceIndex, deviceName));
+            int formatCount = OpenpnpCaptureLibrary.INSTANCE.Cap_getNumFormats(context, deviceIndex);
+            for (int formatIndex = 0; formatIndex < formatCount; formatIndex++) {
+                CapFormatInfo formatInfo = new CapFormatInfo();
+                OpenpnpCaptureLibrary.INSTANCE.Cap_getFormatInfo(context, deviceIndex, formatIndex, formatInfo);
+                System.out.println(String.format("  %dx%d @ %d fps", formatInfo.width, formatInfo.height, formatInfo.fps));
+            }
         }
     }
 }
