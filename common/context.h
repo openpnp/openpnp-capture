@@ -29,8 +29,6 @@
 #ifndef openpnp_context_h
 #define openpnp_context_h
 
-#define _CRT_SECURE_NO_WARNINGS
-
 #include <vector>
 #include <string>
 #include <map>

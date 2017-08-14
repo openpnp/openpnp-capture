@@ -42,6 +42,9 @@ IF (WIN32)
     # set the platform identification string
     add_definitions(-D__PLATFORM__="Win ${COMPILERBITS}")
     
+    # remove annoying 'unsafe' function warnings
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+
     # add files for WIN32
     set (SOURCE common/libmain.cpp
                 common/context.cpp
