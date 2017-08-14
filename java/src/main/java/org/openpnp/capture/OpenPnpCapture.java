@@ -1,11 +1,29 @@
 package org.openpnp.capture;
 
-import org.openpnp.capture.library.CapFormatInfo;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.openpnp.capture.library.OpenpnpCaptureLibrary;
 
 import com.sun.jna.Pointer;
 
 public class OpenPnpCapture {
+    Pointer context;
+    
+    public OpenPnpCapture() {
+        context = OpenpnpCaptureLibrary.INSTANCE.Cap_createContext();
+    }
+    
+    public List<CaptureDevice> getDevices() {
+        int deviceCount = OpenpnpCaptureLibrary.INSTANCE.Cap_getDeviceCount(context);
+        List<CaptureDevice> devices = new ArrayList<>();
+        for (int deviceIndex = 0; deviceIndex < deviceCount; deviceIndex++) {
+            CaptureDevice device = new CaptureDevice(context, deviceIndex);
+            devices.add(device);
+        }
+        return devices;
+    }
+    
     // Library prefixes
     // darwin
     // win32-x86
@@ -14,17 +32,7 @@ public class OpenPnpCapture {
     // linux-x86-64
     public static void main(String[] args) {
         OpenPnpCapture capture = new OpenPnpCapture();
-        Pointer context = OpenpnpCaptureLibrary.INSTANCE.Cap_createContext();
-        int deviceCount = OpenpnpCaptureLibrary.INSTANCE.Cap_getDeviceCount(context);
-        for (int deviceIndex = 0; deviceIndex < deviceCount; deviceIndex++) {
-            String deviceName = OpenpnpCaptureLibrary.INSTANCE.Cap_getDeviceName(context, deviceIndex).getString(0);
-            System.out.println(String.format("%d %s", deviceIndex, deviceName));
-            int formatCount = OpenpnpCaptureLibrary.INSTANCE.Cap_getNumFormats(context, deviceIndex);
-            for (int formatIndex = 0; formatIndex < formatCount; formatIndex++) {
-                CapFormatInfo formatInfo = new CapFormatInfo();
-                OpenpnpCaptureLibrary.INSTANCE.Cap_getFormatInfo(context, deviceIndex, formatIndex, formatInfo);
-                System.out.println(String.format("  %dx%d @ %d fps", formatInfo.width, formatInfo.height, formatInfo.fps));
-            }
-        }
+        List<CaptureDevice> devices = capture.getDevices();
+        System.out.println(devices);
     }
 }
