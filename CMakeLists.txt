@@ -76,6 +76,8 @@ ELSEIF(APPLE)
         "-framework AVFoundation"
         "-framework Foundation"
         "-framework CoreMedia"
+        "-framework CoreVideo"
+        "-framework Accelerate"
         )
 
     # add mac specific test application
