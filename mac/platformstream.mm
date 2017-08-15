@@ -94,8 +94,7 @@ void PlatformStream::close()
     if (m_nativeSession != nullptr)
     {
         [m_nativeSession stopRunning];
-        //FIXME: how do we handle deallocation of objc++ 
-        //       objects? 
+        [m_nativeSession release];
         m_nativeSession = nullptr;
     }
 
