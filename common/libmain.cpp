@@ -30,6 +30,7 @@
 #include "openpnp-capture.h"
 #include "context.h"
 #include "logging.h"
+#include "version.h"
 
 // Define a PlatformContext factory call 
 // to separate platform dependent and independent

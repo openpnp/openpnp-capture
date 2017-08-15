@@ -7,18 +7,28 @@
 # When invoking on Windows systems, make sure the
 # compiler (Visual Studio) is in the search path.
 #
-# Author: Niels A. Moseley
+# Author: Niels A. Moseley, Jason von Nieda
 #
 
 cmake_minimum_required(VERSION 3.1)
 project (openpnp-capture)
 
+# make CMAKE search the current cmake dir inside the
+# current project
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # force C++11 standard
 set(CMAKE_CXX_STANDARD 11)
 
+# load module that gets info from GIT 
+# see: http://brianmilco.blogspot.nl/2012/11/cmake-automatically-use-git-tags-as.html
+include(GetGitRevisionDescription)
 
-# library version
-add_definitions(-D__LIBVER__="v0.01")
+# create library version from GIT tag using cmake/version.h.in as a template
+# and write it to common/version.h
+git_describe(GITVERSION --tags)
+MESSAGE(STATUS "Using GIT tag: " ${GITVERSION} )
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/common/version.h)
 
 # determine number of bits of compiler
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
