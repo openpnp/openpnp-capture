@@ -21,7 +21,7 @@ before_script:
 
 script: make
 
-defore_deploy:
+before_deploy:
   - if [ $TRAVIS_OS_NAME = osx ]; then cp mac/tests/openpnp-capture-test openpnp-capture-test-mac; fi
   - if [ $TRAVIS_OS_NAME = linux ]; then cp linux/tests/openpnp-capture-test openpnp-capture-test-linux; fi
 
