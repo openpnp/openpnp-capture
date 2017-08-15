@@ -26,3 +26,4 @@ deploy:
   artifact: openpnp-capture.dll
   on:
     appveyor_repo_tag: true
+    configuration: Release
