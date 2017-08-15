@@ -13,22 +13,10 @@
 #ifndef openpnp_win32platformcontext_h
 #define openpnp_win32platformcontext_h
 
-#define _CRT_SECURE_NO_WARNINGS
-
-
 #include <vector>
 #include <string>
 #include <map>
 #include <stdint.h>
-
-#if 0
-// Media Foundation libraries
-#include <Mfidl.h>
-#include <Mfapi.h>
-#pragma comment(lib, "Mfplat")
-#pragma comment(lib, "Mf.lib")
-#pragma comment(lib, "Mfuuid.lib")
-#endif
 
 #pragma comment(lib, "strmiids")
 

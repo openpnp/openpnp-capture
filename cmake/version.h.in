@@ -1,0 +1,3 @@
+#ifndef __LIBVER__
+#define __LIBVER__ "@GITVERSION@"
+#endif

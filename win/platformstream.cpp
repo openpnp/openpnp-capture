@@ -62,6 +62,7 @@ PlatformStream::PlatformStream() :
     m_callbackHandler(nullptr),
     m_sampleGrabberFilter(nullptr),
     m_sourceFilter(nullptr),
+    m_nullRenderer(nullptr),
     m_sampleGrabber(nullptr),
     m_camControl(nullptr)
 {
@@ -103,6 +104,7 @@ void PlatformStream::close()
     SafeRelease(&m_sampleGrabberFilter);
     SafeRelease(&m_sampleGrabber);
     SafeRelease(&m_camControl);
+    SafeRelease(&m_nullRenderer);
 
     if (m_callbackHandler != 0)
     {
@@ -358,8 +360,44 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     /* Note: Although I had expected to have to use 'PIN_CATEGORY_CAPTURE',
        using 'PIN_CATEGORY_PREVIEW' gives 30 fps at HD res on a Microsoft LifeCam 3000,
        whereas 'PIN_CATEGORY_CAPTURE' results in 2.5 fps !?!
+
+       In order to not create a default display window, the end-point of the stream
+       must be a Null renderer. It can be created by:
+
+        //NULL RENDERER//
+        //used to give the video stream somewhere to go to.
+        hr = CoCreateInstance(CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)(&m_nullRenderer));
+        if (FAILED(hr))
+        {
+            DebugPrintOut("ERROR: Could not create filter - NullRenderer\n");
+            stopDevice(deviceID);
+            return hr;
+        }
     */
-    hr = m_capture->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_sourceFilter, m_sampleGrabberFilter, NULL);
+
+    // only create a valid NULL renderer in release builds!
+    // FIXME: is this the behavior we actually want,
+    //        or should we use a special define to 
+    //        enable the preview window?
+    #ifndef _DEBUG
+    hr = CoCreateInstance(CLSID_NullRenderer, NULL, CLSCTX_INPROC_SERVER, IID_IBaseFilter, (void**)(&m_nullRenderer));
+    if (FAILED(hr))
+    {
+        LOG(LOG_WARNING,"Could not create a NULL renderer - using NULL ptr instead.");
+    }
+    else
+    {
+        // we need to add the filter to the graph to be able to use it.. 
+        hr = m_graph->AddFilter(m_nullRenderer, L"NULLRenderer");
+        if (hr < 0)
+        {
+            LOG(LOG_ERR,"Could not add NULL Renderer to graph (HRESULT=%08X)\n", hr);
+            return false;
+        }
+    }
+    #endif
+
+    hr = m_capture->RenderStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_sourceFilter, m_sampleGrabberFilter, m_nullRenderer);
     if (hr < 0)
     {
         LOG(LOG_ERR,"Error calling RenderStream (HRESULT=%08X)\n", hr);

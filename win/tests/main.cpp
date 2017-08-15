@@ -141,10 +141,25 @@ int main(int argc, char*argv[])
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
     //disable auto exposure, focus and white balance
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
+    if (Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0) != CAPRESULT_OK)
+    {
+        printf("Could not disable auto-exposure\n");
+    }
+
+    if (Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0) != CAPRESULT_OK)
+    {
+        printf("Could not disable auto-focus\n");
+    }
+
+    if (Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0) != CAPRESULT_OK)
+    {
+        printf("Could not disabe auto-whitebalance\n");
+    }
+
+    if (Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0) != CAPRESULT_OK)
+    {
+        printf("Could not disable auto-gain\n");
+    }
 
     // set exposure in the middle of the range
     int32_t exposure = 0;

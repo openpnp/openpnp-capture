@@ -163,6 +163,7 @@ protected:
     IMediaControl*  m_control;
     IBaseFilter*    m_sourceFilter;
     IBaseFilter*    m_sampleGrabberFilter;
+    IBaseFilter*    m_nullRenderer;
     ISampleGrabber* m_sampleGrabber;
     ICaptureGraphBuilder2* m_capture;
     IAMCameraControl* m_camControl;
