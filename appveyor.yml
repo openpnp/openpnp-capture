@@ -23,7 +23,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
-  artifact: openpnp-capture.dll
+  artifact: openpnp-capture.dll,openpnp-capture-test.exe
   on:
     appveyor_repo_tag: true
     configuration: Release
