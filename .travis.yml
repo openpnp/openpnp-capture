@@ -21,15 +21,12 @@ before_script:
 
 script: make
 
-after_script:
-  - cd ..
-
 deploy:
   provider: releases
   api_key:
     secure: KCWaBhQUErPrtFJjd967ERl7Bd3qCvd1tCYtPsI19JC7VHRlbn9pIJmACLKn8ZYd9WiL0214QJohoppQtov+g0wF+l7nTIHAImjVq/dYXvOtsSuOqcjpxxqf4AfmRy3uOyHyOrcvFW2OzZnCwER3iMOcsNXD3jdCDhQycBr2stzASmcbBLvt21xwMhGP8HjarALwpTuvEwSVda19bgKz7bsxaLETV/d4W79DBKTscdR8R41wur0fi4Z5WCtsJ6yT2ILmOQb5AXxTeqwvr1a522F668WlrQ/T7V+vkzAGBDGzQmmbGw/utHirwfncBcVXK/ap/DTiaFZvdvIgtkWglFjtOpLrPbuikccu6Lxetie22AMuHc867FgFmMi1BT7oO5faFODQ95L1apTNzsbERTiMetny0HAJxfAlmmz//MIe2KoK9U5raRESmQAR7hCdYX7fzXYkW/rPvvyK5KIQa2bd/ifE/iITVeRL1/cZvb/E+sCk8Z10nf/qt1nWKIlxPicrIhmMazDqSd6FHlqEVBPHPy9nQtvN7DpJTo6XOuoAKVT6RqukmltcxpsAJYqK1CDRPIJbevW40oX1ZjTlpULI1PsBzHJcGJd0Trt98PhiUtRJC776zU6ItjrR6MBNKov+Ffy27TXUrVmedf+2U83io2hQn3ugzkVfyyQoeIM=
   file_glob: true    
-  file: build/libopenpnp-capture.*
+  file: libopenpnp-capture.*
   skip_cleanup: true
   on:
     tags: true
