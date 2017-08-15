@@ -18,3 +18,11 @@ artifacts:
 - path: build\$(CONFIGURATION)\openpnp-capture.dll
   name: openpnp-capture.dll
   
+deploy:
+  description: 'Auto generated release.'
+  provider: GitHub
+  auth_token:
+    secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
+  artifact: openpnp-capture.dll
+  on:
+    appveyor_repo_tag: true
