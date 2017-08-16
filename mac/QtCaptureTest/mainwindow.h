@@ -21,6 +21,7 @@ public:
 
 public slots:
     void doFrameUpdate();
+    void changeCamera(int index);
 
 private:
     CapFormatInfo           m_finfo;

@@ -221,10 +221,11 @@ bool Context::captureFrame(int32_t streamID, uint8_t *RGBbufferPtr, size_t RGBbu
         return false;
     }    
 
-    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    Stream *stream = m_streams[streamID];
+    if (stream == nullptr)
     {
-        LOG(LOG_ERR, "captureFrame was called with an out-of-bounds stream ID\n");
-        return false;
+        LOG(LOG_ERR, "hasNewFrame was called with an unknown stream ID\n");
+        return false; 
     }
     
     return m_streams[streamID]->captureFrame(RGBbufferPtr, RGBbufferBytes);
@@ -238,13 +239,14 @@ bool Context::hasNewFrame(int32_t streamID)
         return false;
     }    
 
-    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    Stream *stream = m_streams[streamID];
+    if (stream == nullptr)
     {
-        LOG(LOG_ERR, "hasNewFrame was called with an out-of-bounds stream ID\n");
-        return false;        
+        LOG(LOG_ERR, "hasNewFrame was called with an unknown stream ID\n");
+        return false; 
     }
 
-    return m_streams[streamID]->hasNewFrame();
+    return stream->hasNewFrame();
 }
 
 uint32_t Context::getStreamFrameCount(int32_t streamID)
@@ -255,15 +257,17 @@ uint32_t Context::getStreamFrameCount(int32_t streamID)
         return 0;
     }    
 
-    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    Stream *stream = m_streams[streamID];
+    if (stream == nullptr)
     {
-        LOG(LOG_ERR, "getStreamFrameCount was called with an out-of-bounds stream ID\n");
-        return 0;        
+        LOG(LOG_ERR, "hasNewFrame was called with an unknown stream ID\n");
+        return false; 
     }
 
-    return m_streams[streamID]->getFrameCount();
+    return stream->getFrameCount();
 }
 
+#if 0
 /** Lookup a stream by ID and return a pointer
     to it if it exists. If it doesnt exist, 
     return NULL */
@@ -276,6 +280,7 @@ Stream* Context::lookupStreamByID(int32_t ID)
     }
     return nullptr;
 }
+#endif
 
 /** Store a stream pointer in the m_streams map
     and return its unique ID */
@@ -302,21 +307,21 @@ bool Context::removeStream(int32_t ID)
 
 bool Context::getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max)
 {
-    Stream* stream = Context::lookupStreamByID(streamID);
+    Stream* stream = m_streams[streamID];
     if (stream == nullptr) return false;
     return stream->getPropertyLimits(propertyID, min, max);
 }
 
 bool Context::setStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool enable)
 {
-    Stream* stream = Context::lookupStreamByID(streamID);
+    Stream* stream = m_streams[streamID];
     if (stream == nullptr) return false;
     return stream->setAutoProperty(propertyID, enable);
 }
 
 bool Context::setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t value)
 {
-    Stream* stream = Context::lookupStreamByID(streamID);
+    Stream* stream = m_streams[streamID];
     if (stream == nullptr) return false;
     return stream->setProperty(propertyID, value);
 }
