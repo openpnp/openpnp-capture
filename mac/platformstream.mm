@@ -100,6 +100,7 @@ void PlatformStream::close()
 
     m_fourCC = 0;
     m_isOpen = false;
+    m_device = nullptr; // note: we don't own the device object!
 }
 
 bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
@@ -135,14 +136,14 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;        
     }
 
-    // get a pointer to the native OBJC device.
-    AVCaptureDevice* nativeDevice = (__bridge AVCaptureDevice*) (void*) dinfo->m_captureDevice;
+    //copy the device pointer into stream object
+    m_device = (__bridge AVCaptureDevice*) dinfo->m_captureDevice;
 
     // create a new session manager and open a capture session
     m_nativeSession = [AVCaptureSession new];
 
     NSError* error = nil;
-    AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:nativeDevice error:&error];
+    AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:m_device error:&error];
     if (!input) 
     {
         LOG(LOG_ERR, "Error opening native device %s\n", error.localizedDescription.UTF8String);
@@ -155,7 +156,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 
     LOG(LOG_DEBUG, "Setup for capture format (%d x %d)...\n", width, height);
 
-    //[nativeDevice lockForConfiguration];
     AVCaptureDeviceFormat *bestFormat = nil;
     for(uint32_t i=0; i<dinfo->m_platformFormats.size(); i++)
     {
@@ -180,8 +180,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     }
     
     //FIXME: error checking..
-    [nativeDevice lockForConfiguration:NULL];
-    nativeDevice.activeFormat = bestFormat;
+    [m_device lockForConfiguration:NULL];
+    m_device.activeFormat = bestFormat;
     
     m_width = width;
     m_height = height;
@@ -253,7 +253,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     // unlock must be after startRunning call
     // otherwise the session object will
     // override our settings :-/
-    [nativeDevice unlockForConfiguration];
+    [m_device unlockForConfiguration];
 
     m_isOpen = true;
     m_frames = 0; // reset the frame counter
@@ -293,13 +293,97 @@ uint32_t PlatformStream::getFOURCC()
 /** set property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setProperty(uint32_t propID, int32_t value)
 {
-    return false;
+    if (m_device == nullptr) 
+    {
+        return false;
+    }
+
+    if (![m_device lockForConfiguration:NULL])
+    {
+        LOG(LOG_ERR, "cannot lock the capture device for re-configuration\n");
+        return false;
+    }
+
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        //m_device.exposureDusation = minExposureDuration;
+        // it seems that explicit exposure settings are not supported
+        // on OSX.
+        [m_device unlockForConfiguration];
+        return false;
+    case CAPPROPID_WHITEBALANCE:
+        [m_device unlockForConfiguration];
+        return false;
+    default:
+        ;
+    }
+    [m_device unlockForConfiguration];
+
+    return true;
 }
 
 /** set automatic state of property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
 {
-    return 0;
+    if (m_device == nullptr) 
+    {
+        return false;
+    }
+
+    if ([m_device lockForConfiguration:NULL] == NO)
+    {
+        LOG(LOG_ERR, "cannot lock the capture device for re-configuration\n");
+        return false;
+    }
+
+    //FIXME: exposure/whitebalance modes must be 
+    //       chekced for support, otherwise an exception
+    //       will occur if unsupported by the device!
+
+    bool ok = true;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        if (enabled)
+        {
+            m_device.exposureMode = AVCaptureExposureModeAutoExpose;
+        }
+        else
+        {
+            m_device.exposureMode = AVCaptureExposureModeLocked;         
+        }
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        if (enabled)
+        {
+            if ([m_device isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeContinuousAutoWhiteBalance] == YES)
+            {
+                m_device.whiteBalanceMode = AVCaptureWhiteBalanceModeContinuousAutoWhiteBalance;
+            }
+            else
+            {
+                ok = false;
+            }
+        }
+        else
+        {
+            if ([m_device isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeLocked] == YES)
+            {            
+                m_device.whiteBalanceMode = AVCaptureWhiteBalanceModeLocked;
+            }
+            else
+            {
+                ok = false;
+            }            
+        }
+        break;
+    default:
+        ;
+    }
+    [m_device unlockForConfiguration];
+
+    return ok;
 }
 
 void PlatformStream::callback(const uint8_t *ptr, uint32_t bytes)
