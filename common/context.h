@@ -159,11 +159,6 @@ protected:
     */
     virtual bool enumerateDevices() = 0;
 
-    /** Lookup a stream by ID and return a pointer
-        to it if it exists. If it doesnt exist, 
-        return NULL */
-    Stream* lookupStreamByID(int32_t ID);
-
     /** Store a stream pointer in the m_streams map
         and return its unique ID */
     int32_t storeStream(Stream *stream);
