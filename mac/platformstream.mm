@@ -386,6 +386,20 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
     return ok;
 }
 
+// FIXME: properties are not properly supported on OSX and must be
+//        implemented using direct access of UVC cameras
+bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
+{
+    return false;
+}
+
+// FIXME: properties are not properly supported on OSX and must be
+//        implemented using direct access of UVC cameras
+bool PlatformStream::getAutoProperty(uint32_t propID, bool &enabled)
+{
+    return false;
+}
+
 void PlatformStream::callback(const uint8_t *ptr, uint32_t bytes)
 {
     // here we get 32-bit ARGB buffers, which we need to
