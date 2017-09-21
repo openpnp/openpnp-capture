@@ -27,6 +27,7 @@ typedef struct
     uint32_t    snapshotCounter;
 
     int32_t     zoom,gain,exposure,wbalance,focus;
+    int32_t     exposure_step;
     int32_t     gstep,wbstep;
 } CallbackInfo;
  
@@ -78,6 +79,7 @@ void showAutoProperty(CapContext ctx, int32_t streamID, uint32_t propertyID)
 
 void showAutoProperties(CapContext ctx, int32_t streamID)
 {
+    printf("--= Automatic =--\n");
     printf("White balance: ");
     showAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE);
 
@@ -86,9 +88,6 @@ void showAutoProperties(CapContext ctx, int32_t streamID)
 
     printf("Focus        : ");
     showAutoProperty(ctx, streamID, CAPPROPID_FOCUS);
-    
-    printf("Zoom         : ");
-    showAutoProperty(ctx, streamID, CAPPROPID_ZOOM);
 
     printf("Gain         : ");
     showAutoProperty(ctx, streamID, CAPPROPID_GAIN);
@@ -215,14 +214,16 @@ gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data)
         gtk_main_quit();
         return TRUE;
     case '+':
-        printf("+");
-        fflush(stdout);
-        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ++ptr->exposure);
+        ptr->exposure += ptr->exposure_step;
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ptr->exposure);
+        printf("exposure: %d\r", ptr->exposure);
+        fflush(stdout);        
         return TRUE;
     case '-':
-        printf("-");
-        fflush(stdout);
-        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, --ptr->exposure);
+        ptr->exposure -= ptr->exposure_step;
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ptr->exposure);
+        printf("exposure: %d\r", ptr->exposure);
+        fflush(stdout);        
         return TRUE;
     case '0':
         printf("0");
@@ -230,6 +231,16 @@ gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data)
         ptr->exposure = 0;
         Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ptr->exposure);
         return TRUE;
+    case '1':
+        printf("manual exposure\n");
+        fflush(stdout);
+        Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+        return TRUE;
+    case '2':
+        printf("auto exposure\n");
+        fflush(stdout);
+        Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 1);
+        return TRUE;        
     case 'f':
         Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++ptr->focus);
         printf("focus = %d     \r", ptr->focus);
@@ -490,6 +501,7 @@ int main (int argc, char *argv[])
     id.snapshotCounter = 0;
     
     id.exposure = exposure;
+    id.exposure_step = (exmin+exmax)/20;
     id.gain = gain;
     id.wbalance = wbalance;
     id.focus = focus;
@@ -557,8 +569,11 @@ int main (int argc, char *argv[])
     printf("Press w to write the current frame to a PPM file.\n");
     fflush(stdout);
 
+    printf("Camera configuration:\n");
     showProperties(ctx, streamID);
     showAutoProperties(ctx, streamID);
+    printf("\n");
+    fflush(stdout);
 
     gtk_widget_show_all(window);
     gtk_main();
