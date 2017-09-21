@@ -43,6 +43,74 @@ bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const 
     return true;
 }
 
+void showAutoProperty(CapContext ctx, int32_t streamID, uint32_t propertyID)
+{
+    uint32_t bValue;
+    if (Cap_getAutoProperty(ctx, streamID, propertyID, &bValue)==CAPRESULT_OK)
+    {
+        if (bValue) 
+        {
+            printf("Auto\n");
+        }
+        else
+        {
+            printf("Manual\n");
+        }
+    }
+    else
+    {
+        printf("Unsupported\n");
+    }
+}
+
+void showAutoProperties(CapContext ctx, int32_t streamID)
+{
+    printf("White balance: ");
+    showAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE);
+
+    printf("Exposure     : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE);
+
+    printf("Focus        : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_FOCUS);
+    
+    printf("Zoom         : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_ZOOM);
+
+    printf("Gain         : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_GAIN);
+}
+
+void showProperty(CapContext ctx, int32_t streamID, uint32_t propertyID)
+{
+    int32_t value;
+    if (Cap_getProperty(ctx, streamID, propertyID, &value)==CAPRESULT_OK)
+    {
+        printf("%d\n", value);
+    }
+    else
+    {
+        printf("Unsupported\n");
+    }
+}
+
+void showProperties(CapContext ctx, int32_t streamID)
+{
+    printf("White balance: ");
+    showProperty(ctx, streamID, CAPPROPID_WHITEBALANCE);
+
+    printf("Exposure     : ");
+    showProperty(ctx, streamID, CAPPROPID_EXPOSURE);
+
+    printf("Focus        : ");
+    showProperty(ctx, streamID, CAPPROPID_FOCUS);
+    
+    printf("Zoom         : ");
+    showProperty(ctx, streamID, CAPPROPID_ZOOM);
+
+    printf("Gain         : ");
+    showProperty(ctx, streamID, CAPPROPID_GAIN);
+}
 
 void estimateFrameRate(CapContext ctx, int32_t streamID)
 {
@@ -68,7 +136,7 @@ int main(int argc, char*argv[])
     printf(" OpenPNP Capture Test Program\n");
     printf(" %s\n", Cap_getLibraryVersion());
     printf("==============================\n");
-    Cap_setLogLevel(7);
+    Cap_setLogLevel(8);
 
     if (argc == 1)
     {
@@ -126,13 +194,19 @@ int main(int argc, char*argv[])
         return 1;
     }
 
+    printf("Camera set to:\n");
+    showProperties(ctx, streamID);
+    showAutoProperties(ctx, streamID);
+    
     printf("=== KEY MAPPINGS ===\n");
     printf("Press q to exit.\n");
     printf("Press + or - to change the exposure.\n");
+    printf("Press 1 or 2 to change to auto/manual exposure.\n");
     printf("Press f or g to change the focus.\n");
     printf("Press z or x to change the zoom.\n");
     printf("Press a or s to change the gain.\n");
     printf("Press [ or ] to change the white balance.\n");
+    printf("Press d to display the camera configuration.\n");
     printf("Press p to estimate the actual frame rate.\n");
     printf("Press w to write the current frame to a PPM file.\n");
 
@@ -234,6 +308,11 @@ int main(int argc, char*argv[])
         printf("Could not get gain limits.\n");
     }
 
+
+    printf("Camera reconfigured to:\n");
+    showProperties(ctx, streamID);
+    showAutoProperties(ctx, streamID);
+
     // try to create a message loop so the preview
     // window doesn't crash.. 
 
@@ -276,6 +355,14 @@ int main(int argc, char*argv[])
                 Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, exposure);
                 printf("exposure = %d  \r", exposure);
                 break;
+            case '1':
+                Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 1);
+                printf("exposure = auto  \r", exposure);
+                break;
+            case '2':
+                Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+                printf("exposure = manual  \r", exposure);
+                break;                
             case 'f':
                 Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++focus);
                 printf("focus = %d     \r", focus);
@@ -315,7 +402,13 @@ int main(int argc, char*argv[])
             case 'p':
                 printf("Estimating frame rate..\n");
                 estimateFrameRate(ctx, streamID);
-                break;             
+                break; 
+            case 'd':
+                printf("\nCamera configuration:\n");
+                showProperties(ctx, streamID);
+                showAutoProperties(ctx, streamID);
+                printf("\n");
+                break;
             case 'w':
                 if (Cap_captureFrame(ctx, streamID, &m_buffer[0], m_buffer.size()) == CAPRESULT_OK)
                 {

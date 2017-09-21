@@ -326,6 +326,22 @@ bool Context::setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t v
     return stream->setProperty(propertyID, value);
 }
 
+
+bool Context::getStreamProperty(int32_t streamID, uint32_t propertyID, int32_t &outValue)
+{
+    Stream* stream = m_streams[streamID];
+    if (stream == nullptr) return false;
+    return stream->getProperty(propertyID, outValue);
+}
+
+
+bool Context::getStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool &enable)
+{
+    Stream* stream = m_streams[streamID];
+    if (stream == nullptr) return false;
+    return stream->getAutoProperty(propertyID, enable);
+}
+
 /** convert a FOURCC uint32_t to human readable form */
 std::string fourCCToString(uint32_t fourcc)
 {

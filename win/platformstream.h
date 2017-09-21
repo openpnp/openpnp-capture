@@ -140,6 +140,12 @@ public:
     /** set automatic state of property (exposure, zoom etc) of camera/stream */
     virtual bool setAutoProperty(uint32_t propID, bool enabled) override;
 
+    /** get property (exposure, zoom etc) of camera/stream */
+    virtual bool getProperty(uint32_t propID, int32_t &outValue) override;
+    
+    /** get automatic state of property (exposure, zoom etc) of camera/stream */
+    virtual bool getAutoProperty(uint32_t propID, bool &enabled) override;
+
 protected:
     /** A re-implementation of Stream::submitBuffer with BGR to RGB conversion */
     virtual void submitBuffer(const uint8_t *ptr, size_t bytes) override;
@@ -156,6 +162,9 @@ protected:
 
     /** Write filter graph to 'filtergraph.grf' file - for debugging purposes only.*/
     HRESULT SaveGraphFile(IGraphBuilder *pGraph);
+
+    /** get DirectShow property + flags helper function */
+    bool getDSProperty(uint32_t propID, long &value, long &flags);
 
     void dumpCameraProperties();
 

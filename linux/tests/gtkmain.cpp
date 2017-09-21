@@ -27,6 +27,7 @@ typedef struct
     uint32_t    snapshotCounter;
 
     int32_t     zoom,gain,exposure,wbalance,focus;
+    int32_t     exposure_step;
     int32_t     gstep,wbstep;
 } CallbackInfo;
  
@@ -54,6 +55,73 @@ static void triggerSnapshot(GtkWidget *widget,
     CallbackInfo *id = (CallbackInfo*)data;
     id->takeSnapshot = true;
     printf("Snapshot triggered!\n");
+}
+
+void showAutoProperty(CapContext ctx, int32_t streamID, uint32_t propertyID)
+{
+    uint32_t bValue;
+    if (Cap_getAutoProperty(ctx, streamID, propertyID, &bValue)==CAPRESULT_OK)
+    {
+        if (bValue) 
+        {
+            printf("Auto\n");
+        }
+        else
+        {
+            printf("Manual\n");
+        }
+    }
+    else
+    {
+        printf("Unsupported\n");
+    }
+}
+
+void showAutoProperties(CapContext ctx, int32_t streamID)
+{
+    printf("--= Automatic =--\n");
+    printf("White balance: ");
+    showAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE);
+
+    printf("Exposure     : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE);
+
+    printf("Focus        : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_FOCUS);
+
+    printf("Gain         : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_GAIN);
+}
+
+void showProperty(CapContext ctx, int32_t streamID, uint32_t propertyID)
+{
+    int32_t value;
+    if (Cap_getProperty(ctx, streamID, propertyID, &value)==CAPRESULT_OK)
+    {
+        printf("%d\n", value);
+    }
+    else
+    {
+        printf("Unsupported\n");
+    }
+}
+
+void showProperties(CapContext ctx, int32_t streamID)
+{
+    printf("White balance: ");
+    showProperty(ctx, streamID, CAPPROPID_WHITEBALANCE);
+
+    printf("Exposure     : ");
+    showProperty(ctx, streamID, CAPPROPID_EXPOSURE);
+
+    printf("Focus        : ");
+    showProperty(ctx, streamID, CAPPROPID_FOCUS);
+    
+    printf("Zoom         : ");
+    showProperty(ctx, streamID, CAPPROPID_ZOOM);
+
+    printf("Gain         : ");
+    showProperty(ctx, streamID, CAPPROPID_GAIN);
 }
 
 bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const uint8_t *bufferPtr, size_t bytes)
@@ -146,14 +214,16 @@ gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data)
         gtk_main_quit();
         return TRUE;
     case '+':
-        printf("+");
-        fflush(stdout);
-        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ++ptr->exposure);
+        ptr->exposure += ptr->exposure_step;
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ptr->exposure);
+        printf("exposure: %d\r", ptr->exposure);
+        fflush(stdout);        
         return TRUE;
     case '-':
-        printf("-");
-        fflush(stdout);
-        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, --ptr->exposure);
+        ptr->exposure -= ptr->exposure_step;
+        Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ptr->exposure);
+        printf("exposure: %d\r", ptr->exposure);
+        fflush(stdout);        
         return TRUE;
     case '0':
         printf("0");
@@ -161,6 +231,16 @@ gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data)
         ptr->exposure = 0;
         Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, ptr->exposure);
         return TRUE;
+    case '1':
+        printf("manual exposure\n");
+        fflush(stdout);
+        Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+        return TRUE;
+    case '2':
+        printf("auto exposure\n");
+        fflush(stdout);
+        Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 1);
+        return TRUE;        
     case 'f':
         Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++ptr->focus);
         printf("focus = %d     \r", ptr->focus);
@@ -203,6 +283,13 @@ gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data)
         ptr->gain += ptr->gstep;
         Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, ptr->gain);
         printf("gain = %d     \r", ptr->gain);
+        fflush(stdout);
+        return TRUE;
+    case 'd':
+        printf("Camera configuration:\n");
+        showProperties(ctx, streamID);
+        showAutoProperties(ctx, streamID);
+        printf("\n");
         fflush(stdout);
         return TRUE;
     case 'p':
@@ -414,6 +501,7 @@ int main (int argc, char *argv[])
     id.snapshotCounter = 0;
     
     id.exposure = exposure;
+    id.exposure_step = (exmin+exmax)/20;
     id.gain = gain;
     id.wbalance = wbalance;
     id.focus = focus;
@@ -476,8 +564,15 @@ int main (int argc, char *argv[])
     printf("Press z or x to change the zoom.\n");
     printf("Press a or s to change the gain.\n");
     printf("Press [ or ] to change the white balance.\n");
+    printf("Press d to show camera configuration.\n");
     printf("Press p to estimate the actual frame rate.\n");
     printf("Press w to write the current frame to a PPM file.\n");
+    fflush(stdout);
+
+    printf("Camera configuration:\n");
+    showProperties(ctx, streamID);
+    showAutoProperties(ctx, streamID);
+    printf("\n");
     fflush(stdout);
 
     gtk_widget_show_all(window);

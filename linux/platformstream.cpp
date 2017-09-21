@@ -26,6 +26,7 @@
 #include "platformdeviceinfo.h"
 #include "platformstream.h"
 #include "platformcontext.h"
+#include "yuvconverters.h"
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
@@ -518,6 +519,16 @@ void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
         case V4L2_PIX_FMT_RGB24:
             Stream::submitBuffer((uint8_t*)ptr, bytes);
             break;
+        case V4L2_PIX_FMT_YUYV:
+            // here we implement our own ::submitBuffer replacement
+            // so we can decode the 16-bit YUYV frames and copy the 24-bit
+            // RGB pixels into m_frameBuffer
+            m_bufferMutex.lock();
+            YUYV2RGB((const uint8_t*)ptr, &m_frameBuffer[0], bytes);
+            m_newFrame = true;
+            m_frames++;
+            m_bufferMutex.unlock();
+            break;            
         case 0x47504A4D:    // MJPG
             #ifdef FRAMEDUMP
             {
@@ -533,6 +544,9 @@ void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
             }
             #endif        
 
+            // here we implement our own ::submitBuffer replacement
+            // so we can decode the MJEG frames and copy the 24-bit
+            // RGB pixels into m_frameBuffer
             m_bufferMutex.lock();
             if (m_mjpegHelper.decompressFrame((uint8_t*)ptr, bytes, &m_frameBuffer[0], m_width, m_height))
             {
@@ -569,13 +583,16 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
-        ctrl.id = V4L2_CID_EXPOSURE;
+        ctrl.id = V4L2_CID_EXPOSURE_ABSOLUTE;
         break;
     case CAPPROPID_FOCUS:
         ctrl.id = V4L2_CID_FOCUS_ABSOLUTE;
         break;
     case CAPPROPID_ZOOM:
         ctrl.id = V4L2_CID_ZOOM_ABSOLUTE;
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
         break;
     default:
         return false;
@@ -598,23 +615,29 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
-        ctrl.id = V4L2_CID_AUTOGAIN;
+        ctrl.id = V4L2_CID_EXPOSURE_AUTO;
+        //FIXME: V4L2 has multiple auto settings
+        // currently my cameras only have support for 
+        // V4L2_EXPOSURE_APERTURE_PRIORITY, so we're
+        // using that for now.. 
+        ctrl.value = enabled ? V4L2_EXPOSURE_APERTURE_PRIORITY : V4L2_EXPOSURE_MANUAL;
         break;
     case CAPPROPID_FOCUS:
         ctrl.id = V4L2_CID_FOCUS_AUTO;
+        ctrl.value = enabled ? 1:0;
         break;
     case CAPPROPID_WHITEBALANCE:
         ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
+        ctrl.value = enabled ? 1:0;
         break;
     default:
         return false;
     }
 
-    ctrl.value = enabled ? 1 : 0;
     if (xioctl(m_deviceHandle, VIDIOC_S_CTRL, &ctrl)==-1)
     {
         LOG(LOG_ERR,"setAutoProperty (ID=%d) failed on VIDIOC_S_CTRL (errno %d)\n", propID, errno);
-        return false;        
+        return false;    
     }
     return true;    
 }
@@ -632,7 +655,7 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
-        ctrl.id = V4L2_CID_EXPOSURE;
+        ctrl.id = V4L2_CID_EXPOSURE_ABSOLUTE;
         break;
     case CAPPROPID_FOCUS:
         ctrl.id = V4L2_CID_FOCUS_ABSOLUTE;
@@ -640,6 +663,9 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
     case CAPPROPID_ZOOM:
         ctrl.id = V4L2_CID_ZOOM_ABSOLUTE;
         break;
+    case CAPPROPID_WHITEBALANCE:
+        ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
+        break;        
     default:
         return false;
     }
@@ -654,4 +680,74 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
     return true;
 }
 
+bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
+{
+    v4l2_control ctrl;
+    CLEAR(ctrl);
 
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        ctrl.id = V4L2_CID_EXPOSURE_ABSOLUTE;
+        break;
+    case CAPPROPID_FOCUS:
+        ctrl.id = V4L2_CID_FOCUS_ABSOLUTE;
+        break;
+    case CAPPROPID_ZOOM:
+        ctrl.id = V4L2_CID_ZOOM_ABSOLUTE;
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
+        break;         
+    default:
+        return false;
+    }
+
+    if (xioctl(m_deviceHandle, VIDIOC_G_CTRL, &ctrl)==-1)
+    {
+        LOG(LOG_ERR,"getProperty (ID=%d) failed on VIDIOC_G_CTRL (errno %d)\n", propID, errno);
+        return false;        
+    }
+
+    value = ctrl.value;
+
+    return true;
+}
+
+bool PlatformStream::getAutoProperty(uint32_t propID, bool &enabled)
+{
+    v4l2_control ctrl;
+    CLEAR(ctrl);
+
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        ctrl.id = V4L2_CID_EXPOSURE_AUTO;        
+        break;
+    case CAPPROPID_FOCUS:
+        ctrl.id = V4L2_CID_FOCUS_AUTO;
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
+        break;
+    default:
+        return false;
+    }
+
+    if (xioctl(m_deviceHandle, VIDIOC_G_CTRL, &ctrl)==-1)
+    {
+        LOG(LOG_ERR,"getAutoProperty (ID=%d) failed on VIDIOC_G_CTRL (errno %d)\n", propID, errno);
+        return false;        
+    }
+
+    // V4L2_CID_EXPOSURE_AUTO is a menu, not a boolean .. *sigh*
+    if (ctrl.id == V4L2_CID_EXPOSURE_AUTO)
+    {
+        enabled = (ctrl.value == V4L2_EXPOSURE_MANUAL) ? 0 : 1;
+    }
+    else
+    {
+        enabled = (ctrl.value != 0);
+    }
+    return true;   
+}

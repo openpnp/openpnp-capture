@@ -123,7 +123,7 @@ public:
 
     /** Get the minimum and maximum settings for a property.
         @param streamID the ID of the stream.
-        @param propretyID the ID of the property.
+        @param propertyID the ID of the property.
         @param min a pointer to an int32_t that will receive the minimum setting.
         @param max a pointer to an int32_t that will receive the maximum setting.
         @return true if min and max were written.
@@ -134,7 +134,7 @@ public:
         such as exposure or white balance.
 
         @param streamID the ID of the stream.
-        @param propretyID the ID of the property.
+        @param propertyID the ID of the property.
         @param enable the desired new state of the auto setting.
         @return true if succesful.
     */    
@@ -143,11 +143,30 @@ public:
     /** Set the value of a property, such as exposure or white balance.
 
         @param streamID the ID of the stream.
-        @param propretyID the ID of the property.
+        @param propertyID the ID of the property.
         @param value the new value of the property.
         @return true if succesful.
     */        
     bool setStreamProperty(int32_t streamID, uint32_t propertyID, int32_t value);
+
+
+    /** Get the value of a property, such as exposure or white balance.
+
+        @param streamID the ID of the stream.
+        @param propretyID the ID of the property.
+        @param outValue a reference to the int32_t that will receive the value of the property.
+        @return true if succesful.
+    */
+    bool getStreamProperty(int32_t stream, uint32_t propID, int32_t &outValue);
+
+    /** Get the value of a property, such as exposure or white balance.
+
+        @param streamID the ID of the stream.
+        @param propretyID the ID of the property.
+        @param enable a reference to a boolean that will receive the state of the auto setting.
+        @return true if succesful.
+    */
+    bool getStreamAutoProperty(int32_t stream, uint32_t propID, bool &enable);
 
 protected:
     /** Enumerate all capture devices and put their 
