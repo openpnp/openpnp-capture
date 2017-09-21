@@ -222,14 +222,45 @@ DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream);
      NEW CAMERA CONTROL API FUNCTIONS
 **********************************************************************************/
 
-/** get the min/max limits of a camera/stream property (e.g. zoom, exposure etc) */
+/** get the min/max limits of a camera/stream property (e.g. zoom, exposure etc) 
+
+    returns: CAPRESULT_OK if all is well.
+             CAPRESULT_PROPERTYNOTSUPPORTED if property not available.
+             CAPRESULT_ERR if context, stream are invalid.
+*/
 DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max);
 
-/** set the value of a camera/stream property (e.g. zoom, exposure etc) */
+/** set the value of a camera/stream property (e.g. zoom, exposure etc) 
+
+    returns: CAPRESULT_OK if all is well.
+             CAPRESULT_PROPERTYNOTSUPPORTED if property not available.
+             CAPRESULT_ERR if context, stream are invalid.
+*/
 DLLPUBLIC CapResult Cap_setProperty(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t value);
 
-/** set the automatic flag of a camera/stream property (e.g. zoom, focus etc) */
+/** set the automatic flag of a camera/stream property (e.g. zoom, focus etc) 
+
+    returns: CAPRESULT_OK if all is well.
+             CAPRESULT_PROPERTYNOTSUPPORTED if property not available.
+             CAPRESULT_ERR if context, stream are invalid.
+*/
 DLLPUBLIC CapResult Cap_setAutoProperty(CapContext ctx, CapStream stream, CapPropertyID propID, uint32_t bOnOff);
+
+/** get the value of a camera/stream property (e.g. zoom, exposure etc) 
+
+    returns: CAPRESULT_OK if all is well.
+             CAPRESULT_PROPERTYNOTSUPPORTED if property not available.
+             CAPRESULT_ERR if context, stream are invalid or outValue == NULL.
+*/
+DLLPUBLIC CapResult Cap_getProperty(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *outValue);
+
+/** get the automatic flag of a camera/stream property (e.g. zoom, focus etc) 
+
+    returns: CAPRESULT_OK if all is well.
+             CAPRESULT_PROPERTYNOTSUPPORTED if property not available.
+             CAPRESULT_ERR if context, stream are invalid.
+*/
+DLLPUBLIC CapResult Cap_getAutoProperty(CapContext ctx, CapStream stream, CapPropertyID propID, uint32_t *outValue);
 
 /********************************************************************************** 
      DEBUGGING

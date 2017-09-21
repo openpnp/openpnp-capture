@@ -90,6 +90,12 @@ public:
     /** set automatic state of property (exposure, zoom etc) of camera/stream */
     virtual bool setAutoProperty(uint32_t propID, bool enabled) = 0;
 
+    /** get property (exposure, zoom etc) of camera/stream */
+    virtual bool getProperty(uint32_t propID, int32_t &outValue) = 0;
+
+    /** get automatic state of property (exposure, zoom etc) of camera/stream */
+    virtual bool getAutoProperty(uint32_t propID, bool &enable) = 0;
+
 protected:
     /** Thread-safe copying of the 24-bit RGB buffer pointed to
         by 'ptr' with length 'bytes'.
