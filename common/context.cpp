@@ -339,7 +339,7 @@ bool Context::getStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool 
 {
     Stream* stream = m_streams[streamID];
     if (stream == nullptr) return false;
-    return stream->setAutoProperty(propertyID, enable);
+    return stream->getAutoProperty(propertyID, enable);
 }
 
 /** convert a FOURCC uint32_t to human readable form */
