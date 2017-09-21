@@ -34,12 +34,12 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 | Device Enumeration | Yes |
 | Capturing | Yes |
 | MJPEG formats | Yes |
-| YUV formats | Yes |
-| Exposure control | Yes / Untested |
+| YUV formats | Yes, YUYV/YUV2 |
+| Exposure control | Yes |
 | Focus control | Yes / Untested |
-| Zoom control | Yes / Untested |
+| Zoom control | Yes |
 | Gain control | Yes / Untested |
-| White balance control | Yes / Untested |
+| White balance control | Yes |
 | Framerate control | No |
 
 ### OSX
