@@ -654,4 +654,64 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
     return true;
 }
 
+bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
+{
+    v4l2_control ctrl;
+    CLEAR(ctrl);
 
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        ctrl.id = V4L2_CID_EXPOSURE;
+        break;
+    case CAPPROPID_FOCUS:
+        ctrl.id = V4L2_CID_FOCUS_ABSOLUTE;
+        break;
+    case CAPPROPID_ZOOM:
+        ctrl.id = V4L2_CID_ZOOM_ABSOLUTE;
+        break;
+    default:
+        return false;
+    }
+
+    if (xioctl(m_deviceHandle, VIDIOC_G_CTRL, &ctrl)==-1)
+    {
+        LOG(LOG_ERR,"getProperty (ID=%d) failed on VIDIOC_G_CTRL (errno %d)\n", propID, errno);
+        return false;        
+    }
+
+    value = ctrl.value;
+
+    return true;
+}
+
+bool PlatformStream::getAutoProperty(uint32_t propID, bool &enabled)
+{
+    v4l2_control ctrl;
+    CLEAR(ctrl);
+
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        ctrl.id = V4L2_CID_AUTOGAIN;
+        break;
+    case CAPPROPID_FOCUS:
+        ctrl.id = V4L2_CID_FOCUS_AUTO;
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
+        break;
+    default:
+        return false;
+    }
+
+    //ctrl.value = enabled ? 1 : 0;
+    if (xioctl(m_deviceHandle, VIDIOC_G_CTRL, &ctrl)==-1)
+    {
+        LOG(LOG_ERR,"getAutoProperty (ID=%d) failed on VIDIOC_G_CTRL (errno %d)\n", propID, errno);
+        return false;        
+    }
+
+    enabled = (ctrl.value != 0);
+    return true;   
+}

@@ -56,6 +56,75 @@ static void triggerSnapshot(GtkWidget *widget,
     printf("Snapshot triggered!\n");
 }
 
+void showAutoProperty(CapContext ctx, int32_t streamID, uint32_t propertyID)
+{
+    uint32_t bValue;
+    if (Cap_getAutoProperty(ctx, streamID, propertyID, &bValue)==CAPRESULT_OK)
+    {
+        if (bValue) 
+        {
+            printf("Auto\n");
+        }
+        else
+        {
+            printf("Manual\n");
+        }
+    }
+    else
+    {
+        printf("Unsupported\n");
+    }
+}
+
+void showAutoProperties(CapContext ctx, int32_t streamID)
+{
+    printf("White balance: ");
+    showAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE);
+
+    printf("Exposure     : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE);
+
+    printf("Focus        : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_FOCUS);
+    
+    printf("Zoom         : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_ZOOM);
+
+    printf("Gain         : ");
+    showAutoProperty(ctx, streamID, CAPPROPID_GAIN);
+}
+
+void showProperty(CapContext ctx, int32_t streamID, uint32_t propertyID)
+{
+    int32_t value;
+    if (Cap_getProperty(ctx, streamID, propertyID, &value)==CAPRESULT_OK)
+    {
+        printf("%d\n", value);
+    }
+    else
+    {
+        printf("Unsupported\n");
+    }
+}
+
+void showProperties(CapContext ctx, int32_t streamID)
+{
+    printf("White balance: ");
+    showProperty(ctx, streamID, CAPPROPID_WHITEBALANCE);
+
+    printf("Exposure     : ");
+    showProperty(ctx, streamID, CAPPROPID_EXPOSURE);
+
+    printf("Focus        : ");
+    showProperty(ctx, streamID, CAPPROPID_FOCUS);
+    
+    printf("Zoom         : ");
+    showProperty(ctx, streamID, CAPPROPID_ZOOM);
+
+    printf("Gain         : ");
+    showProperty(ctx, streamID, CAPPROPID_GAIN);
+}
+
 bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const uint8_t *bufferPtr, size_t bytes)
 {
     char fname[100];
@@ -203,6 +272,13 @@ gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data)
         ptr->gain += ptr->gstep;
         Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, ptr->gain);
         printf("gain = %d     \r", ptr->gain);
+        fflush(stdout);
+        return TRUE;
+    case 'd':
+        printf("Camera configuration:\n");
+        showProperties(ctx, streamID);
+        showAutoProperties(ctx, streamID);
+        printf("\n");
         fflush(stdout);
         return TRUE;
     case 'p':
@@ -476,9 +552,13 @@ int main (int argc, char *argv[])
     printf("Press z or x to change the zoom.\n");
     printf("Press a or s to change the gain.\n");
     printf("Press [ or ] to change the white balance.\n");
+    printf("Press d to show camera configuration.\n");
     printf("Press p to estimate the actual frame rate.\n");
     printf("Press w to write the current frame to a PPM file.\n");
     fflush(stdout);
+
+    showProperties(ctx, streamID);
+    showAutoProperties(ctx, streamID);
 
     gtk_widget_show_all(window);
     gtk_main();
