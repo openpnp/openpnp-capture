@@ -84,5 +84,5 @@ Run 'bootstrap_linux.sh'. Run make.
 
 # Downloading Binaries
 
-openpnp-capture is not yet ready for release, but you can download test binaries that are built automatically
+openpnp-capture is still under development, but you can download releases that are built automatically
 from https://github.com/openpnp/openpnp-capture/releases/latest.
