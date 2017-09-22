@@ -745,6 +745,114 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
     return true;
 }
 
+bool PlatformStream::getDSProperty(uint32_t propID, long &value, long &flags)
+{
+    if (m_camControl == 0)
+    {
+        return false;
+    }
+
+    long prop = 0;
+    switch(propID)
+    {
+    case CAPPROPID_EXPOSURE:
+        prop = CameraControl_Exposure;
+        break;
+    case CAPPROPID_FOCUS:
+        prop = CameraControl_Focus;
+        break;
+    case CAPPROPID_ZOOM:
+        prop = CameraControl_Zoom;        
+        break;
+    case CAPPROPID_WHITEBALANCE:
+        prop = VideoProcAmp_WhiteBalance; 
+        break;
+    case CAPPROPID_GAIN:
+        prop = VideoProcAmp_Gain; 
+        break;        
+    default:
+        return false;
+    }
+
+    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
+    {
+        if (FAILED(m_camControl->Get(prop, &value, &flags)))
+        {
+            return false;
+        }
+        //LOG(LOG_VERBOSE, "PlatformStream::getDSProperty ID=%d\n", propID);
+        //LOG(LOG_VERBOSE, "Value : %08Xh\n", value);
+        //LOG(LOG_VERBOSE, "Flags : %08Xh\n", flags);        
+        return true;
+    }
+    else
+    {
+        //note: m_videoProcAmp only exists if the camera
+        //      supports hardware accelleration of 
+        //      video frame processing, such as
+        //      white balance etc.
+        if (m_videoProcAmp == nullptr)
+        {
+            return false;
+        }
+
+        // get the current value so we can just set the auto flag
+        // but leave the actualy setting itself intact.
+        if (FAILED(m_videoProcAmp->Get(prop, &value, &flags)))
+        {
+            return false;
+        }
+
+        //LOG(LOG_VERBOSE, "PlatformStream::getDSProperty ID=%d\n", propID);
+        //LOG(LOG_VERBOSE, "Value : %08Xh\n", value);
+        //LOG(LOG_VERBOSE, "Flags : %08Xh\n", flags);        
+        return true;
+    }
+
+    return false; // we should never reach here..
+}
+
+/** get property (exposure, zoom etc) of camera/stream */
+bool PlatformStream::getProperty(uint32_t propID, int32_t &outValue)
+{
+    // in keeping with the documentation, we assume long here.. 
+    // the DS documentation does not specify the actual bit-width
+    // for the vars, but we use 32-bit ints in the capture lib
+    // so we convert to 32-bits and hope for the best.. 
+
+    long value, flags;
+    if (PlatformStream::getDSProperty(propID, value, flags))
+    {
+        outValue = value;
+        return true;
+    }
+    return false;
+}
+
+/** get automatic state of property (exposure, zoom etc) of camera/stream */
+bool PlatformStream::getAutoProperty(uint32_t propID, bool &enabled)
+{
+    // Here, we assume that 
+    // CameraControl_Flags_Auto == VideoProcAmp_Flags_Auto
+    // and
+    // CameraControl_Flags_Manual == VideoProcAmp_Flags_Manual
+    // to simplify the code.
+    // We make sure this assumption is true via a static assert
+    
+    static_assert(CameraControl_Flags_Auto == VideoProcAmp_Flags_Auto, "Boolean flags dont match - code change needed!");
+    //static_assert(CameraControl_Flags_Manual == VideoProcAmp_Flags_Manual, "Boolean flags dont match - code change needed!");
+
+    //LOG(LOG_VERBOSE, "PlatformStream::getAutoProperty called\n");
+
+    long value, flags;
+    if (PlatformStream::getDSProperty(propID, value, flags))
+    {        
+        enabled = ((flags & CameraControl_Flags_Auto) != 0);
+        return true;
+    }
+    return false;
+}
+
 
 void PlatformStream::submitBuffer(const uint8_t *ptr, size_t bytes)
 {

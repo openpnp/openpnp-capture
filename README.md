@@ -23,6 +23,8 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 | Exposure control | Yes |
 | Focus control | Yes / Untested |
 | Zoom control | Yes |
+| Gain control | Yes |
+| White balance control | Yes |
 | Framerate control | No |
 
 ### Linux
@@ -32,10 +34,12 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 | Device Enumeration | Yes |
 | Capturing | Yes |
 | MJPEG formats | Yes |
-| YUV formats | Yes |
-| Exposure control | Yes / Untested |
+| YUV formats | Yes, YUYV/YUV2 |
+| Exposure control | Yes |
 | Focus control | Yes / Untested |
-| Zoom control | Yes / Untested |
+| Zoom control | Yes |
+| Gain control | Yes / Untested |
+| White balance control | Yes |
 | Framerate control | No |
 
 ### OSX
@@ -49,6 +53,8 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 | Exposure control | No |
 | Focus control | No |
 | Zoom control | No |
+| Gain control | No |
+| White balance control | No |
 | Framerate control | No |
 
 # Building OpenPnP Capture
@@ -57,7 +63,7 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 * CMAKE 3.1 or better
 * MAKE (osx, linux)
 * Visual Studio 2013 + NMake or Ninja Build (windows)
-* libjpeg-turbo (linux) -- will be merged into the project at a later time
+* libjpeg-turbo, libjpeg-turbo8-dev (linux) -- will be merged into the project at a later time
 
 ### Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
@@ -65,7 +71,7 @@ Run the batch file 'bootstrap.bat' and choose the desired build system (VisualSt
 Go to the build directory and run nmake or ninja to build the library and the test application.
 
 ### Build instructions (OSX)
-TODO
+Run 'bootstrap_osx.sh'. Run make.
 
 ### Build instructions (Linux)
 Run 'bootstrap_linux.sh'. Run make.

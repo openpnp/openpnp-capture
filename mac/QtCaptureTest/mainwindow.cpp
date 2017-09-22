@@ -69,6 +69,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_refreshTimer = new QTimer(this);
     connect(m_refreshTimer, SIGNAL(timeout()), this, SLOT(doFrameUpdate()));
     m_refreshTimer->start(50);
+
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, 0);
+
 }
 
 MainWindow::~MainWindow()

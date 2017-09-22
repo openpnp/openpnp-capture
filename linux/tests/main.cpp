@@ -127,7 +127,7 @@ int main(int argc, char*argv[])
     //disable auto exposure, focus and white balance
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
+    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 1);
     Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
 
     // set exposure in the middle of the range

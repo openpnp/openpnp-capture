@@ -68,6 +68,12 @@ public:
     /** set automatic state of property (exposure, zoom etc) of camera/stream */
     virtual bool setAutoProperty(uint32_t propID, bool enabled) override;
 
+    /** set property (exposure, zoom etc) of camera/stream */
+    virtual bool getProperty(uint32_t propID, int32_t &value) override;
+    
+    /** set automatic state of property (exposure, zoom etc) of camera/stream */
+    virtual bool getAutoProperty(uint32_t propID, bool &enabled) override;
+
     /** public function to handle callbacks from ObjC++ */
     virtual void callback(const uint8_t* ptr, uint32_t bytes);
 
@@ -75,6 +81,7 @@ protected:
     /* AVFoundation objects to control the camera on OSX */
     PlatformAVCaptureDelegate* m_captureDelegate;
     AVCaptureSession*   m_nativeSession;
+    AVCaptureDevice*    m_device;       ///< note: we do not own the objecgt itself!
     dispatch_queue_t    m_queue;
 
     std::vector<uint8_t> m_tmpBuffer;  ///< intermediate buffer for 32->24 bit conversion

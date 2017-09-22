@@ -213,6 +213,49 @@ DLLPUBLIC CapResult Cap_setAutoProperty(CapContext ctx, CapStream stream, CapPro
     return CAPRESULT_ERR;
 }
 
+DLLPUBLIC CapResult Cap_getProperty(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *outValue)
+{
+    if (outValue == NULL)
+    {
+        return CAPRESULT_ERR;
+    }
+
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        int32_t value = 0;
+        if (!c->getStreamProperty(stream, propID, value))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        *outValue = value;
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+DLLPUBLIC CapResult Cap_getAutoProperty(CapContext ctx, CapStream stream, CapPropertyID propID, uint32_t *outValue)
+{
+    if (outValue == NULL)
+    {
+        return CAPRESULT_ERR;
+    }
+
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        bool enable = false;
+        if (!c->getStreamAutoProperty(stream, propID, enable))
+        {
+            return CAPRESULT_PROPERTYNOTSUPPORTED;
+        }
+        *outValue = enable ? 1 : 0;
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;
+}
+
+
 DLLPUBLIC const char* Cap_getLibraryVersion()
 {
     #ifndef __LIBVER__

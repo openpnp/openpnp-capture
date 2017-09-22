@@ -106,7 +106,8 @@ ELSEIF(UNIX)
                 common/stream.cpp
                 linux/platformcontext.cpp
                 linux/platformstream.cpp
-                linux/mjpeghelper.cpp)
+                linux/mjpeghelper.cpp
+                linux/yuvconverters.cpp)
 
     # need pthreads for std::thread
     set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -130,7 +131,12 @@ ELSEIF(UNIX)
     # Note: We should be able to specify this on the command line, as well, so we don't have
     # to hardcode the path here.
     ADD_LIBRARY(turbojpeg SHARED IMPORTED)
-    SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.0.0)
+    if(EXISTS "/usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.1.0")
+        SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.1.0)
+    else()
+        SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.0.0)
+    endif()
+    
 
     target_link_libraries(openpnp-capture turbojpeg)
     
