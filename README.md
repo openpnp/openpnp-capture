@@ -1,4 +1,4 @@
-![OpenPNP Logo](doc/logo_small.png)
+![OpenPNP Logo](https://raw.githubusercontent.com/openpnp/openpnp-logo/develop/logo_small.png)
 
 OpenPnP Capture is a cross platform video capture library with a focus on machine vision. It's goals are:
 
