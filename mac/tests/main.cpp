@@ -12,6 +12,7 @@
 
 #include "openpnp-capture.h"
 #include "../common/context.h"
+#include "../uvcctrl.h"
 
 bool writeBufferAsPPM(uint32_t frameNum, uint32_t width, uint32_t height, const uint8_t *bufferPtr, size_t bytes)
 {
@@ -41,7 +42,7 @@ int main(int argc, char*argv[])
     printf(" OpenPNP Capture Test Program\n");
     printf(" %s\n", Cap_getLibraryVersion());
     printf("==============================\n");
-    Cap_setLogLevel(7);
+    Cap_setLogLevel(8);
 
     if (argc == 1)
     {
@@ -116,8 +117,48 @@ int main(int argc, char*argv[])
     CapFormatInfo finfo;
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
-    // try to open the first camera device found
-    //DLLPUBLIC CapStream Cap_openStream(CapContext ctx, CapDeviceID index, CapFormatID formatID);
+
+    UVCCtrl *ctrl = UVCCtrl::create(0x05AC, 0x8502);
+    if (ctrl != nullptr)
+    {
+        printf("Created UVC control interface!\n");
+
+        bool state;
+        if (ctrl->getAutoProperty(CAPPROPID_EXPOSURE, state))
+        {
+            printf("Auto white balance is: %s\n", state ? "ON" : " OFF");
+        }
+        else
+        {
+            printf("Cannot get white balance state..\n");
+        }
+        
+        int32_t value, emin, emax;
+        if (ctrl->getProperty(CAPPROPID_EXPOSURE, &value))
+        {
+            printf("Exposure is: %d\n", value);
+        }
+        else
+        {
+            printf("Cannot get exposure..\n");
+        }
+
+        if (ctrl->getPropertyLimits(CAPPROPID_EXPOSURE, &emin, &emax))
+        {
+            printf("Exposure limits are: %d .. %d\n", emin, emax);
+        }
+        else
+        {
+            printf("Cannot get exposure limits..\n");
+        }
+
+        delete ctrl;
+    }
+    else
+    {
+        printf("Failed to create UVC control interface\n");
+    }
+
     
     int32_t streamID = Cap_openStream(ctx, deviceID, deviceFormatID);
     printf("Stream ID = %d\n", streamID);
@@ -133,10 +174,10 @@ int main(int argc, char*argv[])
     }
 
     //disable auto exposure, focus and white balance
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
-    Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
+    //Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
+    //Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);
+    //Cap_setAutoProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, 0);
+    //Cap_setAutoProperty(ctx, streamID, CAPPROPID_GAIN, 0);
 
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(finfo.width*finfo.height*3);

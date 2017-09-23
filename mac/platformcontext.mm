@@ -32,13 +32,23 @@ bool PlatformContext::enumerateDevices()
     {
         platformDeviceInfo* deviceInfo = new platformDeviceInfo();
         deviceInfo->m_captureDevice = CFBridgingRetain(device);
-        
         deviceInfo->m_name = std::string(device.localizedName.UTF8String) + " (" + std::string(device.manufacturer.UTF8String) + ")";
         deviceInfo->m_uniqueID = deviceInfo->m_name  + " " + std::string(device.uniqueID.UTF8String);
-        
-        LOG(LOG_DEBUG, "Name: %s\n", deviceInfo->m_name.c_str());
-        LOG(LOG_DEBUG, "ID  : %s\n", deviceInfo->m_uniqueID.c_str());
 
+        std::string model = device.modelID.UTF8String;
+        LOG(LOG_DEBUG, "Name : %s\n", deviceInfo->m_name.c_str());
+        LOG(LOG_DEBUG, "Model: %s\n", model.c_str());
+        LOG(LOG_DEBUG, "ID   : %s\n", deviceInfo->m_uniqueID.c_str());
+
+        // extract the PID/VID from the model name
+        NSRange vidRange = [device.modelID rangeOfString:@"VendorID_"];
+        deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, 5)] intValue];
+
+        NSRange pidRange = [device.modelID rangeOfString:@"ProductID_"];
+        deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, 5)] intValue];
+
+        LOG(LOG_DEBUG, "USB  : vid=%04X  pid=%04X\n", deviceInfo->m_vid, deviceInfo->m_pid);
+ 
         for (AVCaptureDeviceFormat* format in device.formats) 
         {
             //Do we really need a complete list of frame rates?

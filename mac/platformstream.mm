@@ -1,3 +1,16 @@
+/*
+
+    OpenPnp-Capture: a video capture subsystem.
+
+    OSX platform code
+
+    Created by Niels Moseley on 7/6/17.
+    Copyright © 2017 Niels Moseley, Jason von Nieda.
+
+    Stream class
+
+*/
+
 #include "platformdeviceinfo.h"
 #include "platformstream.h"
 #include "platformcontext.h"
@@ -78,12 +91,18 @@ Stream* createPlatformStream()
 PlatformStream::PlatformStream() :
     Stream()
 {
+    m_uvc = nullptr;
     m_fourCC = 0;
     m_nativeSession = nullptr;
 }
 
 PlatformStream::~PlatformStream()
 {
+    if (m_uvc != nullptr)
+    {
+        delete m_uvc;
+        m_uvc = nullptr;
+    }
     close();
 }
 
@@ -255,6 +274,17 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     // override our settings :-/
     [m_device unlockForConfiguration];
 
+    // try to create a UVC control object
+    m_uvc = UVCCtrl::create(dinfo->m_vid, dinfo->m_pid);
+    if (m_uvc != nullptr)
+    {
+        LOG(LOG_DEBUG, "Created a UVC control object!\n");
+    }
+    else
+    {
+        LOG(LOG_DEBUG, "Could not create a UVC control object! -- settings will not be available!\n");
+    }
+
     m_isOpen = true;
     m_frames = 0; // reset the frame counter
     return true;
@@ -274,6 +304,10 @@ std::string PlatformStream::genFOURCCstring(uint32_t v)
 /** get the limits of a camera/stream property (exposure, zoom etc) */
 bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max)
 {
+    if (m_uvc != nullptr)
+    {
+        return m_uvc->getPropertyLimits(propID, min, max);
+    }
     return false;
 }
 
