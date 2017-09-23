@@ -118,13 +118,14 @@ int main(int argc, char*argv[])
     Cap_getFormatInfo(ctx, deviceID, deviceFormatID, &finfo);
 
 
+    #if 0
     UVCCtrl *ctrl = UVCCtrl::create(0x05AC, 0x8502);
     if (ctrl != nullptr)
     {
         printf("Created UVC control interface!\n");
 
         bool state;
-        if (ctrl->getAutoProperty(CAPPROPID_EXPOSURE, state))
+        if (ctrl->getAutoProperty(CAPPROPID_WHITEBALANCE, state))
         {
             printf("Auto white balance is: %s\n", state ? "ON" : " OFF");
         }
@@ -158,7 +159,7 @@ int main(int argc, char*argv[])
     {
         printf("Failed to create UVC control interface\n");
     }
-
+    #endif
     
     int32_t streamID = Cap_openStream(ctx, deviceID, deviceFormatID);
     printf("Stream ID = %d\n", streamID);
@@ -171,6 +172,25 @@ int main(int argc, char*argv[])
     {
         printf("Stream is closed (?)\n");
         return 1;
+    }
+
+    int32_t emin,emax;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &emin, &emax))
+    {
+        printf("Exposure limits: %d .. %d\n", emin, emax);
+    }
+    else
+    {
+        printf("Failed to get exposure limits!\n");
+    }
+
+    if (Cap_getProperty(ctx, streamID, CAPPROPID_EXPOSURE, &emin))
+    {
+        printf("Exposure: %d\n", emin);
+    }
+    else
+    {
+        printf("Failed to get exposure!\n");
     }
 
     //disable auto exposure, focus and white balance

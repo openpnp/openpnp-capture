@@ -42,10 +42,14 @@ bool PlatformContext::enumerateDevices()
 
         // extract the PID/VID from the model name
         NSRange vidRange = [device.modelID rangeOfString:@"VendorID_"];
-        deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, 5)] intValue];
+        uint32_t maxLen = device.modelID.length - vidRange.location - 9;
+        maxLen = (maxLen > 5) ? 5 : maxLen;        
+        deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, maxLen)] intValue];
 
         NSRange pidRange = [device.modelID rangeOfString:@"ProductID_"];
-        deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, 5)] intValue];
+        maxLen = device.modelID.length - pidRange.location - 10;
+        maxLen = (maxLen > 5) ? 5 : maxLen;
+        deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, maxLen)] intValue];
 
         LOG(LOG_DEBUG, "USB  : vid=%04X  pid=%04X\n", deviceInfo->m_vid, deviceInfo->m_pid);
  
