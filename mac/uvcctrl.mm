@@ -21,8 +21,7 @@
 // 
 
 #define UVC_INPUT_TERMINAL_ID 0x01
-#define UVC_PROCESSING_UNIT_ID 0x02
-//#define UVC_
+#define UVC_PROCESSING_UNIT_ID 0x03
 
 // Camera termainal control selectors
 #define CT_AE_MODE_CONTROL 0x02
@@ -59,6 +58,14 @@
 #define UVC_GET_RES 0x84
 #define UVC_GET_INFO 0x86
 #define UVC_GET_DEF 0x87
+
+
+UVCCtrl::UVCCtrl(IOUSBInterfaceInterface190 **controller)
+    : m_controller(controller)
+{
+    LOG(LOG_VERBOSE,"[BRIGHTNESS] ");
+    reportCapabilities(PU_BRIGHTNESS_CONTROL, UVC_PROCESSING_UNIT_ID);        
+}
 
 UVCCtrl::~UVCCtrl()
 {
@@ -178,6 +185,7 @@ IOUSBInterfaceInterface190** UVCCtrl::createControlInterface(IOUSBDeviceInterfac
                 return NULL;
         }
         LOG(LOG_DEBUG, "UVCCtrl::createControlInterface: created control interface\n");
+
         return controlInterface;
     }
     return NULL;
@@ -322,14 +330,18 @@ bool UVCCtrl::setProperty(uint32_t propID, int32_t value)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
+        LOG(LOG_VERBOSE, "UVCCtrl::setProperty (exposure) %08X\n", value);
         return setData(CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, value);
     case CAPPROPID_FOCUS:
         return false; // FIXME: not supported yet
     case CAPPROPID_ZOOM:
+        LOG(LOG_VERBOSE, "UVCCtrl::setProperty (zoom) %08X\n", value);
         return setData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, value);
     case CAPPROPID_WHITEBALANCE:
+        LOG(LOG_VERBOSE, "UVCCtrl::setProperty (white balance) %08X\n", value);
         return setData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);
     case CAPPROPID_GAIN:
+        LOG(LOG_VERBOSE, "UVCCtrl::setProperty (gain) %08X\n", value);
         return setData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);
     default:
         return false;
@@ -351,14 +363,19 @@ bool UVCCtrl::getProperty(uint32_t propID, int32_t *value)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
+        LOG(LOG_VERBOSE, "UVCCtrl::getProperty (exposure)\n");
         return getData(CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, value);
     case CAPPROPID_FOCUS:
+        LOG(LOG_VERBOSE, "UVCCtrl::getProperty (focus)\n");
         return false; // FIXME: not supported yet
     case CAPPROPID_ZOOM:
+        LOG(LOG_VERBOSE, "UVCCtrl::getProperty (zoom)\n");
         return getData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, value);
     case CAPPROPID_WHITEBALANCE:
+        LOG(LOG_VERBOSE, "UVCCtrl::getProperty (white balance)\n");  
         return getData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);       
     case CAPPROPID_GAIN:
+        LOG(LOG_VERBOSE, "UVCCtrl::getProperty (gain)\n");
         return getData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);
     default:
         return false;
@@ -378,8 +395,10 @@ bool UVCCtrl::setAutoProperty(uint32_t propID, bool enabled)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
+        LOG(LOG_VERBOSE, "UVCCtrl::setAutoProperty (exposure %s)\n", enabled ? "ON" : "OFF");
         return setData(CT_AE_MODE_CONTROL, UVC_INPUT_TERMINAL_ID, 1, enabled ? 0x8 : 0x1);
     case CAPPROPID_WHITEBALANCE:
+        LOG(LOG_VERBOSE, "UVCCtrl::setAutoProperty (white balance %s)\n", enabled ? "ON" : "OFF");
         return setData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, UVC_PROCESSING_UNIT_ID, 1, value);
     default:
         return false;
@@ -399,9 +418,10 @@ bool UVCCtrl::getAutoProperty(uint32_t propID, bool *enabled)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
+        LOG(LOG_VERBOSE, "UVCCtrl::getAutoProperty exposure\n");
         if (getData(CT_AE_MODE_CONTROL, UVC_INPUT_TERMINAL_ID, 1, &value))
         {
-            LOG(LOG_VERBOSE,"CT_AE_MODE_CONTROL returned %08Xh\n", value);
+            LOG(LOG_VERBOSE,"CT_AE_MODE_CONTROL returned %08Xh\n", value & 0xFF);
             //
             // value = 1 -> manual mode
             //         2 -> auto mode (I haven't seen this in the wild)
@@ -414,13 +434,15 @@ bool UVCCtrl::getAutoProperty(uint32_t propID, bool *enabled)
         }
         return false;
     case CAPPROPID_WHITEBALANCE:
+        LOG(LOG_VERBOSE, "UVCCtrl::getAutoProperty white balance\n");
         if (getData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, UVC_PROCESSING_UNIT_ID, 1, &value))
         {
+            LOG(LOG_VERBOSE,"PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL returned %08Xh\n", value & 0xFF);
             value &= 0xFF; // make 8-bit            
             *enabled = (value==1) ? true : false; 
             return true;
         }
-        return false;
+        return false;     
     default:
         return false;
     }
@@ -480,10 +502,12 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
         LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (white balance)\n");
         if (!getMinData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emin))
         {
+            reportCapabilities(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID);
             return false;
         }
         if (!getMaxData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emax))
         {
+            reportCapabilities(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID);
             return false;
         }     
         // convert from 16-bit to 32-bit.
@@ -494,10 +518,12 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
         LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (gain)\n");
         if (!getMinData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emin))
         {
+            reportCapabilities(PU_GAIN_CONTROL,UVC_PROCESSING_UNIT_ID);
             return false;
         }
         if (!getMaxData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emax))
         {
+            reportCapabilities(PU_GAIN_CONTROL,UVC_PROCESSING_UNIT_ID);
             return false;
         }
         // convert from 16-bit to 32-bit.
@@ -510,4 +536,36 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
     }
 
     return false;   
+}
+
+void UVCCtrl::reportCapabilities(uint32_t selector, uint32_t unit)
+{
+    uint32_t info;
+    LOG(LOG_VERBOSE,"CAPS: ");
+    getInfo(selector, unit, &info);
+    if (info & 0x01)
+    {
+        LOG(LOG_VERBOSE,"GET ");
+    }
+    if (info & 0x02)
+    {
+        LOG(LOG_VERBOSE,"SET ");
+    }
+    if (info & 0x04)
+    {
+        LOG(LOG_VERBOSE,"DISABLED ");
+    }
+    if (info & 0x08)
+    {
+        LOG(LOG_VERBOSE,"AUTO-UPD ");
+    }
+    if (info & 0x10)
+    {
+        LOG(LOG_VERBOSE,"ASYNC ");
+    }
+    if (info & 0x20)
+    {
+        LOG(LOG_VERBOSE,"DISCOMMIT");
+    }
+    LOG(LOG_VERBOSE,"\n");
 }

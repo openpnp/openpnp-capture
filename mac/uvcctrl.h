@@ -48,10 +48,7 @@ public:
     bool getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax);
 
 protected:
-    UVCCtrl(IOUSBInterfaceInterface190 **controller)
-        : m_controller(controller)
-    {
-    }
+    UVCCtrl(IOUSBInterfaceInterface190 **controller);
 
     static IOUSBInterfaceInterface190** findDevice(uint16_t vid, uint16_t pid);
     static IOUSBInterfaceInterface190** createControlInterface(IOUSBDeviceInterface** deviceInterface);
@@ -62,6 +59,8 @@ protected:
     bool getMaxData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
     bool getMinData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
     bool getInfo(uint32_t selector, uint32_t unit, uint32_t *data);
+
+    void reportCapabilities(uint32_t selector, uint32_t unit);
 
     IOUSBInterfaceInterface190** m_controller;
 };

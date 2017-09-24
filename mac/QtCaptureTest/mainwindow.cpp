@@ -16,10 +16,11 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    Cap_setLogLevel(7);
+    Cap_setLogLevel(8);
     qDebug() << Cap_getLibraryVersion();
 
     m_ctx = Cap_createContext();
+    qDebug() << "Context = " << m_ctx;
 
     CapDeviceID deviceID = 0;
     CapFormatID formatID = 0;
@@ -71,16 +72,23 @@ MainWindow::MainWindow(QWidget *parent) :
     m_exposureSlider = new QSlider(Qt::Horizontal);
     m_autoWhiteBalance = new QCheckBox("Auto White Balance");
     m_whiteBalanceSlider = new QSlider(Qt::Horizontal);
+    m_autoGain = new QCheckBox("Auto Gain");
+    m_gainSlider = new QSlider(Qt::Horizontal);
 
     ui->verticalLayout->addWidget(m_autoExposure);
     ui->verticalLayout->addWidget(m_exposureSlider);
     ui->verticalLayout->addWidget(m_autoWhiteBalance);
     ui->verticalLayout->addWidget(m_whiteBalanceSlider);
+    ui->verticalLayout->addWidget(m_autoGain);
+    ui->verticalLayout->addWidget(m_gainSlider);
 
     connect(m_autoExposure, SIGNAL(toggled(bool)), this, SLOT(onAutoExposure(bool)));
     connect(m_autoWhiteBalance, SIGNAL(toggled(bool)),this, SLOT(onAutoWhiteBalance(bool)));
-    connect(m_exposureSlider, SIGNAL(sliderMoved(int)),this, SLOT(onExposureSlider(int)));
-    connect(m_whiteBalanceSlider, SIGNAL(sliderMoved(int)),this, SLOT(onWhiteBalanceSlider(int)));
+    connect(m_exposureSlider, SIGNAL(valueChanged(int)),this, SLOT(onExposureSlider(int)));
+    connect(m_whiteBalanceSlider, SIGNAL(valueChanged(int)),this, SLOT(onWhiteBalanceSlider(int)));
+    connect(m_autoGain, SIGNAL(toggled(bool)), this, SLOT(onAutoGain(bool)));
+    connect(m_gainSlider, SIGNAL(valueChanged(int)), this, SLOT(onGainSlider(int)));
+
 
     // add timer to refresh the frame display
     m_refreshTimer = new QTimer(this);
@@ -162,13 +170,22 @@ void MainWindow::onAutoWhiteBalance(bool state)
     Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, state ? 1 : 0);
 }
 
+void MainWindow::onAutoGain(bool state)
+{
+    qDebug() << "Auto gain set to " << state;
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_GAIN, state ? 1 : 0);
+}
+
 void MainWindow::readCameraSettings()
 {
-    //Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, false);
-    //Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, false);
+    qDebug() << "readCameraSettings -> Context = " << m_ctx;
+
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, false);
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_GAIN, false);
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, false);
 
     uint32_t v = 0;
-    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &v))
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &v)==CAPRESULT_OK)
     {
         qDebug() << "Auto white balance is " << ((v==1) ? "ON" : "OFF");
     }
@@ -177,9 +194,9 @@ void MainWindow::readCameraSettings()
         qDebug() << "Auto white balance read failed";
     }
 
-    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &v))
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &v)==CAPRESULT_OK)
     {
-        qDebug() << "Auto exposure is " << ((v==1) ? "ON" : "OFF");
+        qDebug() << "Auto exposure is" << ((v==1) ? "ON" : "OFF");
     }
     else
     {
@@ -187,7 +204,7 @@ void MainWindow::readCameraSettings()
     }
 
     int32_t exposure;
-    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &exposure))
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &exposure)==CAPRESULT_OK)
     {
         qDebug() << "Exposure: " << exposure;
         m_exposureSlider->setValue(exposure);
@@ -197,8 +214,19 @@ void MainWindow::readCameraSettings()
         qDebug() << "Failed to get exposure value";
     }
 
+    int32_t gain;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_GAIN, &gain)==CAPRESULT_OK)
+    {
+        qDebug() << "Gain: " << gain;
+        m_exposureSlider->setValue(gain);
+    }
+    else
+    {
+        qDebug() << "Failed to get gain value";
+    }
+
     int32_t emin,emax;
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &emin, &emax))
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &emin, &emax)==CAPRESULT_OK)
     {
         qDebug() << "Exposure min: " << emin;
         qDebug() << "Exposure max: " << emax;
@@ -210,7 +238,7 @@ void MainWindow::readCameraSettings()
         m_exposureSlider->setRange(0, 0);
     }
 
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &emin, &emax))
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &emin, &emax)==CAPRESULT_OK)
     {
         qDebug() << "White balance min: " << emin;
         qDebug() << "White balance max: " << emax;
@@ -221,6 +249,18 @@ void MainWindow::readCameraSettings()
         qDebug() << "Failed to get white balance limits";
         m_whiteBalanceSlider->setRange(0, 0);
     }
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_GAIN, &emin, &emax)==CAPRESULT_OK)
+    {
+        qDebug() << "Gain min: " << emin;
+        qDebug() << "Gain max: " << emax;
+        m_gainSlider->setRange(emin, emax);
+    }
+    else
+    {
+        qDebug() << "Failed to get gain limits";
+        m_gainSlider->setRange(0, 0);
+    }
 }
 
 void MainWindow::onExposureSlider(int value)
@@ -230,8 +270,13 @@ void MainWindow::onExposureSlider(int value)
 
 void MainWindow::onWhiteBalanceSlider(int value)
 {
-    if (!Cap_setProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, value))
+    if (Cap_setProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, value)!=CAPRESULT_OK)
     {
         qDebug() << "Setting white balance failed";
     }
+}
+
+void MainWindow::onGainSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_GAIN, value);
 }

@@ -29,8 +29,10 @@ public slots:
 
     void onAutoExposure(bool state);
     void onAutoWhiteBalance(bool state);
+    void onAutoGain(bool state);
     void onExposureSlider(int value);
     void onWhiteBalanceSlider(int value);
+    void onGainSlider(int value);
 
 private:
     CapFormatInfo           m_finfo;
@@ -39,8 +41,10 @@ private:
 
     QCheckBox*  m_autoWhiteBalance;
     QCheckBox*  m_autoExposure;
+    QCheckBox*  m_autoGain;
     QSlider*    m_exposureSlider;
     QSlider*    m_whiteBalanceSlider;
+    QSlider*    m_gainSlider;
 
 
     QTimer*     m_refreshTimer;
