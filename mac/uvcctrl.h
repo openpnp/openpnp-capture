@@ -44,7 +44,7 @@ public:
     bool setProperty(uint32_t propID, int32_t value);
     bool getProperty(uint32_t propID, int32_t *value);
     bool setAutoProperty(uint32_t propID, bool enabled);
-    bool getAutoProperty(uint32_t propID, bool &enabled);
+    bool getAutoProperty(uint32_t propID, bool *enabled);
     bool getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax);
 
 protected:
@@ -61,6 +61,7 @@ protected:
     bool getData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
     bool getMaxData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
     bool getMinData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
+    bool getInfo(uint32_t selector, uint32_t unit, uint32_t *data);
 
     IOUSBInterfaceInterface190** m_controller;
 };

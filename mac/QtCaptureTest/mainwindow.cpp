@@ -16,10 +16,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    //setWindowTitle("ARSE");
-    m_ctx = Cap_createContext();
-
+    Cap_setLogLevel(7);
     qDebug() << Cap_getLibraryVersion();
+
+    m_ctx = Cap_createContext();
 
     CapDeviceID deviceID = 0;
     CapFormatID formatID = 0;
@@ -66,12 +66,26 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->cameraChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCamera(int)));
 
+    // add exposure and white balance checkboxes
+    m_autoExposure = new QCheckBox("Auto Exposure");
+    m_exposureSlider = new QSlider(Qt::Horizontal);
+    m_autoWhiteBalance = new QCheckBox("Auto White Balance");
+    m_whiteBalanceSlider = new QSlider(Qt::Horizontal);
+
+    ui->verticalLayout->addWidget(m_autoExposure);
+    ui->verticalLayout->addWidget(m_exposureSlider);
+    ui->verticalLayout->addWidget(m_autoWhiteBalance);
+    ui->verticalLayout->addWidget(m_whiteBalanceSlider);
+
+    connect(m_autoExposure, SIGNAL(toggled(bool)), this, SLOT(onAutoExposure(bool)));
+    connect(m_autoWhiteBalance, SIGNAL(toggled(bool)),this, SLOT(onAutoWhiteBalance(bool)));
+    connect(m_exposureSlider, SIGNAL(sliderMoved(int)),this, SLOT(onExposureSlider(int)));
+    connect(m_whiteBalanceSlider, SIGNAL(sliderMoved(int)),this, SLOT(onWhiteBalanceSlider(int)));
+
+    // add timer to refresh the frame display
     m_refreshTimer = new QTimer(this);
     connect(m_refreshTimer, SIGNAL(timeout()), this, SLOT(doFrameUpdate()));
     m_refreshTimer->start(50);
-
-    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, 0);
-
 }
 
 MainWindow::~MainWindow()
@@ -132,4 +146,92 @@ void MainWindow::changeCamera(int index)
     m_frameData.resize(m_finfo.width*m_finfo.height*3);
     m_frameDisplay->setFixedSize(QSize(m_finfo.width, m_finfo.height));
     m_frameDisplay->setStyleSheet("border: 1px solid red");
+
+    readCameraSettings();
+}
+
+void MainWindow::onAutoExposure(bool state)
+{
+    qDebug() << "Auto exposure set to " << state;
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, state ? 1 : 0);
+}
+
+void MainWindow::onAutoWhiteBalance(bool state)
+{
+    qDebug() << "Auto white balance set to " << state;
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, state ? 1 : 0);
+}
+
+void MainWindow::readCameraSettings()
+{
+    //Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, false);
+    //Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, false);
+
+    uint32_t v = 0;
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &v))
+    {
+        qDebug() << "Auto white balance is " << ((v==1) ? "ON" : "OFF");
+    }
+    else
+    {
+        qDebug() << "Auto white balance read failed";
+    }
+
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &v))
+    {
+        qDebug() << "Auto exposure is " << ((v==1) ? "ON" : "OFF");
+    }
+    else
+    {
+        qDebug() << "Auto exposure read failed";
+    }
+
+    int32_t exposure;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &exposure))
+    {
+        qDebug() << "Exposure: " << exposure;
+        m_exposureSlider->setValue(exposure);
+    }
+    else
+    {
+        qDebug() << "Failed to get exposure value";
+    }
+
+    int32_t emin,emax;
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &emin, &emax))
+    {
+        qDebug() << "Exposure min: " << emin;
+        qDebug() << "Exposure max: " << emax;
+        m_exposureSlider->setRange(emin, emax);
+    }
+    else
+    {
+        qDebug() << "Failed to get exposure limits";
+        m_exposureSlider->setRange(0, 0);
+    }
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &emin, &emax))
+    {
+        qDebug() << "White balance min: " << emin;
+        qDebug() << "White balance max: " << emax;
+        m_whiteBalanceSlider->setRange(emin, emax);
+    }
+    else
+    {
+        qDebug() << "Failed to get white balance limits";
+        m_whiteBalanceSlider->setRange(0, 0);
+    }
+}
+
+void MainWindow::onExposureSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, value);
+}
+
+void MainWindow::onWhiteBalanceSlider(int value)
+{
+    if (!Cap_setProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, value))
+    {
+        qDebug() << "Setting white balance failed";
+    }
 }

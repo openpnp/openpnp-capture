@@ -11,6 +11,7 @@
 
 */
 
+#include <IOKit/usb/USB.h>
 #include "uvcctrl.h"
 #include "../common/logging.h"
 
@@ -21,22 +22,32 @@
 
 #define UVC_INPUT_TERMINAL_ID 0x01
 #define UVC_PROCESSING_UNIT_ID 0x02
+//#define UVC_
 
+// Camera termainal control selectors
 #define CT_AE_MODE_CONTROL 0x02
 #define CT_AE_PRIORITY_CONTROL 0x03
 #define CT_EXPOSURE_TIME_ABSOLUTE_CONTROL 0x04
-#define CT_EXPOSURE_TIME_RELATEIVE_CONTROL 0x05
+#define CT_EXPOSURE_TIME_RELATIVE_CONTROL 0x05
 #define CT_FOCUS_ABSOLUTE_CONTROL 0x06
 #define CT_FOCUS_RELATIVE_CONTROL 0x07
 #define CT_FOCUS_AUTO_CONTROL 0x08
 #define CT_ZOOM_ABSOLUTE_CONTROL 0x0B
 #define CT_ZOOM_RELATIVE_CONTROL 0x0C
 
+// Processing unit control selectors
 #define PU_BRIGHTNESS_CONTROL 0x02
 #define PU_CONTRAST_CONTROL 0x03
 #define PU_GAIN_CONTROL 0x04
 #define PU_WHITE_BALANCE_TEMPERATURE_CONTROL 0x0A
 #define PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL 0x0B
+#define PA_WHITE_BALANCE_COMPONENT_CONTROL 0x0C
+#define PU_WHITE_BALANCE_COMPONENT_AUTO_CONTROL 0x0D
+#define PU_HUE_AUTO_CONTROL 0x10
+#define PU_CONTRAST_AUTO_CONTROL 0x13
+
+// Video control interface selectors
+#define VC_REQUEST_ERROR_CODE_CONTROL 0x02
 
 #define UVC_CONTROL_INTERFACE_CLASS 14
 #define UVC_CONTROL_INTERFACE_SUBCLASS 1
@@ -45,7 +56,9 @@
 #define UVC_GET_CUR	0x81
 #define UVC_GET_MIN	0x82
 #define UVC_GET_MAX	0x83
-
+#define UVC_GET_RES 0x84
+#define UVC_GET_INFO 0x86
+#define UVC_GET_DEF 0x87
 
 UVCCtrl::~UVCCtrl()
 {
@@ -79,7 +92,6 @@ IOUSBInterfaceInterface190** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
         if ((result != kIOReturnSuccess) || (plugInInterface == nullptr))
         {
             LOG(LOG_DEBUG, "UVCCtrl::findDevice() Camera control error %d\n", result);
-            //FIXME: log error?
             continue;
         }
         else
@@ -92,33 +104,16 @@ IOUSBInterfaceInterface190** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
             if (hr || (deviceInterface == nullptr))
             {
                 (*plugInInterface)->Release(plugInInterface);
-                //FIXME: log
+                //FIXME: log error
                 continue;
             }
 
             uint16_t vendorID, productID;
             result = (*deviceInterface)->GetDeviceVendor(deviceInterface, &vendorID);
             result = (*deviceInterface)->GetDeviceProduct(deviceInterface, &productID);
-            //LOG(LOG_INFO, "UVC vid=%08X pid=%08X\n", vendorID, productID);
+
             if ((vendorID == vid) && (productID == pid))
             {
-                #if 0
-                IOUSBInterfaceInterface190 **controlInterface;
-
-                hr = (*plugInInterface)->QueryInterface(plugInInterface, 
-                    CFUUIDGetUUIDBytes(kIOUSBInterfaceInterfaceID), (LPVOID *)&controlInterface);
-
-                if (hr || (controlInterface == nullptr))
-                {
-                    LOG(LOG_INFO, "Failed to create UVC control interface (hr=%08X)!\n", hr);
-                }
-                else
-                {
-                    LOG(LOG_INFO, "Created UVC control interface!\n");
-                    (*controlInterface)->Release(controlInterface); 
-                }
-                #endif
-
                 return createControlInterface(deviceInterface);
             }
 
@@ -206,15 +201,44 @@ bool UVCCtrl::sendControlRequest(IOUSBDevRequest req)
     kr = (*m_controller)->ControlRequest(m_controller, 0, &req);
     if (kr != kIOReturnSuccess)
     {
-        LOG(LOG_ERR, "sendControlRequest ControlRequest failed!\n");
+        // IOKIT error code
+        #define err_get_system(err) (((err)>>26)&0x3f) 
+        #define err_get_sub(err) (((err)>>14)&0xfff) 
+        #define err_get_code(err) ((err)&0x3fff)
+        
+        uint32_t code = err_get_code(kr);
+        uint32_t sys  = err_get_system(kr);
+        uint32_t sub  = err_get_sub(kr);
+
+        switch(kr)
+        {
+            case kIOUSBUnknownPipeErr:
+                LOG(LOG_ERR,"sendControlRequest: Pipe ref not recognised\n");
+                break;
+            case kIOUSBTooManyPipesErr:
+                LOG(LOG_ERR,"sendControlRequest: Too many pipes\n");
+                break;
+            case kIOUSBEndpointNotFound:
+                LOG(LOG_ERR,"sendControlRequest: Endpoint not found\n");
+                break;
+            case kIOUSBConfigNotFound:
+                LOG(LOG_ERR,"sendControlRequest: USB configuration not found\n");
+                break;
+            case kIOUSBPipeStalled:
+                LOG(LOG_ERR,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
+                break;
+            case kIOUSBInterfaceNotFound:
+                LOG(LOG_ERR,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
+                break;
+            default:
+                LOG(LOG_ERR, "sendControlRequest ControlRequest failed (KR=sys:sub:code) = %02Xh:%03Xh:%04Xh)!\n", 
+                    err_get_system(kr), err_get_sub(kr), err_get_code(kr));
+                break; 
+        }
+
         kr = (*m_controller)->USBInterfaceClose(m_controller);
         return false;
     }
-
-    //if (req.bRequest != UVC_SET_CUR)
-    //{
-    //    LOG(LOG_VERBOSE, "-> %08X\n", *((int32_t*)req.pData));
-    //}
 
     kr = (*m_controller)->USBInterfaceClose(m_controller);
     return true;
@@ -236,7 +260,7 @@ bool UVCCtrl::setData(uint32_t selector, uint32_t unit, uint32_t length, int32_t
 bool UVCCtrl::getData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data)
 {
     IOUSBDevRequest req;
-    req.bmRequestType = USBmakebmRequestType(kUSBOut, kUSBClass, kUSBInterface);
+    req.bmRequestType = USBmakebmRequestType(kUSBIn, kUSBClass, kUSBInterface);
     req.bRequest = UVC_GET_CUR;
     req.wValue   = (selector << 8);
     req.wIndex   = (unit << 8);
@@ -250,7 +274,7 @@ bool UVCCtrl::getMaxData(uint32_t selector, uint32_t unit, uint32_t length, int3
 {
     IOUSBDevRequest req;
     *data = 0;
-    req.bmRequestType = USBmakebmRequestType(kUSBOut, kUSBClass, kUSBInterface);
+    req.bmRequestType = USBmakebmRequestType(kUSBIn, kUSBClass, kUSBInterface);
     req.bRequest = UVC_GET_MAX;
     req.wValue   = (selector << 8);
     req.wIndex   = (unit << 8);
@@ -264,7 +288,7 @@ bool UVCCtrl::getMinData(uint32_t selector, uint32_t unit, uint32_t length, int3
 {
     IOUSBDevRequest req;
     *data = 0;
-    req.bmRequestType = USBmakebmRequestType(kUSBOut, kUSBClass, kUSBInterface);
+    req.bmRequestType = USBmakebmRequestType(kUSBIn, kUSBClass, kUSBInterface);
     req.bRequest = UVC_GET_MIN;
     req.wValue   = (selector << 8);
     req.wIndex   = (unit << 8);
@@ -272,6 +296,20 @@ bool UVCCtrl::getMinData(uint32_t selector, uint32_t unit, uint32_t length, int3
     req.wLenDone = 0;
     req.pData = data;
     return sendControlRequest(req);
+}
+
+bool UVCCtrl::getInfo(uint32_t selector, uint32_t unit, uint32_t *data)
+{
+    IOUSBDevRequest req;
+    *data = 0;
+    req.bmRequestType = USBmakebmRequestType(kUSBIn, kUSBClass, kUSBInterface);
+    req.bRequest = UVC_GET_INFO;
+    req.wValue   = (selector << 8);
+    req.wIndex   = (unit << 8);
+    req.wLength  = 1;
+    req.wLenDone = 0;
+    req.pData = data;
+    return sendControlRequest(req);    
 }
 
 bool UVCCtrl::setProperty(uint32_t propID, int32_t value)
@@ -288,7 +326,7 @@ bool UVCCtrl::setProperty(uint32_t propID, int32_t value)
     case CAPPROPID_FOCUS:
         return false; // FIXME: not supported yet
     case CAPPROPID_ZOOM:
-        return false; // FIXME: not supported yet
+        return setData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, value);
     case CAPPROPID_WHITEBALANCE:
         return setData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);
     case CAPPROPID_GAIN:
@@ -309,6 +347,7 @@ bool UVCCtrl::getProperty(uint32_t propID, int32_t *value)
 
     *value = 0;
 
+    uint32_t info;
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
@@ -316,7 +355,7 @@ bool UVCCtrl::getProperty(uint32_t propID, int32_t *value)
     case CAPPROPID_FOCUS:
         return false; // FIXME: not supported yet
     case CAPPROPID_ZOOM:
-        return false; // FIXME: not supported yet
+        return getData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, value);
     case CAPPROPID_WHITEBALANCE:
         return getData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);       
     case CAPPROPID_GAIN:
@@ -349,12 +388,8 @@ bool UVCCtrl::setAutoProperty(uint32_t propID, bool enabled)
     return false;   // we should never get here..
 }
 
-bool UVCCtrl::getAutoProperty(uint32_t propID, bool &enabled)
+bool UVCCtrl::getAutoProperty(uint32_t propID, bool *enabled)
 {
-    if (m_controller == nullptr)
-    {
-        return false;
-    }
     if (m_controller == nullptr)
     {
         return false;
@@ -364,16 +399,25 @@ bool UVCCtrl::getAutoProperty(uint32_t propID, bool &enabled)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
-        if (getData(0x02, UVC_INPUT_TERMINAL_ID, 1, &value))
+        if (getData(CT_AE_MODE_CONTROL, UVC_INPUT_TERMINAL_ID, 1, &value))
         {
-            enabled = (value==1) ? true : false; 
+            LOG(LOG_VERBOSE,"CT_AE_MODE_CONTROL returned %08Xh\n", value);
+            //
+            // value = 1 -> manual mode
+            //         2 -> auto mode (I haven't seen this in the wild)
+            //         4 -> shutter priority mode (haven't seen this)
+            //         8 -> aperature prioritry mode (seen this used)
+
+            value &= 0xFF; // make 8-bit
+            *enabled = (value==1) ? false : true;
             return true;
         }
         return false;
     case CAPPROPID_WHITEBALANCE:
-        if (getData(0x0B, UVC_PROCESSING_UNIT_ID, 1, &value))
+        if (getData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, UVC_PROCESSING_UNIT_ID, 1, &value))
         {
-            enabled = (value==1) ? true : false; 
+            value &= 0xFF; // make 8-bit            
+            *enabled = (value==1) ? true : false; 
             return true;
         }
         return false;
@@ -394,6 +438,7 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
+        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (exposure)\n");
         if (!getMinData(CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, emin))
         {
             return false;
@@ -404,6 +449,7 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
         }
         return true;
     case CAPPROPID_FOCUS:
+        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (focus)\n");
         if (!getMinData(CT_FOCUS_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emin))
         {
             return false;
@@ -411,9 +457,13 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
         if (!getMaxData(CT_FOCUS_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emax))
         {
             return false;
-        }           
+        }
+        // convert from 16-bit to 32-bit.
+        *emin = (int16_t)(*emin & 0xFFFF);
+        *emax = (int16_t)(*emax & 0xFFFF);        
         return true;
     case CAPPROPID_ZOOM:
+        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (zoom)\n");
         if (!getMinData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emin))
         {
             return false;
@@ -421,19 +471,27 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
         if (!getMaxData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emax))
         {
             return false;
-        }        
+        }
+        // convert from 16-bit to 32-bit.
+        *emin = (int16_t)(*emin & 0xFFFF);
+        *emax = (int16_t)(*emax & 0xFFFF);        
         return true; 
     case CAPPROPID_WHITEBALANCE:
-        if (!getMinData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emin))
+        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (white balance)\n");
+        if (!getMinData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emin))
         {
             return false;
         }
-        if (!getMaxData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emax))
+        if (!getMaxData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emax))
         {
             return false;
         }     
+        // convert from 16-bit to 32-bit.
+        *emin = (int16_t)(*emin & 0xFFFF);
+        *emax = (int16_t)(*emax & 0xFFFF); 
         return true;
     case CAPPROPID_GAIN:
+        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (gain)\n");
         if (!getMinData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emin))
         {
             return false;
@@ -442,8 +500,12 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
         {
             return false;
         }
+        // convert from 16-bit to 32-bit.
+        *emin = (int16_t)(*emin & 0xFFFF);
+        *emax = (int16_t)(*emax & 0xFFFF);        
         return true;
     default:
+        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (unsupported property %d)\n", propID);
         return false;
     }
 

@@ -193,6 +193,16 @@ int main(int argc, char*argv[])
         printf("Failed to get exposure!\n");
     }
 
+    uint32_t vvv;
+    if (Cap_getAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, &vvv))
+    {
+        printf("Auto exposure: %d\n", vvv);
+    }
+    else
+    {
+        printf("Failed to get auto exposure!\n");
+    }
+
     //disable auto exposure, focus and white balance
     //Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
     //Cap_setAutoProperty(ctx, streamID, CAPPROPID_FOCUS, 0);

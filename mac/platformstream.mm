@@ -306,6 +306,7 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *m
 {
     if (m_uvc != nullptr)
     {
+        LOG(LOG_INFO,"PlatformStream::getProprtyLimits\n");
         return m_uvc->getPropertyLimits(propID, min, max);
     }
     return false;
@@ -327,111 +328,53 @@ uint32_t PlatformStream::getFOURCC()
 /** set property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setProperty(uint32_t propID, int32_t value)
 {
-    if (m_device == nullptr) 
+    if (m_uvc == nullptr)
     {
         return false;
     }
 
-    if (![m_device lockForConfiguration:NULL])
-    {
-        LOG(LOG_ERR, "cannot lock the capture device for re-configuration\n");
-        return false;
-    }
-
-    switch(propID)
-    {
-    case CAPPROPID_EXPOSURE:
-        //m_device.exposureDusation = minExposureDuration;
-        // it seems that explicit exposure settings are not supported
-        // on OSX.
-        [m_device unlockForConfiguration];
-        return false;
-    case CAPPROPID_WHITEBALANCE:
-        [m_device unlockForConfiguration];
-        return false;
-    default:
-        ;
-    }
-    [m_device unlockForConfiguration];
-
-    return true;
+    return m_uvc->setProperty(propID, value);
 }
 
 /** set automatic state of property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
 {
-    if (m_device == nullptr) 
+    if (m_uvc == nullptr) 
     {
         return false;
     }
 
-    if ([m_device lockForConfiguration:NULL] == NO)
-    {
-        LOG(LOG_ERR, "cannot lock the capture device for re-configuration\n");
-        return false;
-    }
-
-    //FIXME: exposure/whitebalance modes must be 
-    //       chekced for support, otherwise an exception
-    //       will occur if unsupported by the device!
-
-    bool ok = true;
-    switch(propID)
-    {
-    case CAPPROPID_EXPOSURE:
-        if (enabled)
-        {
-            m_device.exposureMode = AVCaptureExposureModeAutoExpose;
-        }
-        else
-        {
-            m_device.exposureMode = AVCaptureExposureModeLocked;         
-        }
-        break;
-    case CAPPROPID_WHITEBALANCE:
-        if (enabled)
-        {
-            if ([m_device isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeContinuousAutoWhiteBalance] == YES)
-            {
-                m_device.whiteBalanceMode = AVCaptureWhiteBalanceModeContinuousAutoWhiteBalance;
-            }
-            else
-            {
-                ok = false;
-            }
-        }
-        else
-        {
-            if ([m_device isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeLocked] == YES)
-            {            
-                m_device.whiteBalanceMode = AVCaptureWhiteBalanceModeLocked;
-            }
-            else
-            {
-                ok = false;
-            }            
-        }
-        break;
-    default:
-        ;
-    }
-    [m_device unlockForConfiguration];
-
-    return ok;
+    return m_uvc->setAutoProperty(propID, enabled);
 }
 
 // FIXME: properties are not properly supported on OSX and must be
 //        implemented using direct access of UVC cameras
 bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
 {
-    return false;
+    if (m_uvc == nullptr)
+    {
+        return false;
+    }
+
+    int32_t v;
+    bool ok = m_uvc->getProperty(propID, &v);
+    value = v;
+    return ok;
 }
 
 // FIXME: properties are not properly supported on OSX and must be
 //        implemented using direct access of UVC cameras
 bool PlatformStream::getAutoProperty(uint32_t propID, bool &enabled)
 {
-    return false;
+    if (m_uvc == nullptr) 
+    {
+        return false;
+    }
+
+    bool e;
+    bool ok = m_uvc->getAutoProperty(propID, &e);
+    enabled = e;
+    return ok;
 }
 
 void PlatformStream::callback(const uint8_t *ptr, uint32_t bytes)
