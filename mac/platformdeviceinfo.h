@@ -1,3 +1,14 @@
+/*
+
+    OpenPnp-Capture: a video capture subsystem.
+
+    OSX platform device info object
+
+    Created by Niels Moseley on 7/6/17.
+    Copyright © 2017 Niels Moseley, Jason von Nieda.
+
+*/
+
 #ifndef platformdeviceinfo_h
 #define platformdeviceinfo_h
 
@@ -15,6 +26,8 @@ public:
     platformDeviceInfo() : deviceInfo() 
     {
         m_captureDevice = nullptr;
+        m_pid = 0;
+        m_vid = 0;
     }
 
     virtual ~platformDeviceInfo()
@@ -37,6 +50,11 @@ public:
 
     CFTypeRef m_captureDevice;   ///< pointer to AVCaptureDevice
     std::vector<AVCaptureDeviceFormat*> m_platformFormats; ///< formats supported by the device
+
+    // save USB PID/VID so we can access the UVC camera
+    // directly for setting focus/exposure etc.
+    uint16_t m_pid; // USB product ID (if found) 
+    uint16_t m_vid; // USB vendor ID (if found)
 };
 
 #endif

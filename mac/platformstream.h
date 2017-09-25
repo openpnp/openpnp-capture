@@ -2,10 +2,10 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Windows platform code
+    OSX platform code
 
     Created by Niels Moseley on 7/6/17.
-    Copyright © 2017 Niels Moseley. All rights reserved.
+    Copyright © 2017 Niels Moseley, Jason von Nieda.
 
     Stream class
 
@@ -17,10 +17,13 @@
 #include <stdint.h>
 #include "../common/logging.h"
 #include "../common/stream.h"
+
 #import <AVFoundation/AVFoundation.h>
 #import <CoreFoundation/CoreFoundation.h>
 #import <CoreMedia/CoreMedia.h>
 #import <CoreVideo/CoreVideo.h>
+
+#include "uvcctrl.h"
 
 class Context;          // pre-declaration
 class PlatformStream;  // pre-declaration
@@ -84,7 +87,9 @@ protected:
     AVCaptureDevice*    m_device;       ///< note: we do not own the objecgt itself!
     dispatch_queue_t    m_queue;
 
-    std::vector<uint8_t> m_tmpBuffer;  ///< intermediate buffer for 32->24 bit conversion
+    std::vector<uint8_t> m_tmpBuffer;   ///< intermediate buffer for 32->24 bit conversion
+
+    UVCCtrl             *m_uvc;         ///< UVC USB control object, can be NULL!
 
     /** generate FOURCC string from a uint32 */
     std::string genFOURCCstring(uint32_t v);

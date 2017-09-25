@@ -78,7 +78,8 @@ ELSEIF(APPLE)
                 common/logging.cpp
                 common/stream.cpp
                 mac/platformcontext.mm
-                mac/platformstream.mm)
+                mac/platformstream.mm
+                mac/uvcctrl.mm)
 
 
     # create the library
@@ -91,6 +92,7 @@ ELSEIF(APPLE)
         "-framework CoreMedia"
         "-framework CoreVideo"
         "-framework Accelerate"
+        "-framework IOKit"
         )
 
     # add mac specific test application
