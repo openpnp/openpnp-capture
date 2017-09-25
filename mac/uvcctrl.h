@@ -30,15 +30,18 @@ public:
     /** create a UVC controller for a USB camera */
     static UVCCtrl* create(uint16_t vid, uint16_t pid)
     {
-        IOUSBInterfaceInterface190** iface = findDevice(vid, pid);
-        if (iface == nullptr)
+        IOUSBDeviceInterface** dev = findDevice(vid, pid);
+        if (dev != nullptr)
         {
-            return nullptr;
+            uint32_t unitID = getProcessingUnitID(dev);
+            IOUSBInterfaceInterface190** iface = createControlInterface(dev);
+            if (iface != nullptr)
+            {
+                return new UVCCtrl(iface, unitID);
+            }
+            (*dev)->Release(dev);
         }
-        else
-        {
-            return new UVCCtrl(iface);
-        }
+        return nullptr;
     }
 
     bool setProperty(uint32_t propID, int32_t value);
@@ -48,9 +51,9 @@ public:
     bool getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax);
 
 protected:
-    UVCCtrl(IOUSBInterfaceInterface190 **controller);
+    UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID);
 
-    static IOUSBInterfaceInterface190** findDevice(uint16_t vid, uint16_t pid);
+    static IOUSBDeviceInterface** findDevice(uint16_t vid, uint16_t pid);
     static IOUSBInterfaceInterface190** createControlInterface(IOUSBDeviceInterface** deviceInterface);
     static uint32_t getProcessingUnitID(IOUSBDeviceInterface**);
 
@@ -63,6 +66,7 @@ protected:
 
     void reportCapabilities(uint32_t selector, uint32_t unit);
 
+    uint32_t m_pud; // processing unit ID
     IOUSBInterfaceInterface190** m_controller;
 };
 

@@ -62,9 +62,17 @@
 #define UVC_GET_INFO 0x86
 #define UVC_GET_DEF 0x87
 
+struct ProcessingUnitDescriptor
+{
+    uint8_t bLength;
+    uint8_t bDescriptorType;        // CS_INTERFACE 0x24
+    uint8_t bDescriptorSubtype;     // VC_PROCESSING_UNIT 0x05
+    uint8_t bUnitID;
+};
 
-UVCCtrl::UVCCtrl(IOUSBInterfaceInterface190 **controller)
-    : m_controller(controller)
+UVCCtrl::UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID)
+    : m_pud(processingUnitID),
+    m_controller(controller)
 {
     LOG(LOG_VERBOSE,"[BRIGHTNESS] ");
     reportCapabilities(PU_BRIGHTNESS_CONTROL, UVC_PROCESSING_UNIT_ID);        
@@ -79,7 +87,7 @@ UVCCtrl::~UVCCtrl()
     }
 }
 
-IOUSBInterfaceInterface190** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
+IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
 {
     LOG(LOG_DEBUG, "UVCCtrl::findDevice() called\n");
 
@@ -124,8 +132,8 @@ IOUSBInterfaceInterface190** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
 
             if ((vendorID == vid) && (productID == pid))
             {
-                getProcessingUnitID(deviceInterface);
-                return createControlInterface(deviceInterface);
+                (*plugInInterface)->Release(plugInInterface);
+                return deviceInterface;
             }
 
             (*plugInInterface)->Release(plugInInterface);
@@ -152,13 +160,72 @@ uint32_t UVCCtrl::getProcessingUnitID(IOUSBDeviceInterface** dev)
     {
         LOG(LOG_VERBOSE,"USB descriptor:\n");
         LOG(LOG_VERBOSE,"  length    = %08X\n", configDesc->bLength);
-        //LOG(LOG_VERBOSE,"  type      = %08X\n", configDesc->type);
+        LOG(LOG_VERBOSE,"  type      = %08X\n", configDesc->bDescriptorType);
         LOG(LOG_VERBOSE,"  totalLen  = %08X\n", configDesc->wTotalLength);
         LOG(LOG_VERBOSE,"  interfaces = %08X\n", configDesc->bNumInterfaces);
 
-        FILE *fout = fopen("usbdump.txt","wb");
-        fwrite(configDesc, 1, configDesc->wTotalLength, fout);
-        fclose(fout);
+        //FILE *fout = fopen("usbdump.txt","wb");
+        //fwrite(configDesc, 1, configDesc->wTotalLength, fout);
+        //fclose(fout);
+
+        uint32_t idx  = 0;
+        uint8_t  *ptr = (uint8_t*)configDesc;
+        
+        // Search for VIDEO/CONTROL interface descriptor
+        // Class=14, Subclass=1, Protocol=0
+        // and find the processing unit, if available..
+        // DescriptorType 0x24, DescriptorSubType 0x5
+
+        IOUSBInterfaceDescriptor *iface = NULL;
+        ProcessingUnitDescriptor *pud   = NULL;
+        bool inVideoControlInterfaceDescriptor = false;
+        while(idx < configDesc->wTotalLength)
+        {
+            IOUSBDescriptorHeader *hdr = (IOUSBDescriptorHeader *)&ptr[idx];
+            //LOG(LOG_VERBOSE, "LEN  %08X\n", hdr->bLength);
+            //LOG(LOG_VERBOSE, "TYPE %08X ", hdr->bDescriptorType);
+            switch(hdr->bDescriptorType)
+            {
+                case 0x05:
+                    LOG(LOG_VERBOSE,"Endpoint\n");
+                    break;
+                case 0x02:
+                    LOG(LOG_VERBOSE,"Configuration\n");
+                    break;
+                case 0x04:
+                    LOG(LOG_VERBOSE,"Interface");
+                    iface = (IOUSBInterfaceDescriptor*)&ptr[idx];
+                    if ((iface->bInterfaceClass == 14) && 
+                        (iface->bInterfaceSubClass == 1) &&
+                        (iface->bInterfaceProtocol == 0))
+                    {
+                        inVideoControlInterfaceDescriptor = true;
+                        LOG(LOG_VERBOSE," VIDEO/CONTROL\n");
+                    }
+                    else
+                    {
+                        inVideoControlInterfaceDescriptor = false;
+                        LOG(LOG_VERBOSE,"\n");
+                    }
+                case 0x24:
+                    pud = (ProcessingUnitDescriptor*)&ptr[idx];
+                    if (inVideoControlInterfaceDescriptor)
+                    {
+                        if (pud->bDescriptorSubtype == 0x05)
+                        {
+                            LOG(LOG_VERBOSE,"Processing Unit ID: %d\n", 
+                                pud->bUnitID);
+                            return pud->bUnitID;
+                        }
+                    }
+                    LOG(LOG_VERBOSE,"\n");
+                    break;
+                default:
+                    LOG(LOG_VERBOSE,"?\n");
+                    break;
+            }
+            idx += hdr->bLength; // skip to next..
+        }
     }
     return 0;
 }
