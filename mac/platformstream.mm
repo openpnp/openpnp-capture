@@ -1,3 +1,16 @@
+/*
+
+    OpenPnp-Capture: a video capture subsystem.
+
+    OSX platform code
+
+    Created by Niels Moseley on 7/6/17.
+    Copyright © 2017 Niels Moseley, Jason von Nieda.
+
+    Stream class
+
+*/
+
 #include "platformdeviceinfo.h"
 #include "platformstream.h"
 #include "platformcontext.h"
@@ -78,12 +91,18 @@ Stream* createPlatformStream()
 PlatformStream::PlatformStream() :
     Stream()
 {
+    m_uvc = nullptr;
     m_fourCC = 0;
     m_nativeSession = nullptr;
 }
 
 PlatformStream::~PlatformStream()
 {
+    if (m_uvc != nullptr)
+    {
+        delete m_uvc;
+        m_uvc = nullptr;
+    }
     close();
 }
 
@@ -100,6 +119,7 @@ void PlatformStream::close()
 
     m_fourCC = 0;
     m_isOpen = false;
+    m_device = nullptr; // note: we don't own the device object!
 }
 
 bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
@@ -135,14 +155,14 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;        
     }
 
-    // get a pointer to the native OBJC device.
-    AVCaptureDevice* nativeDevice = (__bridge AVCaptureDevice*) (void*) dinfo->m_captureDevice;
+    //copy the device pointer into stream object
+    m_device = (__bridge AVCaptureDevice*) dinfo->m_captureDevice;
 
     // create a new session manager and open a capture session
     m_nativeSession = [AVCaptureSession new];
 
     NSError* error = nil;
-    AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:nativeDevice error:&error];
+    AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:m_device error:&error];
     if (!input) 
     {
         LOG(LOG_ERR, "Error opening native device %s\n", error.localizedDescription.UTF8String);
@@ -155,7 +175,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 
     LOG(LOG_DEBUG, "Setup for capture format (%d x %d)...\n", width, height);
 
-    //[nativeDevice lockForConfiguration];
     AVCaptureDeviceFormat *bestFormat = nil;
     for(uint32_t i=0; i<dinfo->m_platformFormats.size(); i++)
     {
@@ -180,8 +199,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     }
     
     //FIXME: error checking..
-    [nativeDevice lockForConfiguration:NULL];
-    nativeDevice.activeFormat = bestFormat;
+    [m_device lockForConfiguration:NULL];
+    m_device.activeFormat = bestFormat;
     
     m_width = width;
     m_height = height;
@@ -253,7 +272,18 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     // unlock must be after startRunning call
     // otherwise the session object will
     // override our settings :-/
-    [nativeDevice unlockForConfiguration];
+    [m_device unlockForConfiguration];
+
+    // try to create a UVC control object
+    m_uvc = UVCCtrl::create(dinfo->m_vid, dinfo->m_pid);
+    if (m_uvc != nullptr)
+    {
+        LOG(LOG_DEBUG, "Created a UVC control object!\n");
+    }
+    else
+    {
+        LOG(LOG_DEBUG, "Could not create a UVC control object! -- settings will not be available!\n");
+    }
 
     m_isOpen = true;
     m_frames = 0; // reset the frame counter
@@ -274,6 +304,11 @@ std::string PlatformStream::genFOURCCstring(uint32_t v)
 /** get the limits of a camera/stream property (exposure, zoom etc) */
 bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max)
 {
+    if (m_uvc != nullptr)
+    {
+        LOG(LOG_INFO,"PlatformStream::getProprtyLimits\n");
+        return m_uvc->getPropertyLimits(propID, min, max);
+    }
     return false;
 }
 
@@ -293,13 +328,53 @@ uint32_t PlatformStream::getFOURCC()
 /** set property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setProperty(uint32_t propID, int32_t value)
 {
-    return false;
+    if (m_uvc == nullptr)
+    {
+        return false;
+    }
+
+    return m_uvc->setProperty(propID, value);
 }
 
 /** set automatic state of property (exposure, zoom etc) of camera/stream */
 bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
 {
-    return 0;
+    if (m_uvc == nullptr) 
+    {
+        return false;
+    }
+
+    return m_uvc->setAutoProperty(propID, enabled);
+}
+
+// FIXME: properties are not properly supported on OSX and must be
+//        implemented using direct access of UVC cameras
+bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
+{
+    if (m_uvc == nullptr)
+    {
+        return false;
+    }
+
+    int32_t v;
+    bool ok = m_uvc->getProperty(propID, &v);
+    value = v;
+    return ok;
+}
+
+// FIXME: properties are not properly supported on OSX and must be
+//        implemented using direct access of UVC cameras
+bool PlatformStream::getAutoProperty(uint32_t propID, bool &enabled)
+{
+    if (m_uvc == nullptr) 
+    {
+        return false;
+    }
+
+    bool e;
+    bool ok = m_uvc->getAutoProperty(propID, &e);
+    enabled = e;
+    return ok;
 }
 
 void PlatformStream::callback(const uint8_t *ptr, uint32_t bytes)
