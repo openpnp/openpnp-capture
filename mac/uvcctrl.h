@@ -52,6 +52,7 @@ protected:
 
     static IOUSBInterfaceInterface190** findDevice(uint16_t vid, uint16_t pid);
     static IOUSBInterfaceInterface190** createControlInterface(IOUSBDeviceInterface** deviceInterface);
+    static uint32_t getProcessingUnitID(IOUSBDeviceInterface**);
 
     bool sendControlRequest(IOUSBDevRequest req);
     bool setData(uint32_t selector, uint32_t unit, uint32_t length, int32_t data);

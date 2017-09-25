@@ -19,6 +19,9 @@
 // constants defined in the UVC USB specfication
 // which you can get here: http://www.usb.org/developers/docs/devclass_docs/USB_Video_Class_1_5.zip
 // 
+// FIXME: we should get the processing unit ID from the USB device 
+// descriptors
+//
 
 #define UVC_INPUT_TERMINAL_ID 0x01
 #define UVC_PROCESSING_UNIT_ID 0x03
@@ -121,6 +124,7 @@ IOUSBInterfaceInterface190** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
 
             if ((vendorID == vid) && (productID == pid))
             {
+                getProcessingUnitID(deviceInterface);
                 return createControlInterface(deviceInterface);
             }
 
@@ -131,6 +135,33 @@ IOUSBInterfaceInterface190** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
     return NULL;
 }
 
+uint32_t UVCCtrl::getProcessingUnitID(IOUSBDeviceInterface** dev)
+{
+    // find the ID of the processing unit in the USB device descriptor
+    //Get the configuration descriptor for index 0
+
+    IOReturn                        kr;
+    IOUSBConfigurationDescriptorPtr configDesc;
+
+    kr = (*dev)->GetConfigurationDescriptorPtr(dev, 0, &configDesc);
+    if (kr)
+    {
+        return 0; // cannot find the ID
+    }
+    else
+    {
+        LOG(LOG_VERBOSE,"USB descriptor:\n");
+        LOG(LOG_VERBOSE,"  length    = %08X\n", configDesc->bLength);
+        //LOG(LOG_VERBOSE,"  type      = %08X\n", configDesc->type);
+        LOG(LOG_VERBOSE,"  totalLen  = %08X\n", configDesc->wTotalLength);
+        LOG(LOG_VERBOSE,"  interfaces = %08X\n", configDesc->bNumInterfaces);
+
+        FILE *fout = fopen("usbdump.txt","wb");
+        fwrite(configDesc, 1, configDesc->wTotalLength, fout);
+        fclose(fout);
+    }
+    return 0;
+}
 
 IOUSBInterfaceInterface190** UVCCtrl::createControlInterface(IOUSBDeviceInterface** deviceInterface)
 {
