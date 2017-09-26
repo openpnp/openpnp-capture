@@ -87,7 +87,7 @@ UVCCtrl::~UVCCtrl()
     }
 }
 
-IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
+IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t location)
 {
     LOG(LOG_DEBUG, "UVCCtrl::findDevice() called\n");
 
@@ -118,7 +118,6 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
                 CFUUIDGetUUIDBytes(kIOUSBDeviceInterfaceID),
                 (LPVOID*)&deviceInterface);
 
-
             if (hr || (deviceInterface == nullptr))
             {
                 (*plugInInterface)->Release(plugInInterface);
@@ -127,10 +126,19 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
             }
 
             uint16_t vendorID, productID;
+            uint32_t locationID;
             result = (*deviceInterface)->GetDeviceVendor(deviceInterface, &vendorID);
             result = (*deviceInterface)->GetDeviceProduct(deviceInterface, &productID);
+            result = (*deviceInterface)->GetLocationID(deviceInterface, &locationID);
 
-            if ((vendorID == vid) && (productID == pid))
+            // if 'location' is zero, we won't match on location
+            // to achieve this, we simply set locationID to zero.
+            if (location == 0)
+            {
+                locationID = 0;
+            }
+
+            if ((vendorID == vid) && (productID == pid) && (locationID == location))
             {
                 (*plugInInterface)->Release(plugInInterface);
                 return deviceInterface;
