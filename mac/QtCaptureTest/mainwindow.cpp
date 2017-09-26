@@ -74,6 +74,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_whiteBalanceSlider = new QSlider(Qt::Horizontal);
     m_autoGain = new QCheckBox("Auto Gain");
     m_gainSlider = new QSlider(Qt::Horizontal);
+    m_contrastSlider = new QSlider(Qt::Horizontal);
+    m_brightnessSlider = new QSlider(Qt::Horizontal);
 
     ui->verticalLayout->addWidget(m_autoExposure);
     ui->verticalLayout->addWidget(m_exposureSlider);
@@ -81,6 +83,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->verticalLayout->addWidget(m_whiteBalanceSlider);
     ui->verticalLayout->addWidget(m_autoGain);
     ui->verticalLayout->addWidget(m_gainSlider);
+    ui->verticalLayout->addWidget(m_contrastSlider);
+    ui->verticalLayout->addWidget(m_brightnessSlider);
 
     connect(m_autoExposure, SIGNAL(toggled(bool)), this, SLOT(onAutoExposure(bool)));
     connect(m_autoWhiteBalance, SIGNAL(toggled(bool)),this, SLOT(onAutoWhiteBalance(bool)));
@@ -88,7 +92,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_whiteBalanceSlider, SIGNAL(valueChanged(int)),this, SLOT(onWhiteBalanceSlider(int)));
     connect(m_autoGain, SIGNAL(toggled(bool)), this, SLOT(onAutoGain(bool)));
     connect(m_gainSlider, SIGNAL(valueChanged(int)), this, SLOT(onGainSlider(int)));
-
+    connect(m_contrastSlider, SIGNAL(valueChanged(int)), this, SLOT(onContrastSlider(int)));
+    connect(m_brightnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onBrightnessSlider(int)));
 
     // add timer to refresh the frame display
     m_refreshTimer = new QTimer(this);
@@ -261,6 +266,28 @@ void MainWindow::readCameraSettings()
         qDebug() << "Failed to get gain limits";
         m_gainSlider->setRange(0, 0);
     }
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_CONTRAST, &emin, &emax)==CAPRESULT_OK)
+    {
+        qDebug() << "Contrast min: " << emin;
+        qDebug() << "Contrast max: " << emax;
+        m_contrastSlider->setRange(emin, emax);
+    }
+    else
+    {
+        m_contrastSlider->setRange(0, 0);
+    }
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, &emin, &emax)==CAPRESULT_OK)
+    {
+        qDebug() << "Brightness min: " << emin;
+        qDebug() << "Brightness max: " << emax;
+        m_brightnessSlider->setRange(emin, emax);
+    }
+    else
+    {
+        m_brightnessSlider->setRange(0, 0);
+    }
 }
 
 void MainWindow::onExposureSlider(int value)
@@ -279,4 +306,14 @@ void MainWindow::onWhiteBalanceSlider(int value)
 void MainWindow::onGainSlider(int value)
 {
     Cap_setProperty(m_ctx, m_streamID, CAPPROPID_GAIN, value);
+}
+
+void MainWindow::onContrastSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_CONTRAST, value);
+}
+
+void MainWindow::onBrightnessSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, value);
 }
