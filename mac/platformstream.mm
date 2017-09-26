@@ -212,37 +212,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     [m_nativeSession addOutput:output];
     output.videoSettings = nil;
 
-#if 0
-    //auto myFormat = nativeDevice.activeFormat.formatDescription;
-    //NSLog(@"%@", myFormat);
-
-    //for (NSString *key in [myFormat allKeys]) 
-    //{
-        //NSString *v = [output.videoSettings objectForKey:key];
-        //LOG(LOG_DEBUG,"key: %s %s\n", key.UTF8String, v.UTF8String);
-        //NSLog(@"%@",[myFormat objectForKey:key]);
-    //}
-
-    // dump all video settings
-    LOG(LOG_DEBUG,"Dumping videoSettings:\n");
-    for (NSString *key in [output.videoSettings allKeys]) 
-    {
-        //NSString *v = [output.videoSettings objectForKey:key];
-        //LOG(LOG_DEBUG,"key: %s %s\n", key.UTF8String, v.UTF8String);
-        NSLog(@"%@",[output.videoSettings objectForKey:key]);
-    }
-
-    output.videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:
-        [output.videoSettings objectForKey:AVVideoCodecKey], AVVideoCodecKey,
-        [NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA], (id)kCVPixelBufferPixelFormatTypeKey,
-        //[NSNumber numberWithInt:width], AVVideoWidthKey,
-        //[NSNumber numberWithInt:height], AVVideoHeightKey,
-        //[NSNumber numberWithUnsignedInt:width], AVVideoWidthKey,
-        //[NSNumber numberWithUnsignedInt:height], AVVideoHeightKey,
-         nil];
-
-#endif
-
     output.videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:
         [NSNumber numberWithUnsignedInt:kCVPixelFormatType_32ARGB], (id)kCVPixelBufferPixelFormatTypeKey,
         nil];
@@ -275,7 +244,7 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     [m_device unlockForConfiguration];
 
     // try to create a UVC control object
-    m_uvc = UVCCtrl::create(dinfo->m_vid, dinfo->m_pid);
+    m_uvc = UVCCtrl::create(dinfo->m_vid, dinfo->m_pid, dinfo->m_busLocation);
     if (m_uvc != nullptr)
     {
         LOG(LOG_DEBUG, "Created a UVC control object!\n");

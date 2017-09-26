@@ -106,8 +106,8 @@ int main(int argc, char*argv[])
             for (int i = 3; i >= 0; i--) {
                 fourcc += (char) ((finfo.fourcc >> (8 * i)) & 0xff);
             }
-            printf("  Format ID %d: %d x %d pixels  FOURCC=%s\n",
-                j, finfo.width, finfo.height, fourcc.c_str());
+            printf("  Format ID %d: %d x %d pixels  %d FPS(max)  FOURCC=%s\n",
+                j, finfo.width, finfo.height, finfo.fps, fourcc.c_str());
         }
     }
 

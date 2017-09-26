@@ -53,8 +53,9 @@ public:
 
     // save USB PID/VID so we can access the UVC camera
     // directly for setting focus/exposure etc.
-    uint16_t m_pid; // USB product ID (if found) 
-    uint16_t m_vid; // USB vendor ID (if found)
+    uint16_t m_pid;         // USB product ID (if found) 
+    uint16_t m_vid;         // USB vendor ID (if found)
+    uint32_t m_busLocation; // 10-char hex bus location (if found)
 };
 
 #endif

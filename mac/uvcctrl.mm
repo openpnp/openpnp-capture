@@ -24,7 +24,6 @@
 //
 
 #define UVC_INPUT_TERMINAL_ID 0x01
-#define UVC_PROCESSING_UNIT_ID 0x03
 
 // Camera termainal control selectors
 #define CT_AE_MODE_CONTROL 0x02
@@ -41,9 +40,13 @@
 #define PU_BRIGHTNESS_CONTROL 0x02
 #define PU_CONTRAST_CONTROL 0x03
 #define PU_GAIN_CONTROL 0x04
+#define PU_HUE_CONTROL 0x06
+#define PU_SATURATION_CONTROL 0x07
+#define PU_SHARPNESS_CONTROL 0x08
+#define PU_GAMMA_CONTROL 0x09
 #define PU_WHITE_BALANCE_TEMPERATURE_CONTROL 0x0A
 #define PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL 0x0B
-#define PA_WHITE_BALANCE_COMPONENT_CONTROL 0x0C
+#define PU_WHITE_BALANCE_COMPONENT_CONTROL 0x0C
 #define PU_WHITE_BALANCE_COMPONENT_AUTO_CONTROL 0x0D
 #define PU_HUE_AUTO_CONTROL 0x10
 #define PU_CONTRAST_AUTO_CONTROL 0x13
@@ -62,6 +65,7 @@
 #define UVC_GET_INFO 0x86
 #define UVC_GET_DEF 0x87
 
+// USB descriptor for UVC processing unit
 struct ProcessingUnitDescriptor
 {
     uint8_t bLength;
@@ -70,12 +74,33 @@ struct ProcessingUnitDescriptor
     uint8_t bUnitID;
 };
 
+struct propertyInfo_t
+{
+    uint32_t    selector;   // selector ID
+    uint32_t    unit;       // unit (==0 for INPUT TERMINA:, ==1 for PROCESSING UNIT)
+    uint32_t    length;     // length (bytes)
+};
+
+const propertyInfo_t propertyInfo[] =
+{
+    {0,0,0},
+    {CT_EXPOSURE_TIME_ABSOLUTE_CONTROL   , 0, 4},
+    {CT_FOCUS_ABSOLUTE_CONTROL           , 0, 2},
+    {CT_ZOOM_ABSOLUTE_CONTROL            , 0, 2},
+    {PU_WHITE_BALANCE_TEMPERATURE_CONTROL, 1, 2},
+    {PU_GAIN_CONTROL                     , 1, 2},
+    {PU_BRIGHTNESS_CONTROL               , 1, 2},
+    {PU_CONTRAST_CONTROL                 , 1, 2},
+    {PU_SATURATION_CONTROL               , 1, 2},
+    {PU_GAMMA_CONTROL                    , 1, 2}
+};
+
 UVCCtrl::UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID)
     : m_pud(processingUnitID),
     m_controller(controller)
 {
-    LOG(LOG_VERBOSE,"[BRIGHTNESS] ");
-    reportCapabilities(PU_BRIGHTNESS_CONTROL, UVC_PROCESSING_UNIT_ID);        
+    //LOG(LOG_VERBOSE,"[BRIGHTNESS] ");
+    //reportCapabilities(PU_BRIGHTNESS_CONTROL, UVC_PROCESSING_UNIT_ID);        
 }
 
 UVCCtrl::~UVCCtrl()
@@ -87,7 +112,7 @@ UVCCtrl::~UVCCtrl()
     }
 }
 
-IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
+IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t location)
 {
     LOG(LOG_DEBUG, "UVCCtrl::findDevice() called\n");
 
@@ -118,7 +143,6 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
                 CFUUIDGetUUIDBytes(kIOUSBDeviceInterfaceID),
                 (LPVOID*)&deviceInterface);
 
-
             if (hr || (deviceInterface == nullptr))
             {
                 (*plugInInterface)->Release(plugInInterface);
@@ -127,10 +151,19 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid)
             }
 
             uint16_t vendorID, productID;
+            uint32_t locationID;
             result = (*deviceInterface)->GetDeviceVendor(deviceInterface, &vendorID);
             result = (*deviceInterface)->GetDeviceProduct(deviceInterface, &productID);
+            result = (*deviceInterface)->GetLocationID(deviceInterface, &locationID);
 
-            if ((vendorID == vid) && (productID == pid))
+            // if 'location' is zero, we won't match on location
+            // to achieve this, we simply set locationID to zero.
+            if (location == 0)
+            {
+                locationID = 0;
+            }
+
+            if ((vendorID == vid) && (productID == pid) && (locationID == location))
             {
                 (*plugInInterface)->Release(plugInInterface);
                 return deviceInterface;
@@ -182,17 +215,15 @@ uint32_t UVCCtrl::getProcessingUnitID(IOUSBDeviceInterface** dev)
         while(idx < configDesc->wTotalLength)
         {
             IOUSBDescriptorHeader *hdr = (IOUSBDescriptorHeader *)&ptr[idx];
-            //LOG(LOG_VERBOSE, "LEN  %08X\n", hdr->bLength);
-            //LOG(LOG_VERBOSE, "TYPE %08X ", hdr->bDescriptorType);
             switch(hdr->bDescriptorType)
             {
-                case 0x05:
+                case 0x05:  // Endpoint descriptor ID
                     LOG(LOG_VERBOSE,"Endpoint\n");
                     break;
-                case 0x02:
+                case 0x02:  // Configuration descriptor ID
                     LOG(LOG_VERBOSE,"Configuration\n");
                     break;
-                case 0x04:
+                case 0x04: // Interface descriptor ID
                     LOG(LOG_VERBOSE,"Interface");
                     iface = (IOUSBInterfaceDescriptor*)&ptr[idx];
                     if ((iface->bInterfaceClass == 14) && 
@@ -207,7 +238,8 @@ uint32_t UVCCtrl::getProcessingUnitID(IOUSBDeviceInterface** dev)
                         inVideoControlInterfaceDescriptor = false;
                         LOG(LOG_VERBOSE,"\n");
                     }
-                case 0x24:
+                    break;
+                case 0x24: // class-specific ID
                     pud = (ProcessingUnitDescriptor*)&ptr[idx];
                     if (inVideoControlInterfaceDescriptor)
                     {
@@ -218,10 +250,10 @@ uint32_t UVCCtrl::getProcessingUnitID(IOUSBDeviceInterface** dev)
                             return pud->bUnitID;
                         }
                     }
-                    LOG(LOG_VERBOSE,"\n");
+                    //LOG(LOG_VERBOSE,"\n");
                     break;
                 default:
-                    LOG(LOG_VERBOSE,"?\n");
+                    //LOG(LOG_VERBOSE,"?\n");
                     break;
             }
             idx += hdr->bLength; // skip to next..
@@ -425,6 +457,16 @@ bool UVCCtrl::setProperty(uint32_t propID, int32_t value)
         return false;
     }
 
+    bool ok = false;
+    if (propID < CAPPROPID_LAST)
+    {
+        uint32_t unit = (propertyInfo[propID].unit == 0) ? UVC_INPUT_TERMINAL_ID : m_pud;
+        ok = setData(propertyInfo[propID].selector, unit, 
+            propertyInfo[propID].length, value);
+    }
+    return ok;
+
+#if 0
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
@@ -445,7 +487,9 @@ bool UVCCtrl::setProperty(uint32_t propID, int32_t value)
         return false;
     }
 
-    return false;   // we should never get here..
+    return false;   // we should never get here..    
+#endif
+
 }
 
 bool UVCCtrl::getProperty(uint32_t propID, int32_t *value)
@@ -455,8 +499,29 @@ bool UVCCtrl::getProperty(uint32_t propID, int32_t *value)
         return false;
     }
 
-    *value = 0;
+    bool ok = false;
+    if (propID < CAPPROPID_LAST)
+    {
+        uint32_t unit = (propertyInfo[propID].unit == 0) ? UVC_INPUT_TERMINAL_ID : m_pud;
+        ok = getData(propertyInfo[propID].selector, unit, 
+            propertyInfo[propID].length, value);
 
+        switch(propertyInfo[propID].length)
+        {
+            case 2:
+                *value &= 0xFFFF;
+                break;
+            case 1:
+                *value &= 0xFF;
+                break;
+            default:
+                break;
+        }
+    }
+    return ok;
+
+#if 0
+    *value = 0;
     uint32_t info;
     switch(propID)
     {
@@ -474,12 +539,13 @@ bool UVCCtrl::getProperty(uint32_t propID, int32_t *value)
         return getData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);       
     case CAPPROPID_GAIN:
         LOG(LOG_VERBOSE, "UVCCtrl::getProperty (gain)\n");
-        return getData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);
+        return getData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, value);    
     default:
         return false;
     }
 
     return false;   // we should never get here..
+#endif
 }
 
 bool UVCCtrl::setAutoProperty(uint32_t propID, bool enabled)
@@ -497,7 +563,7 @@ bool UVCCtrl::setAutoProperty(uint32_t propID, bool enabled)
         return setData(CT_AE_MODE_CONTROL, UVC_INPUT_TERMINAL_ID, 1, enabled ? 0x8 : 0x1);
     case CAPPROPID_WHITEBALANCE:
         LOG(LOG_VERBOSE, "UVCCtrl::setAutoProperty (white balance %s)\n", enabled ? "ON" : "OFF");
-        return setData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, UVC_PROCESSING_UNIT_ID, 1, value);
+        return setData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, m_pud, 1, value);
     default:
         return false;
     }
@@ -533,7 +599,7 @@ bool UVCCtrl::getAutoProperty(uint32_t propID, bool *enabled)
         return false;
     case CAPPROPID_WHITEBALANCE:
         LOG(LOG_VERBOSE, "UVCCtrl::getAutoProperty white balance\n");
-        if (getData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, UVC_PROCESSING_UNIT_ID, 1, &value))
+        if (getData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, m_pud, 1, &value))
         {
             LOG(LOG_VERBOSE,"PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL returned %08Xh\n", value & 0xFF);
             value &= 0xFF; // make 8-bit            
@@ -555,6 +621,44 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
         return false;
     }
 
+    bool ok = false;
+    if (propID < CAPPROPID_LAST)
+    {
+        uint32_t unit = (propertyInfo[propID].unit == 0) ? UVC_INPUT_TERMINAL_ID : m_pud;
+        if (getMinData(propertyInfo[propID].selector, unit, 
+            propertyInfo[propID].length, emin))
+        {
+            ok = true;
+        }
+
+        if (getMaxData(propertyInfo[propID].selector, unit, 
+            propertyInfo[propID].length, emax))
+        {
+            // do not set ok to true here
+            // in case getMinData failed..
+        }
+        else
+        {
+            ok = false;
+        }
+
+        switch(propertyInfo[propID].length)
+        {
+            case 2:
+                *emin &= 0xFFFF;
+                *emax &= 0xFFFF;
+                break;
+            case 1:
+                *emin &= 0xFF;
+                *emax &= 0xFF;
+                break;
+            default:
+                break;
+        }
+    }
+    return ok;
+
+#if 0
     switch(propID)
     {
     case CAPPROPID_EXPOSURE:
@@ -634,6 +738,7 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
     }
 
     return false;   
+#endif
 }
 
 void UVCCtrl::reportCapabilities(uint32_t selector, uint32_t unit)

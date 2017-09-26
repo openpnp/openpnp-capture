@@ -59,6 +59,10 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 | White balance control | Yes / Experimental |
 | Framerate control | No |
 
+# TODO
+* support for re-enumeration.
+* support for setting/getting UVC properties on OSX.
+
 # Building OpenPnP Capture
 
 ### Dependencies
