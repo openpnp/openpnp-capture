@@ -39,11 +39,24 @@ bool MJPEGHelper::decompressFrame(const uint8_t *inBuffer,
     if (tjDecompress2(m_decompressHandle, jpegPtr, inBytes, outBuffer, 
         width, 0/*pitch*/, height, TJPF_RGB, TJFLAG_FASTDCT) != 0)
     {
-        //FIXME: ignore the compress error for now
-        //       the ELP 720p camera keeps generating JPEG decode
-        //       errors.
-        LOG(LOG_WARNING, "tjDecompress2 failed: %s\n", tjGetErrorStr());
-        //return false;
+        // A lot of cameras produce incorrect but decoding JPEG data
+        // and produce warnings that fill the console,
+        // such as 'extraneous bytes before marker' etc.
+        //
+        // To avoid cluttering the console, we suppress the warnings
+        // and errors completely.. :-/
+        //
+        // FIXME: the following disabled code only works for
+        // very recent libjpeg-turbo libraries that aren't common on systems
+        // yet..
+
+        #if 0
+        if (tjGetErrorCode(m_decompressHandle)==TJERR_ERROR)
+        {
+            LOG(LOG_ERR, "tjDecompress2 failed: %s\n", tjGetErrorStr());
+            return false;
+        }
+        #endif
 
         return true;
     }
