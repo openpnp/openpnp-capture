@@ -119,7 +119,8 @@ void PlatformStream::close()
 }
 
 
-bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
+bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, 
+    uint32_t fourCC, uint32_t fps)
 {
     if (m_isOpen)
     {

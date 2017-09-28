@@ -112,7 +112,8 @@ public:
     /** Open a capture stream to a device and request a specific (internal) stream format. 
         When succesfully opened, capturing starts immediately.
     */
-    virtual bool open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC) override;
+    virtual bool open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, 
+        uint32_t fourCC, uint32_t fps) override;
 
     /** Close a capture stream */
     virtual void close() override;

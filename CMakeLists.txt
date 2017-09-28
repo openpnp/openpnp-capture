@@ -13,9 +13,13 @@
 cmake_minimum_required(VERSION 3.1)
 project (openpnp-capture)
 
-set(POSITION_INDEPENDENT_CODE TRUE)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+# make sure the libjpegturbo is compiled with the
+# position independent flag -fPIC
+IF (UNIX)
+    set(POSITION_INDEPENDENT_CODE TRUE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+ENDIF()
 
 # make CMAKE search the current cmake dir inside the
 # current project
