@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.12)
 
 project(libjpeg-turbo C)
 set(VERSION 1.5.80)
+set(VERBOSE 1)
 string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
 list(GET VERSION_TRIPLET 0 VERSION_MAJOR)
 list(GET VERSION_TRIPLET 1 VERSION_MINOR)
@@ -482,6 +483,7 @@ endif()
 # Include directories and compiler definitions
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
+message("Added DIRS: ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}")
 
 ###############################################################################
 # TARGETS
