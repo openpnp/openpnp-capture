@@ -219,17 +219,6 @@ void MainWindow::readCameraSettings()
         qDebug() << "Failed to get exposure value";
     }
 
-    int32_t gain;
-    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_GAIN, &gain)==CAPRESULT_OK)
-    {
-        qDebug() << "Gain: " << gain;
-        m_exposureSlider->setValue(gain);
-    }
-    else
-    {
-        qDebug() << "Failed to get gain value";
-    }
-
     int32_t emin,emax;
     if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &emin, &emax)==CAPRESULT_OK)
     {
@@ -267,6 +256,17 @@ void MainWindow::readCameraSettings()
         m_gainSlider->setRange(0, 0);
     }
 
+    int32_t gain;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_GAIN, &gain)==CAPRESULT_OK)
+    {
+        qDebug() << "Gain: " << gain;
+        m_gainSlider->setValue(gain);
+    }
+    else
+    {
+        qDebug() << "Failed to get gain value";
+    }
+
     if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_CONTRAST, &emin, &emax)==CAPRESULT_OK)
     {
         qDebug() << "Contrast min: " << emin;
@@ -288,6 +288,29 @@ void MainWindow::readCameraSettings()
     {
         m_brightnessSlider->setRange(0, 0);
     }
+
+    int32_t contrast;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_CONTRAST, &contrast)==CAPRESULT_OK)
+    {
+        qDebug() << "Contrast: " << contrast;
+        m_contrastSlider->setValue(contrast);
+    }
+    else
+    {
+        qDebug() << "Failed to get contrast value";
+    }
+
+    int32_t brightness;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, &brightness)==CAPRESULT_OK)
+    {
+        qDebug() << "Brightness: " << brightness;
+        m_brightnessSlider->setValue(brightness);
+    }
+    else
+    {
+        qDebug() << "Failed to get brightness value";
+    }
+
 }
 
 void MainWindow::onExposureSlider(int value)
