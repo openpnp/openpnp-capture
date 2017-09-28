@@ -1,4 +1,6 @@
-![OpenPNP Logo](doc/logo_small.png)
+![OpenPNP Logo](https://raw.githubusercontent.com/openpnp/openpnp-logo/develop/logo_small.png)
+
+# openpnp-capture
 
 OpenPnP Capture is a cross platform video capture library with a focus on machine vision. It's goals are:
 
@@ -87,5 +89,5 @@ Run 'bootstrap_linux.sh'. Run make.
 
 # Downloading Binaries
 
-openpnp-capture is not yet ready for release, but you can download test binaries that are built automatically
+openpnp-capture is still under development, but you can download releases that are built automatically
 from https://github.com/openpnp/openpnp-capture/releases/latest.
