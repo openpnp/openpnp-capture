@@ -28,6 +28,32 @@ Stream* createPlatformStream()
 }
 
 // **********************************************************************
+//   Property translation data
+// **********************************************************************
+
+struct property_t
+{
+    uint32_t dsProp;            // Directshow CameraControlProperty or VideoProcAmpProperty
+    bool     isCameraControl;   // if true dsProp is CameraControlProperty
+};
+
+// the order must be the same as the CAPPROPID indeces!
+static const property_t gs_properties[] =
+{
+    {0, true},                      // dummy
+    {CameraControl_Exposure, true}, // exposure
+    {CameraControl_Focus, true},
+    {CameraControl_Zoom, true},
+    {VideoProcAmp_WhiteBalance, false},
+    {VideoProcAmp_Gain, false},
+    {VideoProcAmp_Brightness, false},
+    {VideoProcAmp_Contrast, false},
+    {VideoProcAmp_Saturation, false},
+    {VideoProcAmp_Gamma, false}
+};
+
+
+// **********************************************************************
 //   StreamCallbackHandler
 // **********************************************************************
 
@@ -553,57 +579,35 @@ bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int3
         return false;
     }
 
-    long prop = 0;
-    switch(propID)
+    if (propID < CAPPROPID_LAST)
     {
-    case CAPPROPID_EXPOSURE:
-        prop = CameraControl_Exposure;
-        break;
-    case CAPPROPID_FOCUS:
-        prop = CameraControl_Focus;
-        break;
-    case CAPPROPID_ZOOM:
-        prop = CameraControl_Zoom;        
-        break;
-    case CAPPROPID_WHITEBALANCE:
-        prop = VideoProcAmp_WhiteBalance;
-        break;     
-    case CAPPROPID_GAIN:
-        prop = VideoProcAmp_Gain; 
-        break;            
-    default:
-        return false;
-    }
-
-    //query exposure
-    long flags, mmin, mmax, delta, defaultValue;
-    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
-    {
-        if (m_camControl->GetRange(prop, &mmin, &mmax,
-            &delta, &defaultValue, &flags) == S_OK)
-        {   
-            *emin = mmin;
-            *emax = mmax;
-            return true;
-        }
-    }
-    else
-    {
-        //note: m_videoProcAmp only exists if the camera
-        //      supports hardware accelleration of 
-        //      video frame processing, such as
-        //      white balance etc.
-        if (m_videoProcAmp == nullptr)
+        long flags, mmin, mmax, delta, defaultValue;
+        if (gs_properties[propID].isCameraControl)
         {
-            return false;
+            // use Camera control
+            if (m_camControl->GetRange(gs_properties[propID].dsProp,
+                    &mmin, &mmax, &delta, &defaultValue, &flags) == S_OK)
+            {   
+                *emin = mmin;
+                *emax = mmax;
+                return true;
+            }            
         }
+        else
+        {
+            // use VideoProcAmp
+            if (m_videoProcAmp == nullptr)
+            {
+                return false; // no VideoProcAmp on board camera
+            }
 
-        if (m_videoProcAmp->GetRange(prop, &mmin, &mmax,
-            &delta, &defaultValue, &flags) == S_OK)
-        {   
-            *emin = mmin;
-            *emax = mmax;
-            return true;
+            if (m_videoProcAmp->GetRange(gs_properties[propID].dsProp, 
+                &mmin, &mmax, &delta, &defaultValue, &flags) == S_OK)
+            {   
+                *emin = mmin;
+                *emax = mmax;
+                return true;
+            }
         }
     }
 
@@ -619,69 +623,48 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
         return false;
     }
 
-    long prop = 0;
-    switch(propID)
+
+    if (propID < CAPPROPID_LAST)
     {
-    case CAPPROPID_EXPOSURE:
-        prop = CameraControl_Exposure;
-        break;
-    case CAPPROPID_FOCUS:
-        prop = CameraControl_Focus;
-        break;
-    case CAPPROPID_ZOOM:
-        prop = CameraControl_Zoom;        
-        break;
-    case CAPPROPID_WHITEBALANCE:
-        prop = VideoProcAmp_WhiteBalance;
-        break;
-    case CAPPROPID_GAIN:
-        prop = VideoProcAmp_Gain; 
-        break;         
-    default:
-        return false;
+        long flags, dummy;
+        if (gs_properties[propID].isCameraControl)
+        {
+            // use Camera control
+            // first we get the property so we can retain the flag settings
+            if (m_camControl->Get(gs_properties[propID].dsProp, &dummy, &flags) != S_OK)
+            {
+                return false;
+            }
+
+            // now we set the property.
+            if (m_camControl->Set(gs_properties[propID].dsProp, value, flags) != S_OK)
+            {
+                return false;
+            }            
+        }
+        else
+        {
+            // use VideoProcAmp
+            if (m_videoProcAmp == nullptr)
+            {
+                return false; // no VideoProcAmp on board camera
+            }
+
+            // first we get the property so we can retain the flag settings
+            if (m_videoProcAmp->Get(gs_properties[propID].dsProp, &dummy, &flags) != S_OK)
+            {
+                return false;
+            }
+
+            // now we set the property.
+            if (m_videoProcAmp->Set(gs_properties[propID].dsProp, value, flags) != S_OK)
+            {
+                return false;
+            } 
+        }
     }
 
-    long flags, dummy;
-    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
-    {
-        // first we get the property so we can retain the flag settings
-        if (m_camControl->Get(prop, &dummy, &flags) != S_OK)
-        {
-            return false;
-        }
-
-        // now we set the property.
-        if (m_camControl->Set(prop, value, flags) != S_OK)
-        {
-            return false;
-        }   
-    }
-    else
-    {
-        //note: m_videoProcAmp only exists if the camera
-        //      supports hardware accelleration of 
-        //      video frame processing, such as
-        //      white balance etc.
-        if (m_videoProcAmp == nullptr)
-        {
-            return false;
-        }
-
-        // first we get the property so we can retain the flag settings
-        if (m_videoProcAmp->Get(prop, &dummy, &flags) != S_OK)
-        {
-            return false;
-        }
-
-        // now we set the property.
-        if (m_videoProcAmp->Set(prop, value, flags) != S_OK)
-        {
-            return false;
-        } 
-
-    }
-
-    return true;
+    return false;
 }
 
 
@@ -759,64 +742,38 @@ bool PlatformStream::getDSProperty(uint32_t propID, long &value, long &flags)
         return false;
     }
 
-    long prop = 0;
-    switch(propID)
+    if (propID < CAPPROPID_LAST)
     {
-    case CAPPROPID_EXPOSURE:
-        prop = CameraControl_Exposure;
-        break;
-    case CAPPROPID_FOCUS:
-        prop = CameraControl_Focus;
-        break;
-    case CAPPROPID_ZOOM:
-        prop = CameraControl_Zoom;        
-        break;
-    case CAPPROPID_WHITEBALANCE:
-        prop = VideoProcAmp_WhiteBalance; 
-        break;
-    case CAPPROPID_GAIN:
-        prop = VideoProcAmp_Gain; 
-        break;        
-    default:
-        return false;
-    }
-
-    if ((propID != CAPPROPID_WHITEBALANCE) && (propID != CAPPROPID_GAIN))
-    {
-        if (FAILED(m_camControl->Get(prop, &value, &flags)))
+        if (gs_properties[propID].isCameraControl)
         {
-            return false;
+            // use Camera control 
+            if (FAILED(m_camControl->Get(gs_properties[propID].dsProp, &value, &flags)))
+            {
+                return false;
+            }
+            return true;                   
         }
-        //LOG(LOG_VERBOSE, "PlatformStream::getDSProperty ID=%d\n", propID);
-        //LOG(LOG_VERBOSE, "Value : %08Xh\n", value);
-        //LOG(LOG_VERBOSE, "Flags : %08Xh\n", flags);        
-        return true;
-    }
-    else
-    {
-        //note: m_videoProcAmp only exists if the camera
-        //      supports hardware accelleration of 
-        //      video frame processing, such as
-        //      white balance etc.
-        if (m_videoProcAmp == nullptr)
+        else
         {
-            return false;
-        }
+            //note: m_videoProcAmp only exists if the camera
+            //      supports hardware accelleration of 
+            //      video frame processing, such as
+            //      white balance etc.
+            if (m_videoProcAmp == nullptr)
+            {
+                return false;
+            }
 
-        // get the current value so we can just set the auto flag
-        // but leave the actualy setting itself intact.
-        if (FAILED(m_videoProcAmp->Get(prop, &value, &flags)))
-        {
-            return false;
+            // get the current value so we can just set the auto flag
+            // but leave the actualy setting itself intact.
+            if (FAILED(m_videoProcAmp->Get(gs_properties[propID].dsProp, &value, &flags)))
+            {
+                return false;
+            }
+            return true;
         }
-
-        //LOG(LOG_VERBOSE, "PlatformStream::getDSProperty ID=%d\n", propID);
-        //LOG(LOG_VERBOSE, "Value : %08Xh\n", value);
-        //LOG(LOG_VERBOSE, "Flags : %08Xh\n", flags);        
-        return true;
     }
-
-    return false; // we should never reach here..
+    return false;
 }
 
 /** get property (exposure, zoom etc) of camera/stream */

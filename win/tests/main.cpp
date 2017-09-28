@@ -110,6 +110,18 @@ void showProperties(CapContext ctx, int32_t streamID)
 
     printf("Gain         : ");
     showProperty(ctx, streamID, CAPPROPID_GAIN);
+
+    printf("Brightness   : ");
+    showProperty(ctx, streamID, CAPPROPID_BRIGHTNESS);
+    
+    printf("Contrast     : ");
+    showProperty(ctx, streamID, CAPPROPID_CONTRAST);
+    
+    printf("Saturation   : ");
+    showProperty(ctx, streamID, CAPPROPID_SATURATION);
+    
+    printf("Gamma        : ");
+    showProperty(ctx, streamID, CAPPROPID_GAMMA);
 }
 
 void estimateFrameRate(CapContext ctx, int32_t streamID)
