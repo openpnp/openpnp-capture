@@ -122,7 +122,8 @@ void PlatformStream::close()
     m_device = nullptr; // note: we don't own the device object!
 }
 
-bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
+bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, 
+    uint32_t fourCC, uint32_t fps)
 {
     if (m_isOpen)
     {
@@ -278,6 +279,12 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *m
         LOG(LOG_INFO,"PlatformStream::getProprtyLimits\n");
         return m_uvc->getPropertyLimits(propID, min, max);
     }
+    return false;
+}
+
+bool PlatformStream::setFrameRate(uint32_t fps)
+{
+    //FIXME: unsupported
     return false;
 }
 
