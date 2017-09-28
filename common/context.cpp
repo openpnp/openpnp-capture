@@ -158,7 +158,8 @@ int32_t Context::openStream(CapDeviceID id, CapFormatID formatID)
 
     if (!s->open(this, device, device->m_formats[formatID].width,
                  device->m_formats[formatID].height,
-                 device->m_formats[formatID].fourcc))
+                 device->m_formats[formatID].fourcc,
+                 device->m_formats[formatID].fps))
     {
         LOG(LOG_ERR, "Could not open stream for device %s\n", device->m_name.c_str());
         return -1;
@@ -265,6 +266,24 @@ uint32_t Context::getStreamFrameCount(int32_t streamID)
     }
 
     return stream->getFrameCount();
+}
+
+bool Context::setStreamFrameRate(int32_t streamID, uint32_t fps)
+{
+    if (streamID < 0)
+    {
+        LOG(LOG_ERR, "setStreamFrameRate was called with a negative stream ID\n");
+        return 0;
+    }    
+
+    Stream *stream = m_streams[streamID];
+    if (stream == nullptr)
+    {
+        LOG(LOG_ERR, "setStreamFrameRate was called with an unknown stream ID\n");
+        return false; 
+    }
+
+    return stream->setFrameRate(fps);
 }
 
 #if 0

@@ -33,6 +33,8 @@ public slots:
     void onExposureSlider(int value);
     void onWhiteBalanceSlider(int value);
     void onGainSlider(int value);
+    void onContrastSlider(int value);
+    void onBrightnessSlider(int value);
 
 private:
     CapFormatInfo           m_finfo;
@@ -45,7 +47,8 @@ private:
     QSlider*    m_exposureSlider;
     QSlider*    m_whiteBalanceSlider;
     QSlider*    m_gainSlider;
-
+    QSlider*    m_contrastSlider;
+    QSlider*    m_brightnessSlider;
 
     QTimer*     m_refreshTimer;
     CapContext  m_ctx;

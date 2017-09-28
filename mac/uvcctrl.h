@@ -27,10 +27,17 @@ class UVCCtrl
 public:
     virtual ~UVCCtrl();
 
-    /** create a UVC controller for a USB camera */
-    static UVCCtrl* create(uint16_t vid, uint16_t pid)
+    /** create a UVC controller for a USB camera based on its 
+        USB vendor ID (vid), USB product ID (pid) and the
+        bus location.
+
+        If the bus location is unknown, set it to zero. In this case,
+        a control interface to the first matching VID/PID device is
+        returned.
+    */
+    static UVCCtrl* create(uint16_t vid, uint16_t pid, uint32_t location)
     {
-        IOUSBDeviceInterface** dev = findDevice(vid, pid);
+        IOUSBDeviceInterface** dev = findDevice(vid, pid, location);
         if (dev != nullptr)
         {
             uint32_t unitID = getProcessingUnitID(dev);
@@ -53,7 +60,7 @@ public:
 protected:
     UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID);
 
-    static IOUSBDeviceInterface** findDevice(uint16_t vid, uint16_t pid);
+    static IOUSBDeviceInterface** findDevice(uint16_t vid, uint16_t pid, uint32_t location);
     static IOUSBInterfaceInterface190** createControlInterface(IOUSBDeviceInterface** deviceInterface);
     static uint32_t getProcessingUnitID(IOUSBDeviceInterface**);
 

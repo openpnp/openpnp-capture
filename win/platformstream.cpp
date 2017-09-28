@@ -457,6 +457,12 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     return true;
 }
 
+bool PlatformStream::setFrameRate(uint32_t fps)
+{
+    //FIXME: implement
+    return false;
+}
+
 uint32_t PlatformStream::getFOURCC()
 {
     if (!m_isOpen) return 0;

@@ -70,10 +70,17 @@ typedef uint32_t CapResult;     ///< result defined by CAPRESULT_xxx
 typedef uint32_t CapDeviceID;   ///< unique device ID
 typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
 
-#define CAPPROPID_EXPOSURE 1
-#define CAPPROPID_FOCUS 2
-#define CAPPROPID_ZOOM 3
+// supported properties:
+#define CAPPROPID_EXPOSURE     1
+#define CAPPROPID_FOCUS        2
+#define CAPPROPID_ZOOM         3
 #define CAPPROPID_WHITEBALANCE 4
+#define CAPPROPID_GAIN         5
+#define CAPPROPID_BRIGHTNESS   6
+#define CAPPROPID_CONTRAST     7
+#define CAPPROPID_SATURATION   8
+#define CAPPROPID_GAMMA        9
+#define CAPPROPID_LAST         10
 
 typedef uint32_t CapPropertyID; ///< property ID (exposure, zoom, focus etc.)
 
@@ -198,7 +205,6 @@ DLLPUBLIC CapResult Cap_closeStream(CapContext ctx, CapStream stream);
     @return 1 if the stream is open and capturing, else 0. 
 */
 DLLPUBLIC uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream);
-
 
 /********************************************************************************** 
      FRAME CAPTURING / INFO

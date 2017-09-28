@@ -46,6 +46,8 @@ public:
 protected:
     bool queryFrameSize(int fd, uint32_t index, uint32_t pixelformat, uint32_t *width, uint32_t *height);
 
+    uint32_t findMaxFrameRate(int fd, uint32_t pixelformat, uint32_t width, uint32_t height);
+
     /** Enumerate V4L capture devices and put their 
         information into the m_devices array 
         

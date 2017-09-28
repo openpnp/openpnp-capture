@@ -121,6 +121,11 @@ public:
     /** returns the number of frames captured during the lifetime of the stream */
     uint32_t getStreamFrameCount(int32_t streamID);
 
+    /** set the frame rate of a stream 
+        returns false if the camera does not support the frame rate
+    */
+    bool setStreamFrameRate(int32_t streamID, uint32_t fps);
+
     /** Get the minimum and maximum settings for a property.
         @param streamID the ID of the stream.
         @param propertyID the ID of the property.

@@ -29,6 +29,7 @@ typedef struct
     int32_t     zoom,gain,exposure,wbalance,focus;
     int32_t     exposure_step;
     int32_t     gstep,wbstep;
+    int32_t     fps;
 } CallbackInfo;
  
 
@@ -240,7 +241,21 @@ gboolean on_key_press (GtkWidget *widget, GdkEventKey *event, gpointer data)
         printf("auto exposure\n");
         fflush(stdout);
         Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 1);
-        return TRUE;        
+        return TRUE;
+#if 0        
+    case '3':
+        ptr->fps--;
+        Cap_setFrameRate(ctx, streamID, ptr->fps);
+        printf("framerate = %d\n", ptr->fps);
+        fflush(stdout);
+        return TRUE;
+    case '4':
+        ptr->fps++;
+        Cap_setFrameRate(ctx, streamID, ptr->fps);
+        printf("framerate = %d\n", ptr->fps);
+        fflush(stdout);
+        return TRUE;
+#endif        
     case 'f':
         Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++ptr->focus);
         printf("focus = %d     \r", ptr->focus);
@@ -380,8 +395,8 @@ int main (int argc, char *argv[])
             Cap_getFormatInfo(ctx, i, j, &finfo);
             fourccString = FourCCToString(finfo.fourcc);
 
-            printf("  Format ID %d: %d x %d pixels  FOURCC=%s\n",
-                j, finfo.width, finfo.height, fourccString.c_str());
+            printf("  Format ID %d: %d x %d pixels  %d fps(max)  FOURCC=%s\n",
+                j, finfo.width, finfo.height, finfo.fps, fourccString.c_str());
         }
     }
 
@@ -508,7 +523,7 @@ int main (int argc, char *argv[])
     id.gstep = gstep;
     id.wbstep = wbstep;
     id.zoom = zoom;
-
+    id.fps  = finfo.fps;
 
     guchar *pixels = (guchar *)calloc(finfo.height * id.stride, 1);
 
@@ -550,7 +565,7 @@ int main (int argc, char *argv[])
     gtk_container_add(GTK_CONTAINER(button_box), GTK_WIDGET(id.image));
     gtk_container_add(GTK_CONTAINER(button_box), button);
 
-    g_timeout_add(250,         // milliseconds
+    g_timeout_add(50,         // milliseconds
                 updatePicture,  // handler function
                 &id);        // data
 

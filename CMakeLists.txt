@@ -13,6 +13,10 @@
 cmake_minimum_required(VERSION 3.1)
 project (openpnp-capture)
 
+set(POSITION_INDEPENDENT_CODE TRUE)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+
 # make CMAKE search the current cmake dir inside the
 # current project
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -99,6 +103,16 @@ ELSEIF(APPLE)
     add_subdirectory(mac/tests)
 
 ELSEIF(UNIX)
+
+    # compile libjpeg-turbo for MJPEG decoding support
+    # right now, we need to disable SIMD because it
+    # causes a compile problem.. we need to fix this
+    # later...
+    
+    set(ENABLE_SHARED OFF)
+    set(WITH_SIMD OFF)      
+    add_subdirectory(linux/contrib/libjpeg-turbo-dev)
+
     # set the platform identification string
     add_definitions(-D__PLATFORM__="Linux ${COMPILERBITS}")
 
@@ -111,37 +125,20 @@ ELSEIF(UNIX)
                 linux/mjpeghelper.cpp
                 linux/yuvconverters.cpp)
 
-    # need pthreads for std::thread
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
+    # force include directories for libjpeg-turbo
+    include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/linux/contrib/libjpeg-turbo-dev")
+    
+    # create our capture library
     add_library(openpnp-capture SHARED ${SOURCE})
+
+    # add pthreads library 
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)    
     target_link_libraries(openpnp-capture Threads::Threads)
 
-    # this will force using the static lib, which will will eventually want to 
-    # do for all dependencies so we don't have to distribute them with our .so
-    # find_library(TURBOJPEG_LIB NAMES turbojpeg.a turbojpeg)
+    # add turbojpeg-static library
+    target_link_libraries(openpnp-capture turbojpeg-static)
 
-    # but libturbojpeg is not compiled with -fPIC which means it can't be static
-    # linked into a shared lib. So instead we will eventually have to build it
-    # ourselves with -fPIC and then we can use this to specify the location:
-    # ADD_LIBRARY(turbojpeg STATIC IMPORTED)
-    # SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION ../libjpegturbo/whatever/libjpegturbo.a)
-
-    # this lets us specify the full path of the turbojpeg library. this is required
-    # because of a bug in the library distribution that does not create the correct
-    # symlink. See https://github.com/OpenKinect/libfreenect2/issues/36
-    # Note: We should be able to specify this on the command line, as well, so we don't have
-    # to hardcode the path here.
-    ADD_LIBRARY(turbojpeg SHARED IMPORTED)
-    if(EXISTS "/usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.1.0")
-        SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.1.0)
-    else()
-        SET_TARGET_PROPERTIES(turbojpeg PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libturbojpeg.so.0.0.0)
-    endif()
-    
-
-    target_link_libraries(openpnp-capture turbojpeg)
-    
     # add linux-specific test application
     add_subdirectory(linux/tests)
 

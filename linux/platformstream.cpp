@@ -218,7 +218,7 @@ void captureThreadFunction(PlatformStream *stream, int fd, size_t bufferSizeByte
 void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSizeBytes)
 {
     //https://linuxtv.org/downloads/v4l-dvb-apis/uapi/v4l/capture.c.html
-    const uint32_t nBuffers = 5;
+    const uint32_t nBuffers = 8;
     
     if (stream == nullptr)
     {
@@ -255,7 +255,7 @@ void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSiz
         FD_SET(fd, &fds);
 
         /* Timeout. */
-        tv.tv_sec = 2;
+        tv.tv_sec = 5;
         tv.tv_usec = 0;
 
         result = select(fd + 1, &fds, NULL, NULL, &tv);
@@ -348,8 +348,6 @@ void PlatformStream::close()
     m_isOpen = false; 
     m_quitThread = true;
 
-    ::close(m_deviceHandle);
-
     if (m_helperThread != nullptr)
     {
         m_helperThread->join();
@@ -359,6 +357,8 @@ void PlatformStream::close()
         m_helperThread = nullptr;
     }
 
+    ::close(m_deviceHandle);
+
     m_deviceHandle = -1;    
 }
 
@@ -367,7 +367,7 @@ void test(size_t bufferSizeBytes)
 
 }
 
-bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC)
+bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, uint32_t height, uint32_t fourCC, uint32_t fps)
 {
     if (m_isOpen)
     {
@@ -452,13 +452,14 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     LOG(LOG_INFO, "Width  = %d pixels\n", m_fmt.fmt.pix.width);
     LOG(LOG_INFO, "Height = %d pixels\n", m_fmt.fmt.pix.height);
     LOG(LOG_INFO, "FOURCC = %s\n", fourCCToString(m_fmt.fmt.pix.pixelformat).c_str());
+    LOG(LOG_INFO, "FPS    = %d\n", fps);
 
     // set the desired frame rate
     v4l2_streamparm sparam;
     CLEAR(sparam);
     sparam.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     sparam.parm.capture.timeperframe.numerator   = 1;
-    sparam.parm.capture.timeperframe.denominator = 10;
+    sparam.parm.capture.timeperframe.denominator = fps;
     if (xioctl(m_deviceHandle, VIDIOC_S_PARM, &sparam) == -1)
     {
         LOG(LOG_CRIT, "Could not set the frame rate (errno = %d)\n", errno);
@@ -563,6 +564,25 @@ void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
     }
 }
 
+bool PlatformStream::setFrameRate(uint32_t fps)
+{    
+    struct v4l2_streamparm param;
+    CLEAR(param);
+
+    param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+    param.parm.capture.timeperframe.numerator = 1;
+    param.parm.capture.timeperframe.denominator = fps;
+
+    if (xioctl(m_deviceHandle, VIDIOC_S_PARM, &param) == -1)
+    {
+        LOG(LOG_ERR,"setFrameRate failed on VIDIOC_S_PARM (errno %d)\n", errno);
+        return false;
+    }
+
+    return true;
+}
+
 uint32_t PlatformStream::getFOURCC()
 {
     if (m_isOpen)
@@ -594,6 +614,18 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
     case CAPPROPID_WHITEBALANCE:
         ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
         break;
+    case CAPPROPID_BRIGHTNESS:
+        ctrl.id = V4L2_CID_BRIGHTNESS;
+        break;
+    case CAPPROPID_CONTRAST:
+        ctrl.id = V4L2_CID_CONTRAST;
+        break;
+    case CAPPROPID_SATURATION:
+        ctrl.id = V4L2_CID_SATURATION;
+        break;
+    case CAPPROPID_GAMMA:
+        ctrl.id = V4L2_CID_GAMMA;
+        break;        
     default:
         return false;
     }
@@ -630,6 +662,10 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
         ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
         ctrl.value = enabled ? 1:0;
         break;
+    case CAPPROPID_GAIN:
+        ctrl.id = V4L2_CID_AUTOGAIN;
+        ctrl.value = enabled ? 1:0;
+        break;        
     default:
         return false;
     }
@@ -665,7 +701,19 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
         break;
     case CAPPROPID_WHITEBALANCE:
         ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        break;        
+        break;
+    case CAPPROPID_BRIGHTNESS:
+        ctrl.id = V4L2_CID_BRIGHTNESS;
+        break;
+    case CAPPROPID_CONTRAST:
+        ctrl.id = V4L2_CID_CONTRAST;
+        break;
+    case CAPPROPID_SATURATION:
+        ctrl.id = V4L2_CID_SATURATION;
+        break;
+    case CAPPROPID_GAMMA:
+        ctrl.id = V4L2_CID_GAMMA;
+        break;               
     default:
         return false;
     }
@@ -698,7 +746,19 @@ bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
         break;
     case CAPPROPID_WHITEBALANCE:
         ctrl.id = V4L2_CID_WHITE_BALANCE_TEMPERATURE;
-        break;         
+        break;
+    case CAPPROPID_BRIGHTNESS:
+        ctrl.id = V4L2_CID_BRIGHTNESS;
+        break;
+    case CAPPROPID_CONTRAST:
+        ctrl.id = V4L2_CID_CONTRAST;
+        break;
+    case CAPPROPID_SATURATION:
+        ctrl.id = V4L2_CID_SATURATION;
+        break;
+    case CAPPROPID_GAMMA:
+        ctrl.id = V4L2_CID_GAMMA;
+        break;                
     default:
         return false;
     }
@@ -729,6 +789,9 @@ bool PlatformStream::getAutoProperty(uint32_t propID, bool &enabled)
         break;
     case CAPPROPID_WHITEBALANCE:
         ctrl.id = V4L2_CID_AUTO_WHITE_BALANCE;
+        break;
+    case CAPPROPID_GAIN:
+        ctrl.id = V4L2_CID_AUTOGAIN;
         break;
     default:
         return false;

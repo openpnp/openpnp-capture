@@ -1,4 +1,6 @@
-![OpenPNP Logo](doc/logo_small.png)
+![OpenPNP Logo](https://raw.githubusercontent.com/openpnp/openpnp-logo/develop/logo_small.png)
+
+# openpnp-capture
 
 OpenPnP Capture is a cross platform video capture library with a focus on machine vision. It's goals are:
 
@@ -59,7 +61,6 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 
 # TODO
 * support for re-enumeration.
-* support for setting/getting UVC properties on OSX.
 
 # Building OpenPnP Capture
 
@@ -67,7 +68,7 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 * CMAKE 3.1 or better
 * MAKE (osx, linux)
 * Visual Studio 2013 + NMake or Ninja Build (windows)
-* libjpeg-turbo, libjpeg-turbo8-dev (linux) -- will be merged into the project at a later time
+* NASM for building libjpeg-turbo (linux)
 
 ### Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
@@ -88,5 +89,5 @@ Run 'bootstrap_linux.sh'. Run make.
 
 # Downloading Binaries
 
-openpnp-capture is not yet ready for release, but you can download test binaries that are built automatically
+openpnp-capture is still under development, but you can download releases that are built automatically
 from https://github.com/openpnp/openpnp-capture/releases/latest.

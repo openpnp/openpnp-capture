@@ -11,8 +11,7 @@ addons:
   apt:
     packages:
     - libgtk-3-dev
-    - libturbojpeg
-    - libjpeg-turbo8-dev
+    - nasm
 
 before_script:
   - mkdir build

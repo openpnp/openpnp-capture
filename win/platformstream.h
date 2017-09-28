@@ -128,6 +128,9 @@ public:
     */
     bool captureFrame(uint8_t *RGBbufferPtr, uint32_t RGBbufferBytes);
 
+    /** set the frame rate */
+    virtual bool setFrameRate(uint32_t fps) override;
+
     /** Return the FOURCC media type of the stream */
     virtual uint32_t getFOURCC() override;
 

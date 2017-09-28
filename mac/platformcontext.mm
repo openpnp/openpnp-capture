@@ -38,7 +38,7 @@ bool PlatformContext::enumerateDevices()
         std::string model = device.modelID.UTF8String;
         LOG(LOG_DEBUG, "Name : %s\n", deviceInfo->m_name.c_str());
         LOG(LOG_DEBUG, "Model: %s\n", model.c_str());
-        LOG(LOG_DEBUG, "ID   : %s\n", deviceInfo->m_uniqueID.c_str());
+        LOG(LOG_DEBUG, "U ID : %s\n", deviceInfo->m_uniqueID.c_str());
 
         // extract the PID/VID from the model name
         NSRange vidRange = [device.modelID rangeOfString:@"VendorID_"];
@@ -51,8 +51,48 @@ bool PlatformContext::enumerateDevices()
         maxLen = (maxLen > 5) ? 5 : maxLen;
         deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, maxLen)] intValue];
 
-        LOG(LOG_DEBUG, "USB  : vid=%04X  pid=%04X\n", deviceInfo->m_vid, deviceInfo->m_pid);
- 
+        LOG(LOG_DEBUG, "USB      : vid=%04X  pid=%04X\n", deviceInfo->m_vid, deviceInfo->m_pid);
+
+        // he unique ID seem to be comprised of a 10-character PCI/USB location address
+        // followed by the VID and PID in hex, e.g. 0x26210000046d0825
+        deviceInfo->m_busLocation = 0;
+        if (device.uniqueID.length == 18)
+        {
+            std::string locStdStr = std::string(device.uniqueID.UTF8String);
+            
+            // sanity check for PID and VID to make sure the unique ID is indeed
+            // in the format we expect..
+            char pidStr[5];
+            char vidStr[5];
+            snprintf(pidStr, sizeof(pidStr), "%04x", deviceInfo->m_pid);
+            snprintf(vidStr, sizeof(vidStr), "%04x", deviceInfo->m_vid);
+
+            if ((locStdStr.substr(10,4) == std::string(vidStr)) &&
+                (locStdStr.substr(14,4) == std::string(pidStr)))
+            {
+                // format seems to be correct
+                NSString *hexString = [device.uniqueID substringWithRange:NSMakeRange(2,8)];
+                NSScanner *scanner = [NSScanner scannerWithString:hexString];
+                [scanner scanHexInt:&(deviceInfo->m_busLocation)];
+
+                LOG(LOG_DEBUG, "Location : %08X\n", deviceInfo->m_busLocation);
+                [scanner dealloc];
+                [hexString dealloc];
+            }
+            else
+            {
+                LOG(LOG_DEBUG, "VID/PID mismatch!\n");
+                LOG(LOG_DEBUG, "Extracted VID %s\n", locStdStr.substr(10,4).c_str());
+                LOG(LOG_DEBUG, "Extracted PID %s\n", locStdStr.substr(14,4).c_str());
+            }
+        }
+        
+        if (deviceInfo->m_busLocation == 0)
+        {
+            LOG(LOG_WARNING, "OSX Unique ID is not exactly 18 characters - wrong format to extract location.\n");
+            LOG(LOG_WARNING, "We might have trouble identifying the UVC control interface.\n");
+        }
+
         for (AVCaptureDeviceFormat* format in device.formats) 
         {
             //Do we really need a complete list of frame rates?
@@ -60,8 +100,10 @@ bool PlatformContext::enumerateDevices()
             //when we open the device later...
             //
             //This is more in line with the Windows and Linux
-            //versions
-            
+            //versions.
+            //
+            // For now, just report the max frame rate
+
             #if 0
             for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges) {
                 for (int frameRate = frameRateRange.minFrameRate; frameRate <= frameRateRange.maxFrameRate; frameRate++) {
@@ -74,7 +116,7 @@ bool PlatformContext::enumerateDevices()
                     deviceInfo->m_formats.push_back(formatInfo);
                 }
             }
-            #else
+            #endif
 
             CMVideoDimensions dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
             CapFormatInfo formatInfo;
@@ -94,7 +136,6 @@ bool PlatformContext::enumerateDevices()
             formatInfo.fps = maxFrameRate; // just use maximum for now!
             deviceInfo->m_formats.push_back(formatInfo);
             deviceInfo->m_platformFormats.push_back(format);
-            #endif
         }
         
         m_devices.push_back(deviceInfo);
