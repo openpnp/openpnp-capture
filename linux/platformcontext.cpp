@@ -115,6 +115,9 @@ bool PlatformContext::enumerateDevices()
             uint32_t index = 0;
             fmtdesc.type  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
+            // FIXME: add FPS information
+            // https://linuxtv.org/downloads/v4l-dvb-apis/uapi/v4l/vidioc-enum-frameintervals.html
+
             bool tryMore = true;
             while(tryMore)
             {
@@ -137,6 +140,7 @@ bool PlatformContext::enumerateDevices()
                     while(queryFrameSize(fd, frmindex, fmtdesc.pixelformat, &cinfo.width, &cinfo.height))
                     {
                         frmindex++;
+                        cinfo.fps = findMaxFrameRate(fd, fmtdesc.pixelformat, cinfo.width, cinfo.height);
                         dinfo->m_formats.push_back(cinfo);
                         LOG(LOG_INFO, "  %d x %d\n", cinfo.width, cinfo.height);
                     }
@@ -171,7 +175,36 @@ bool PlatformContext::queryFrameSize(int fd, uint32_t index, uint32_t pixelforma
             *width = 0;
             *height = 0;
         }
+
         return true;
     }
     return false;
+}
+
+uint32_t PlatformContext::findMaxFrameRate(int fd, uint32_t pixelformat, 
+    uint32_t width, uint32_t height)
+{
+    uint32_t fps = 0;
+
+    // now search the frame rates
+    v4l2_frmivalenum ivals;
+    ivals.pixel_format = pixelformat;
+    ivals.width = width;
+    ivals.height = height;
+    ivals.index = 0;
+    while (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &ivals) != -1)
+    {
+        if (ivals.type == V4L2_FRMIVAL_TYPE_DISCRETE)
+        {
+            LOG(LOG_INFO,"  FPS %d/%d", ivals.discrete.denominator, ivals.discrete.numerator);
+            uint32_t v = ivals.discrete.denominator/ivals.discrete.numerator;
+            if (fps < v)
+            {
+                fps = v;
+            }
+        }
+        ivals.index++;
+    }
+
+    return fps;
 }

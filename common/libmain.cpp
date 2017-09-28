@@ -171,6 +171,25 @@ DLLPUBLIC uint32_t Cap_getStreamFrameCount(CapContext ctx, CapStream stream)
     return 0;    
 }
 
+#if 0
+
+// not used for now..
+
+DLLPUBLIC CapResult Cap_setFrameRate(CapContext ctx, CapStream stream, uint32_t fps)
+{
+    if (ctx != 0)
+    {
+        Context *c = reinterpret_cast<Context*>(ctx);
+        if (!c->setStreamFrameRate(stream, fps))
+        {
+            return CAPRESULT_ERR;
+        }
+        return CAPRESULT_OK;
+    }
+    return CAPRESULT_ERR;    
+}
+#endif
+
 DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max)
 {
     if (ctx != 0)

@@ -244,7 +244,15 @@ int main(int argc, char*argv[])
         case 'x':
             Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, --zoom);
             printf("zoom = %d     \r", zoom);
-            break;  
+            break;
+        case '3':
+            //Cap_setFrameRate(ctx, streamID, --fps);
+            //printf("framerate = %d\n", fps);
+            //break;
+        case '4':
+            //Cap_setFrameRate(ctx, streamID, ++fps);
+            //printf("framerate = %d\n", fps);
+            break;
         case '[':
             wbalance -= wbstep;
             Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);

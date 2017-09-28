@@ -206,7 +206,6 @@ DLLPUBLIC CapResult Cap_closeStream(CapContext ctx, CapStream stream);
 */
 DLLPUBLIC uint32_t Cap_isOpenStream(CapContext ctx, CapStream stream);
 
-
 /********************************************************************************** 
      FRAME CAPTURING / INFO
 **********************************************************************************/
