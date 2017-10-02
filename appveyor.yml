@@ -12,7 +12,10 @@ build:
 after_build:
   - ps: mkdir deploy
   - ps: pwd
-  - ps: ls
+  - ps: ECHO "PLATFORM IS: " ($env:PLATFORM)
+  - ps: if ($env:PLATFORM -eq "Win32") { move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_32.dll }
+  - ps: if ($env:PLATFORM -eq "x64") { move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_32.dll }
+  - ps: ls deploy
 
 platform:
   - Win32
