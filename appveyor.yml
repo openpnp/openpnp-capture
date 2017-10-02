@@ -11,10 +11,10 @@ build:
 
 after_build:
   - mkdir deploy
-  - move build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_64.dll
-  - move build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_32.dll
-  - move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test64.exe
-  - move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test32.exe
+  - move -ErrorAction SilentlyContinue build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_64.dll
+  - move -ErrorAction SilentlyContinue build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_32.dll
+  - move -ErrorAction SilentlyContinue build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test64.exe
+  - move -ErrorAction SilentlyContinue build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test32.exe
 
 platform:
   - Win32
