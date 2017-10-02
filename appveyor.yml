@@ -10,22 +10,22 @@ build:
   project: build\ALL_BUILD.vcxproj
 
 after_build:
-  - ps: |
-    mkdir deploy
-    if ($env:CONFIGURATION -eq "Release")
+- ps: |
+  mkdir deploy
+  if ($env:CONFIGURATION -eq "Release")
+  {
+    if ($env:PLATFORM -eq "Win32") 
     {
-      if ($env:PLATFORM -eq "Win32") 
-      {
-        move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_32.dll
-        move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
-      }
-      if ($env:PLATFORM -eq "x64") 
-      {
-        move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_64.dll
-        move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
-      }
+      move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_32.dll
+      move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
     }
-    ls deploy
+    if ($env:PLATFORM -eq "x64") 
+    {
+      move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_64.dll
+      move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
+    }
+  }
+  ls deploy
 
 platform:
   - Win32
