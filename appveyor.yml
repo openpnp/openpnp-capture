@@ -10,7 +10,7 @@ build:
   project: build\ALL_BUILD.vcxproj
 
 after_build:
-  - ps: >-
+  - ps: |
     mkdir deploy
     if ($env:CONFIGURATION -eq "Release")
     {
