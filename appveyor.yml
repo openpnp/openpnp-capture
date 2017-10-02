@@ -18,25 +18,28 @@ configuration:
   - Release
 
 artifacts:
-- path: build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe
-  name: openpnp-capture-test.exe
-- path: build\$(CONFIGURATION)\openpnp-capture.dll
-  name: openpnp-capture.dll
+- path: deploy\$(CONFIGURATION)\openpnp-capture-test32.exe
+  name: openpnp-capture-test32.exe
+- path: deploy\$(CONFIGURATION)\openpnp-capture-test64.exe
+  name: openpnp-capture-test64.exe  
+- path: deploy\$(CONFIGURATION)\openpnp-capture_64.dll
+  name: openpnp-capture_64.dll
+- path: deploy\$(CONFIGURATION)\openpnp-capture_32.dll
+  name: openpnp-capture_32.dll  
   
 before_deploy:
   - mkdir deploy
-  - if %PLATFORM"=="x64" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\openpnp-capture_64.dll
-  - if %PLATFORM"=="Win32" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\openpnp-capture_32.dll
-  - if %PLATFORM"=="x64" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
-  - if %PLATFORM"=="Win32" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
+  - if %PLATFORM"=="x64" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_64.dll
+  - if %PLATFORM"=="Win32" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_32.dll
+  - if %PLATFORM"=="x64" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test64.exe
+  - if %PLATFORM"=="Win32" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test32.exe
 
 deploy:
   description: 'Auto generated release.'
   provider: GitHub
   auth_token:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
-  file_glob: true
-  file: deploy\*
+  artifact: /openpnp.*
   on:
     appveyor_repo_tag: true
     configuration: Release
