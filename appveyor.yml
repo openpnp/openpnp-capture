@@ -3,10 +3,15 @@ os: Visual Studio 2015
 before_build:
   - mkdir build
   - cd build
-  - cmake -G "Visual Studio 14 2015 Win64" ..
+  - if "%PLATFORM%"=="x64" cmake -G "Visual Studio 14 2015 Win64" ..
+  - if "%PLATFORM%"=="Win32" cmake -G "Visual Studio 14 2015" ..
 
 build:
   project: build\ALL_BUILD.vcxproj
+
+platform:
+  - Win32
+  - x64
 
 configuration:
   - Debug
@@ -18,12 +23,20 @@ artifacts:
 - path: build\$(CONFIGURATION)\openpnp-capture.dll
   name: openpnp-capture.dll
   
+before_deploy:
+  - mkdir deploy
+  - if %PLATFORM"=="x64" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\openpnp-capture_64.dll
+  - if %PLATFORM"=="Win32" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\openpnp-capture_32.dll
+  - if %PLATFORM"=="x64" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
+  - if %PLATFORM"=="Win32" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
+
 deploy:
   description: 'Auto generated release.'
   provider: GitHub
   auth_token:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
-  artifact: openpnp-capture.dll,openpnp-capture-test.exe
+  file_glob: true
+  file: deploy\*
   on:
     appveyor_repo_tag: true
     configuration: Release
