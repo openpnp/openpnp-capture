@@ -369,11 +369,11 @@ int main(int argc, char*argv[])
                 break;
             case '1':
                 Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 1);
-                printf("exposure = auto  \r", exposure);
+                printf("exposure = auto  \r");
                 break;
             case '2':
                 Cap_setAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, 0);
-                printf("exposure = manual  \r", exposure);
+                printf("exposure = manual  \r");
                 break;                
             case 'f':
                 Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, ++focus);

@@ -8,6 +8,10 @@ before_build:
 build:
   project: build\ALL_BUILD.vcxproj
 
+platform:
+  - Win32
+  - x64
+
 configuration:
   - Debug
   - Release
