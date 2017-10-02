@@ -10,11 +10,9 @@ build:
   project: build\ALL_BUILD.vcxproj
 
 after_build:
-  - mkdir deploy
-  - move -ErrorAction SilentlyContinue build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_64.dll
-  - move -ErrorAction SilentlyContinue build\$(CONFIGURATION)\openpnp-capture.dll deploy\$(CONFIGURATION)\openpnp-capture_32.dll
-  - move -ErrorAction SilentlyContinue build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test64.exe
-  - move -ErrorAction SilentlyContinue build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\$(CONFIGURATION)\openpnp-capture-test32.exe
+  - ps: mkdir deploy
+  - ps: pwd
+  - ps: ls
 
 platform:
   - Win32
