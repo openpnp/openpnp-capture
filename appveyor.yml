@@ -19,7 +19,7 @@ platform:
   - x64
 
 configuration:
-#  - Debug
+  - Debug
   - Release
 
 deploy:
@@ -28,5 +28,5 @@ deploy:
   auth_token:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
   on:
-    appveyor_repo_tag: false
+    appveyor_repo_tag: true
     configuration: Release
