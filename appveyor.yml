@@ -49,10 +49,3 @@ deploy:
   on:
     appveyor_repo_tag: false
     configuration: Release
-
-
-
-    - path: build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe
-  name: openpnp-capture-test.exe
-- path: build\$(CONFIGURATION)\openpnp-capture.dll
-  name: openpnp-capture.dll
