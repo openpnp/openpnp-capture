@@ -9,6 +9,24 @@ before_build:
 build:
   project: build\ALL_BUILD.vcxproj
 
+after_build:
+- ps: |
+    mkdir deploy
+    if ($env:CONFIGURATION -eq "Release")
+    {
+      if ($env:PLATFORM -eq "Win32") 
+      {
+        move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_32.dll
+        move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
+      }
+      if ($env:PLATFORM -eq "x64") 
+      {
+        move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_64.dll
+        move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
+      }
+    }
+    ls deploy
+
 platform:
   - Win32
   - x64
@@ -18,25 +36,14 @@ configuration:
   - Release
 
 artifacts:
-- path: build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe
-  name: openpnp-capture-test.exe
-- path: build\$(CONFIGURATION)\openpnp-capture.dll
-  name: openpnp-capture.dll
+- path: 'build/deploy'
   
-before_deploy:
-  - mkdir deploy
-  - if %PLATFORM"=="x64" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\openpnp-capture_64.dll
-  - if %PLATFORM"=="Win32" move build\$(CONFIGURATION)\openpnp-capture.dll deploy\openpnp-capture_32.dll
-  - if %PLATFORM"=="x64" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
-  - if %PLATFORM"=="Win32" move build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
-
 deploy:
   description: 'Auto generated release.'
   provider: GitHub
   auth_token:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
-  file_glob: true
-  file: deploy\*
+  artifact: 
   on:
     appveyor_repo_tag: true
     configuration: Release
