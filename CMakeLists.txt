@@ -57,6 +57,11 @@ endif(CMAKE_BUILD_TYPE MATCHES Release)
 include_directories(include)
 
 IF (WIN32)
+	# build with static runtime rather than DLL based so that we
+	# don't have to distribute it
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+
     # set the platform identification string
     add_definitions(-D__PLATFORM__="Win ${COMPILERBITS}")
     
