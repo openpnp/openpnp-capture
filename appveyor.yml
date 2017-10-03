@@ -17,12 +17,12 @@ after_build:
       if ($env:PLATFORM -eq "Win32") 
       {
         move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_32.dll
-        move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
+        move win\tests\$env:CONFIGURATION\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
       }
       if ($env:PLATFORM -eq "x64") 
       {
         move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_64.dll
-        move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
+        move win\tests\$env:CONFIGURATION\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
       }
     }
     ls deploy
@@ -32,7 +32,9 @@ platform:
   - x64
 
 configuration:
-  - Debug
+# Temporarily remove Debug to speed up builds while testing. Not really sure if there is any
+# reason to build Debug anyway aside from having access to the artifacts.
+#  - Debug
   - Release
 
 artifacts:
@@ -45,5 +47,12 @@ deploy:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
   artifact: 
   on:
-    appveyor_repo_tag: true
+    appveyor_repo_tag: false
     configuration: Release
+
+
+
+    - path: build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe
+  name: openpnp-capture-test.exe
+- path: build\$(CONFIGURATION)\openpnp-capture.dll
+  name: openpnp-capture.dll
