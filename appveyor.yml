@@ -11,42 +11,22 @@ build:
 
 after_build:
 - ps: |
-    if ($env:CONFIGURATION -eq "Release")
-    {
-      if ($env:PLATFORM -eq "Win32") 
-      {
-        Push-AppveyorArtifact $env:CONFIGURATION\openpnp-capture.dll -FileName openpnp-capture_Win32.dll
-        Push-AppveyorArtifact win\tests\$env:CONFIGURATION\openpnp-capture-test.exe -FileName openpnp-capture-test_Win32.exe
-      }
-      if ($env:PLATFORM -eq "x64") 
-      {
-        Push-AppveyorArtifact $env:CONFIGURATION\openpnp-capture.dll -FileName openpnp-capture_x64.dll
-        Push-AppveyorArtifact win\tests\$env:CONFIGURATION\openpnp-capture-test.exe -FileName openpnp-capture-test_x64.exe
-      }
-    }
+    Push-AppveyorArtifact $env:CONFIGURATION\openpnp-capture.dll -FileName openpnp-capture_$env:PLATFORM.dll
+    Push-AppveyorArtifact win\tests\$env:CONFIGURATION\openpnp-capture-test.exe -FileName openpnp-capture-test_$env:PLATFORM.exe
 
 platform:
   - Win32
   - x64
 
 configuration:
-# Temporarily remove Debug to speed up builds while testing. Not really sure if there is any
-# reason to build Debug anyway aside from having access to the artifacts.
 #  - Debug
   - Release
 
-#artifacts:
-#- path: build\win\tests\$(CONFIGURATION)\openpnp-capture-test.exe
-#  name: openpnp-capture-test-$(PLATFORM).exe
-#- path: build\$(CONFIGURATION)\openpnp-capture.dll
-#  name: openpnp-capture-$(PLATFORM).dll
-  
 deploy:
   description: 'Auto generated release.'
   provider: GitHub
   auth_token:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
-#  artifact: openpnp-capture.dll,openpnp-capture-test.exe
   on:
     appveyor_repo_tag: false
     configuration: Release
