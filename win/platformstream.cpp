@@ -571,8 +571,8 @@ void PlatformStream::dumpCameraProperties()
 }
 
 
-/** get the limits of a camera/stream property (exposure, zoom etc) */
-bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int32_t *emax)
+/** get the limits and default value of a camera/stream property (exposure, zoom etc) */
+bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int32_t *emax, int32_t *dValue)
 {
     if ((m_camControl == nullptr) || (emin == nullptr) || (emax == nullptr))
     {
@@ -590,6 +590,7 @@ bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int3
             {   
                 *emin = mmin;
                 *emax = mmax;
+                *dValue = defaultValue;
                 return true;
             }            
         }
@@ -606,6 +607,7 @@ bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int3
             {   
                 *emin = mmin;
                 *emax = mmax;
+                *dValue = defaultValue;
                 return true;
             }
         }

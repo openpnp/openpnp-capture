@@ -363,10 +363,12 @@ bool UVCCtrl::sendControlRequest(IOUSBDevRequest req)
                 LOG(LOG_ERR,"sendControlRequest: USB configuration not found\n");
                 break;
             case kIOUSBPipeStalled:
-                LOG(LOG_ERR,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
+                //Note: we don't report this as an error as this happens when
+                //      an unsupported or locked property is set.            
+                LOG(LOG_VERBOSE,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
                 break;
             case kIOUSBInterfaceNotFound:
-                LOG(LOG_ERR,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
+                LOG(LOG_ERR,"sendControlRequest: USB control interface not found\n");
                 break;
             default:
                 LOG(LOG_ERR, "sendControlRequest ControlRequest failed (KR=sys:sub:code) = %02Xh:%03Xh:%04Xh)!\n", 

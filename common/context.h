@@ -131,9 +131,11 @@ public:
         @param propertyID the ID of the property.
         @param min a pointer to an int32_t that will receive the minimum setting.
         @param max a pointer to an int32_t that will receive the maximum setting.
-        @return true if min and max were written.
+        @param dValue a pointer to an int32_t that will receive the default value for the setting.
+        @return true if min, max and dValue were written.
     */
-    bool getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max);
+    bool getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, 
+            int32_t *min, int32_t *max, int32_t *dValue);
 
     /** Turn on or off a property that support an automatic setting,
         such as exposure or white balance.

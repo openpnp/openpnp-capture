@@ -89,7 +89,7 @@ public:
     }
 
     /** get the limits of a camera/stream property (exposure, zoom etc) */
-    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) = 0;
+    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max, int32_t *dValue) = 0;
 
     /** set property (exposure, zoom etc) of camera/stream */
     virtual bool setProperty(uint32_t propID, int32_t value) = 0;

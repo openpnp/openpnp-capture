@@ -70,6 +70,7 @@ protected:
     bool getMaxData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
     bool getMinData(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
     bool getInfo(uint32_t selector, uint32_t unit, uint32_t *data);
+    bool getDefault(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data);
 
     void reportCapabilities(uint32_t selector, uint32_t unit);
 
