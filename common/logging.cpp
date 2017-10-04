@@ -28,7 +28,20 @@
 #include <stdarg.h>
 #include "logging.h"
 
+/* In their infinite "wisdom" Microsoft have declared snprintf deprecated
+   and we must therefore resort to a macro to fix something that shouldn't
+   be a problem */
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
+
 static uint32_t gs_logLevel = LOG_NOTICE;
+static customLogFunc gs_logFunc = NULL;
+
+void installCustomLogFunction(customLogFunc logfunc)
+{
+    gs_logFunc = logfunc;
+}
 
 void LOG(uint32_t logLevel, const char *format, ...)
 {
@@ -37,32 +50,51 @@ void LOG(uint32_t logLevel, const char *format, ...)
         return;
     }
 
+    char logbuffer[1024];
+    char *ptr = logbuffer;
+
     switch(logLevel)
     {
     case LOG_CRIT:
-        fprintf(stderr,"[CRIT] ");
+        snprintf(logbuffer,1024,"[CRIT] ");
+        ptr += 7;
         break;        
     case LOG_ERR:
-        fprintf(stderr,"[ERR ] ");
+        snprintf(logbuffer,1024,"[ERR ] ");
+        ptr += 7;
         break;
     case LOG_INFO:
-        fprintf(stderr,"[INFO] ");
+        snprintf(logbuffer,1024,"[INFO] ");
+        ptr += 7;
         break;    
     case LOG_DEBUG:
-        fprintf(stderr,"[DBG ] ");
+        snprintf(logbuffer,1024,"[DBG ] ");
+        ptr += 7;
         break;
     case LOG_VERBOSE:
-        fprintf(stderr,"[VERB] ");
+        snprintf(logbuffer,1024,"[VERB] ");
+        ptr += 7;
         break;
     default:
         break;
     }
-
+    
     va_list args;
 
     va_start(args, format);
-    vfprintf(stderr, format, args);
+    vsnprintf(ptr, 1024-7, format, args);
     va_end(args);
+
+    if (gs_logFunc != nullptr)
+    {
+        // custom log functions to no include the 
+        // prefix.
+        gs_logFunc(logLevel, ptr);
+    }
+    else
+    {
+        fprintf(stderr, logbuffer);
+    }
 }
 
 void setLogLevel(uint32_t logLevel)

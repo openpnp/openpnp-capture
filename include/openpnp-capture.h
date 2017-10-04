@@ -290,6 +290,18 @@ DLLPUBLIC CapResult Cap_getAutoProperty(CapContext ctx, CapStream stream, CapPro
 */
 DLLPUBLIC void Cap_setLogLevel(uint32_t level);
 
+
+typedef void (*CapCustomLogFunc)(uint32_t level, const char *string);
+
+/** install a custom callback for a logging function.
+
+    the callback function must have the following 
+    structure:
+
+        void func(uint32_t level, const char *string);
+*/
+DLLPUBLIC void Cap_installCustomLogFunction(CapCustomLogFunc logFunc);
+
 /** Return the version of the library as a string.
     In addition to a version number, this should 
     contain information on the platform,

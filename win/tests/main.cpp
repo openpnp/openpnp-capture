@@ -13,6 +13,11 @@
 #include "openpnp-capture.h"
 #include "../common/context.h"
 
+void myCustomLogFunction(uint32_t level, const char *string)
+{
+    printf("== %s", string);
+}
+
 std::string FourCCToString(uint32_t fourcc)
 {
     std::string v;
@@ -143,6 +148,8 @@ int main(int argc, char*argv[])
 {    
     uint32_t deviceFormatID = 0;
     uint32_t deviceID       = 0;
+
+    Cap_installCustomLogFunction(myCustomLogFunction);
 
     printf("==============================\n");
     printf(" OpenPNP Capture Test Program\n");

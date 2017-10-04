@@ -275,6 +275,10 @@ DLLPUBLIC CapResult Cap_getAutoProperty(CapContext ctx, CapStream stream, CapPro
     return CAPRESULT_ERR;
 }
 
+DLLPUBLIC void Cap_installCustomLogFunction(CapCustomLogFunc logFunc)
+{
+    installCustomLogFunction(logFunc);
+}
 
 DLLPUBLIC const char* Cap_getLibraryVersion()
 {
