@@ -55,7 +55,7 @@ public:
     bool getProperty(uint32_t propID, int32_t *value);
     bool setAutoProperty(uint32_t propID, bool enabled);
     bool getAutoProperty(uint32_t propID, bool *enabled);
-    bool getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax);
+    bool getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax, int32_t *dValue);
 
 protected:
     UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID);
