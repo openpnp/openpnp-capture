@@ -645,6 +645,7 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax, i
         if (!getMinData(propertyInfo[propID].selector, unit, 
             propertyInfo[propID].length, emin))
         {
+            LOG(LOG_VERBOSE, "getMinData failed\n");
             ok = false;
         }
 
@@ -652,6 +653,7 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax, i
         if (!getMaxData(propertyInfo[propID].selector, unit, 
             propertyInfo[propID].length, emax))
         {
+            LOG(LOG_VERBOSE, "getMaxData failed\n");
             ok = false;
         }
 
@@ -659,6 +661,7 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax, i
         if (!getDefault(propertyInfo[propID].selector, unit,
             propertyInfo[propID].length, dValue))
         {
+            LOG(LOG_VERBOSE, "getDefault failed\n");
             ok = false;
         }
 
@@ -667,14 +670,21 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax, i
             case 2:
                 *emin &= 0xFFFF;
                 *emax &= 0xFFFF;
+                *dValue &= 0xFFFF;
                 break;
             case 1:
                 *emin &= 0xFF;
                 *emax &= 0xFF;
+                *dValue &= 0xFF;
                 break;
             default:
                 break;
         }
+    }
+    else
+    {
+        LOG(LOG_ERR, "UVCCtrl::getPropertyLimits property ID out of bounds.\n");
+        ok = false;
     }
     return ok;
 }

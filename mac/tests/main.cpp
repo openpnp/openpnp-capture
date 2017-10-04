@@ -174,17 +174,17 @@ int main(int argc, char*argv[])
         return 1;
     }
 
-    int32_t emin,emax;
-    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &emin, &emax))
+    int32_t emin,emax,edefault;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &emin, &emax, &edefault) == CAPRESULT_OK)
     {
-        printf("Exposure limits: %d .. %d\n", emin, emax);
+        printf("Exposure limits: %d .. %d (default=%d)\n", emin, emax, edefault);
     }
     else
     {
         printf("Failed to get exposure limits!\n");
     }
 
-    if (Cap_getProperty(ctx, streamID, CAPPROPID_EXPOSURE, &emin))
+    if (Cap_getProperty(ctx, streamID, CAPPROPID_EXPOSURE, &emin) == CAPRESULT_OK)
     {
         printf("Exposure: %d\n", emin);
     }
@@ -194,7 +194,7 @@ int main(int argc, char*argv[])
     }
 
     uint32_t vvv;
-    if (Cap_getAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, &vvv))
+    if (Cap_getAutoProperty(ctx, streamID, CAPPROPID_EXPOSURE, &vvv) == CAPRESULT_OK)
     {
         printf("Auto exposure: %d\n", vvv);
     }
