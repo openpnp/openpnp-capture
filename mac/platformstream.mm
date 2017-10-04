@@ -272,12 +272,12 @@ std::string PlatformStream::genFOURCCstring(uint32_t v)
 }
 
 /** get the limits of a camera/stream property (exposure, zoom etc) */
-bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max)
+bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max, int32_t *dValue)
 {
-    if (m_uvc != nullptr)
+    if ((m_uvc != nullptr) && (min != nullptr) && (max != nullptr) && (dValue != nullptr))
     {
-        LOG(LOG_INFO,"PlatformStream::getProprtyLimits\n");
-        return m_uvc->getPropertyLimits(propID, min, max);
+        LOG(LOG_INFO,"PlatformStream::getPropertyLimits\n");
+        return m_uvc->getPropertyLimits(propID, min, max, dValue);
     }
     return false;
 }

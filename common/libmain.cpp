@@ -190,12 +190,13 @@ DLLPUBLIC CapResult Cap_setFrameRate(CapContext ctx, CapStream stream, uint32_t 
 }
 #endif
 
-DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, int32_t *min, int32_t *max)
+DLLPUBLIC CapResult Cap_getPropertyLimits(CapContext ctx, CapStream stream, CapPropertyID propID, 
+    int32_t *min, int32_t *max, int32_t *dValue)
 {
     if (ctx != 0)
     {
         Context *c = reinterpret_cast<Context*>(ctx);
-        if (!c->getStreamPropertyLimits(stream, propID, min, max))
+        if (!c->getStreamPropertyLimits(stream, propID, min, max, dValue))
         {
             return CAPRESULT_PROPERTYNOTSUPPORTED;
         }
@@ -274,6 +275,10 @@ DLLPUBLIC CapResult Cap_getAutoProperty(CapContext ctx, CapStream stream, CapPro
     return CAPRESULT_ERR;
 }
 
+DLLPUBLIC void Cap_installCustomLogFunction(CapCustomLogFunc logFunc)
+{
+    installCustomLogFunction(logFunc);
+}
 
 DLLPUBLIC const char* Cap_getLibraryVersion()
 {

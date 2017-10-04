@@ -109,7 +109,8 @@ public:
 
     virtual bool setProperty(uint32_t propID, int32_t value) override;
     virtual bool setAutoProperty(uint32_t propID, bool enabled) override;
-    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) override;
+    virtual bool getPropertyLimits(uint32_t propID, 
+        int32_t *min, int32_t *max, int32_t *dValue) override;
 
     virtual bool getProperty(uint32_t propID, int32_t &value) override;
     virtual bool getAutoProperty(uint32_t propID, bool &enabled) override;

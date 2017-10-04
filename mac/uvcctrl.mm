@@ -363,10 +363,12 @@ bool UVCCtrl::sendControlRequest(IOUSBDevRequest req)
                 LOG(LOG_ERR,"sendControlRequest: USB configuration not found\n");
                 break;
             case kIOUSBPipeStalled:
-                LOG(LOG_ERR,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
+                //Note: we don't report this as an error as this happens when
+                //      an unsupported or locked property is set.            
+                LOG(LOG_VERBOSE,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
                 break;
             case kIOUSBInterfaceNotFound:
-                LOG(LOG_ERR,"sendControlRequest: Pipe has stalled, error needs to be cleared\n");
+                LOG(LOG_ERR,"sendControlRequest: USB control interface not found\n");
                 break;
             default:
                 LOG(LOG_ERR, "sendControlRequest ControlRequest failed (KR=sys:sub:code) = %02Xh:%03Xh:%04Xh)!\n", 
@@ -428,6 +430,20 @@ bool UVCCtrl::getMinData(uint32_t selector, uint32_t unit, uint32_t length, int3
     *data = 0;
     req.bmRequestType = USBmakebmRequestType(kUSBIn, kUSBClass, kUSBInterface);
     req.bRequest = UVC_GET_MIN;
+    req.wValue   = (selector << 8);
+    req.wIndex   = (unit << 8);
+    req.wLength  = length;
+    req.wLenDone = 0;
+    req.pData = data;
+    return sendControlRequest(req);
+}
+
+bool UVCCtrl::getDefault(uint32_t selector, uint32_t unit, uint32_t length, int32_t *data)
+{
+    IOUSBDevRequest req;
+    *data = 0;
+    req.bmRequestType = USBmakebmRequestType(kUSBIn, kUSBClass, kUSBInterface);
+    req.bRequest = UVC_GET_DEF;
     req.wValue   = (selector << 8);
     req.wIndex   = (unit << 8);
     req.wLength  = length;
@@ -614,31 +630,38 @@ bool UVCCtrl::getAutoProperty(uint32_t propID, bool *enabled)
     return false;   // we should never get here..
 }
 
-bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
+bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax, int32_t *dValue)
 {
     if (m_controller == nullptr)
     {
         return false;
     }
 
-    bool ok = false;
+    bool ok = true;
     if (propID < CAPPROPID_LAST)
     {
+        // get the min data
         uint32_t unit = (propertyInfo[propID].unit == 0) ? UVC_INPUT_TERMINAL_ID : m_pud;
-        if (getMinData(propertyInfo[propID].selector, unit, 
+        if (!getMinData(propertyInfo[propID].selector, unit, 
             propertyInfo[propID].length, emin))
         {
-            ok = true;
+            LOG(LOG_VERBOSE, "getMinData failed\n");
+            ok = false;
         }
 
-        if (getMaxData(propertyInfo[propID].selector, unit, 
+        // get the max data
+        if (!getMaxData(propertyInfo[propID].selector, unit, 
             propertyInfo[propID].length, emax))
         {
-            // do not set ok to true here
-            // in case getMinData failed..
+            LOG(LOG_VERBOSE, "getMaxData failed\n");
+            ok = false;
         }
-        else
+
+        // read the default value
+        if (!getDefault(propertyInfo[propID].selector, unit,
+            propertyInfo[propID].length, dValue))
         {
+            LOG(LOG_VERBOSE, "getDefault failed\n");
             ok = false;
         }
 
@@ -647,98 +670,23 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
             case 2:
                 *emin &= 0xFFFF;
                 *emax &= 0xFFFF;
+                *dValue &= 0xFFFF;
                 break;
             case 1:
                 *emin &= 0xFF;
                 *emax &= 0xFF;
+                *dValue &= 0xFF;
                 break;
             default:
                 break;
         }
     }
-    return ok;
-
-#if 0
-    switch(propID)
+    else
     {
-    case CAPPROPID_EXPOSURE:
-        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (exposure)\n");
-        if (!getMinData(CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, emin))
-        {
-            return false;
-        }
-        if (!getMaxData(CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 4, emax))
-        {
-            return false;
-        }
-        return true;
-    case CAPPROPID_FOCUS:
-        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (focus)\n");
-        if (!getMinData(CT_FOCUS_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emin))
-        {
-            return false;
-        }
-        if (!getMaxData(CT_FOCUS_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emax))
-        {
-            return false;
-        }
-        // convert from 16-bit to 32-bit.
-        *emin = (int16_t)(*emin & 0xFFFF);
-        *emax = (int16_t)(*emax & 0xFFFF);        
-        return true;
-    case CAPPROPID_ZOOM:
-        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (zoom)\n");
-        if (!getMinData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emin))
-        {
-            return false;
-        }
-        if (!getMaxData(CT_ZOOM_ABSOLUTE_CONTROL, UVC_INPUT_TERMINAL_ID, 2, emax))
-        {
-            return false;
-        }
-        // convert from 16-bit to 32-bit.
-        *emin = (int16_t)(*emin & 0xFFFF);
-        *emax = (int16_t)(*emax & 0xFFFF);        
-        return true; 
-    case CAPPROPID_WHITEBALANCE:
-        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (white balance)\n");
-        if (!getMinData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emin))
-        {
-            reportCapabilities(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID);
-            return false;
-        }
-        if (!getMaxData(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emax))
-        {
-            reportCapabilities(PU_WHITE_BALANCE_TEMPERATURE_CONTROL, UVC_PROCESSING_UNIT_ID);
-            return false;
-        }     
-        // convert from 16-bit to 32-bit.
-        *emin = (int16_t)(*emin & 0xFFFF);
-        *emax = (int16_t)(*emax & 0xFFFF); 
-        return true;
-    case CAPPROPID_GAIN:
-        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (gain)\n");
-        if (!getMinData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emin))
-        {
-            reportCapabilities(PU_GAIN_CONTROL,UVC_PROCESSING_UNIT_ID);
-            return false;
-        }
-        if (!getMaxData(PU_GAIN_CONTROL, UVC_PROCESSING_UNIT_ID, 2, emax))
-        {
-            reportCapabilities(PU_GAIN_CONTROL,UVC_PROCESSING_UNIT_ID);
-            return false;
-        }
-        // convert from 16-bit to 32-bit.
-        *emin = (int16_t)(*emin & 0xFFFF);
-        *emax = (int16_t)(*emax & 0xFFFF);        
-        return true;
-    default:
-        LOG(LOG_INFO, "UVCCtrl::getPropertyLimits (unsupported property %d)\n", propID);
-        return false;
+        LOG(LOG_ERR, "UVCCtrl::getPropertyLimits property ID out of bounds.\n");
+        ok = false;
     }
-
-    return false;   
-#endif
+    return ok;
 }
 
 void UVCCtrl::reportCapabilities(uint32_t selector, uint32_t unit)

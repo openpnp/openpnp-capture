@@ -13,6 +13,11 @@
 #include "openpnp-capture.h"
 #include "../common/context.h"
 
+void myCustomLogFunction(uint32_t level, const char *string)
+{
+    printf("== %s", string);
+}
+
 std::string FourCCToString(uint32_t fourcc)
 {
     std::string v;
@@ -144,6 +149,8 @@ int main(int argc, char*argv[])
     uint32_t deviceFormatID = 0;
     uint32_t deviceID       = 0;
 
+    Cap_installCustomLogFunction(myCustomLogFunction);
+
     printf("==============================\n");
     printf(" OpenPNP Capture Test Program\n");
     printf(" %s\n", Cap_getLibraryVersion());
@@ -249,12 +256,14 @@ int main(int argc, char*argv[])
 
     // set exposure in the middle of the range
     int32_t exposure = 0;
-    int32_t exmax, exmin;
-    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &exmin, &exmax) == CAPRESULT_OK)
+    int32_t exmax, exmin, edefault;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_EXPOSURE, &exmin, &exmax, &edefault) == CAPRESULT_OK)
     {
-        exposure = (exmax + exmin) / 2;
+        //exposure = (exmax + exmin) / 2;
+        exposure = edefault;
         Cap_setProperty(ctx, streamID, CAPPROPID_EXPOSURE, exposure);
         printf("Set exposure to %d\n", exposure);
+        printf("Default exposure is : %d\n", edefault);
     }
     else
     {
@@ -263,12 +272,13 @@ int main(int argc, char*argv[])
 
     // set focus in the middle of the range
     int32_t focus = 0;
-    int32_t fomax, fomin;
-    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_FOCUS, &fomin, &fomax) == CAPRESULT_OK)
+    int32_t fomax, fomin, fodefault;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_FOCUS, &fomin, &fomax, &fodefault) == CAPRESULT_OK)
     {
         focus = (fomax + fomin) / 2;
         Cap_setProperty(ctx, streamID, CAPPROPID_FOCUS, focus);
         printf("Set focus to %d\n", focus);
+        printf("Default focus is : %d\n", fodefault);
     }
     else
     {
@@ -277,12 +287,13 @@ int main(int argc, char*argv[])
 
     // set zoom in the middle of the range
     int32_t zoom = 0;
-    int32_t zomax, zomin;
-    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_ZOOM, &zomin, &zomax) == CAPRESULT_OK)
+    int32_t zomax, zomin, zodefault;
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_ZOOM, &zomin, &zomax, &zodefault) == CAPRESULT_OK)
     {
         zoom = zomin;
         Cap_setProperty(ctx, streamID, CAPPROPID_ZOOM, zoom);
         printf("Set zoom to %d\n", zoom);
+        printf("Default zoom is : %d\n", zodefault);
     }
     else
     {
@@ -291,14 +302,15 @@ int main(int argc, char*argv[])
 
     // set white balance in the middle of the range
     int32_t wbalance = 0;
-    int32_t wbmax, wbmin;
+    int32_t wbmax, wbmin, wbdefault;
     int32_t wbstep = 0;
-    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_WHITEBALANCE, &wbmin, &wbmax) == CAPRESULT_OK)
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_WHITEBALANCE, &wbmin, &wbmax, &wbdefault) == CAPRESULT_OK)
     {
         wbalance = (wbmax+wbmin)/2;
         wbstep = (wbmax-wbmin) / 20;
         Cap_setProperty(ctx, streamID, CAPPROPID_WHITEBALANCE, wbalance);
         printf("Set white balance to %d\n", wbalance);
+        printf("Default white balance is : %d\n", wbdefault);
     }
     else
     {
@@ -307,13 +319,14 @@ int main(int argc, char*argv[])
 
     // set gain in the middle of the range
     int32_t gain = 0;
-    int32_t gmax, gmin;
+    int32_t gmax, gmin, gdefault;
     int32_t gstep = 0;
-    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_GAIN, &gmin, &gmax) == CAPRESULT_OK)
+    if (Cap_getPropertyLimits(ctx, streamID, CAPPROPID_GAIN, &gmin, &gmax, &gdefault) == CAPRESULT_OK)
     {
         gstep = (gmax-gmin) / 20;
         Cap_setProperty(ctx, streamID, CAPPROPID_GAIN, gain);
         printf("Set gain to %d (min=%d max=%d)\n", gain, gmin, gmax);
+        printf("Default gain is : %d\n", gdefault);
     }
     else
     {

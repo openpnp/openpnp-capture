@@ -324,11 +324,12 @@ bool Context::removeStream(int32_t ID)
     return false;
 }
 
-bool Context::getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, int32_t *min, int32_t *max)
+bool Context::getStreamPropertyLimits(int32_t streamID, uint32_t propertyID, 
+        int32_t *min, int32_t *max, int32_t *dValue)
 {
     Stream* stream = m_streams[streamID];
     if (stream == nullptr) return false;
-    return stream->getPropertyLimits(propertyID, min, max);
+    return stream->getPropertyLimits(propertyID, min, max, dValue);
 }
 
 bool Context::setStreamAutoProperty(int32_t streamID, uint32_t propertyID, bool enable)
