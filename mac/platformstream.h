@@ -64,7 +64,8 @@ public:
     virtual uint32_t getFOURCC() override;
 
     /** get the limits of a camera/stream property (exposure, zoom etc) */
-    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max) override;
+    virtual bool getPropertyLimits(uint32_t propID, int32_t *min, int32_t *max, 
+        int32_t *dvalue) override;
     
     /** set property (exposure, zoom etc) of camera/stream */
     virtual bool setProperty(uint32_t propID, int32_t value) override;
