@@ -678,12 +678,13 @@ bool PlatformStream::setAutoProperty(uint32_t propID, bool enabled)
     return true;    
 }
 
-bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax)
+bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax,
+        int32_t *dValue)
 {
     v4l2_queryctrl ctrl;
     CLEAR(ctrl);
 
-    if ((emin == nullptr) || (emax == nullptr))
+    if ((emin == nullptr) || (emax == nullptr) || (dValue == nullptr))
     {
         return false;
     }
@@ -725,6 +726,7 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
     }
     *emin = ctrl.minimum;
     *emax = ctrl.maximum;
+    *dValue= ctrl.default_value;
     return true;
 }
 
