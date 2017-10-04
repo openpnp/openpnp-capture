@@ -11,21 +11,8 @@ build:
 
 after_build:
 - ps: |
-  mkdir deploy
-  if ($env:CONFIGURATION -eq "Release")
-  {
-    if ($env:PLATFORM -eq "Win32") 
-    {
-      move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_32.dll
-      move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test32.exe
-    }
-    if ($env:PLATFORM -eq "x64") 
-    {
-      move $env:CONFIGURATION\openpnp-capture.dll deploy\openpnp-capture_64.dll
-      move $env:CONFIGURATION\win\tests\openpnp-capture-test.exe deploy\openpnp-capture-test64.exe
-    }
-  }
-  ls deploy
+    Push-AppveyorArtifact $env:CONFIGURATION\openpnp-capture.dll -FileName openpnp-capture_$env:PLATFORM.dll
+    Push-AppveyorArtifact win\tests\$env:CONFIGURATION\openpnp-capture-test.exe -FileName openpnp-capture-test_$env:PLATFORM.exe
 
 platform:
   - Win32
@@ -35,15 +22,11 @@ configuration:
   - Debug
   - Release
 
-artifacts:
-- path: 'build/deploy'
-  
 deploy:
   description: 'Auto generated release.'
   provider: GitHub
   auth_token:
     secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
-  artifact: 
   on:
     appveyor_repo_tag: true
     configuration: Release
