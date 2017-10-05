@@ -5,4 +5,5 @@ java/target
 mac/openpnp-capture.xcodeproj/xcuserdata
 mac/openpnp-capture.xcodeproj/project.xcworkspace/xcuserdata
 common/version.h
-build
+/build*
+*.pro.user

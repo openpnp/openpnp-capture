@@ -25,7 +25,7 @@ public:
 
 public slots:
     void doFrameUpdate();
-    void changeCamera(int index);
+    void changeCamera();
 
     void onAutoExposure(bool state);
     void onAutoWhiteBalance(bool state);

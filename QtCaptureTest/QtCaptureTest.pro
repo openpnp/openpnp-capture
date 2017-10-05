@@ -16,7 +16,7 @@ CONFIG -= app_bundle
 CONFIG += console
 
 # add the openpnp-capture include path
-INCLUDEPATH += ../../include
+INCLUDEPATH += ../include
 
 SOURCES += main.cpp\
         mainwindow.cpp
@@ -25,7 +25,7 @@ HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui
 
-LIBS += -L"../../build/" -lopenpnp-capture
+LIBS += -L../build/ -lopenpnp-capture
 
 # add run-path relative dylib search path
 QMAKE_RPATHDIR += .
