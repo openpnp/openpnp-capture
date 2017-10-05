@@ -239,9 +239,9 @@ void MainWindow::readCameraSettings()
     m_hasFocus = false;
     m_hasZoom = false;
 
-    ui->exposureSlider->setEnabled(true);
-    ui->gainSlider->setEnabled(true);
-    ui->whitebalanceSlider->setEnabled(true);
+    ui->exposureSlider->setEnabled(false);
+    ui->gainSlider->setEnabled(false);
+    ui->whitebalanceSlider->setEnabled(false);
 
     // ********************************************************************************
     //   AUTO EXPOSURE
@@ -287,7 +287,6 @@ void MainWindow::readCameraSettings()
     {
         ui->autoWhiteBalance->setEnabled(true);
         ui->autoWhiteBalance->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
-        ui->whitebalanceSlider->setEnabled(false);
     }
 
     // ********************************************************************************
@@ -302,6 +301,10 @@ void MainWindow::readCameraSettings()
         qDebug() << "Exposure default: " << edefault;
         ui->exposureSlider->setRange(emin, emax);
         m_hasExposure = true;
+        if (!ui->autoExposure->isChecked())
+        {
+            ui->exposureSlider->setEnabled(true);
+        }
     }
     else
     {
@@ -333,6 +336,10 @@ void MainWindow::readCameraSettings()
         qDebug() << "White balance default: " << edefault;
         ui->whitebalanceSlider->setRange(emin, emax);
         m_hasWhiteBalance = true;
+        if (!ui->autoWhiteBalance->isChecked())
+        {
+            ui->whitebalanceSlider->setEnabled(true);
+        }
     }
     else
     {
@@ -362,9 +369,12 @@ void MainWindow::readCameraSettings()
         qDebug() << "Gain min: " << emin;
         qDebug() << "Gain max: " << emax;
         qDebug() << "Gain default: " << edefault;
-        ui->gainSlider->setEnabled(true);
         ui->gainSlider->setRange(emin, emax);
         m_hasGain = true;
+        if (!ui->autoGain->isChecked())
+        {
+            ui->gainSlider->setEnabled(true);
+        }
     }
     else
     {
