@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <qDebug>
+#include <QDebug>
 #include <QBoxLayout>
 #include <QPixmap>
 
@@ -139,7 +139,7 @@ void MainWindow::doFrameUpdate()
     }
 }
 
-void MainWindow::changeCamera(int index)
+void MainWindow::changeCamera()
 {
     QVariant v = ui->cameraChooser->currentData();
     CustomComboBoxData data = v.value<CustomComboBoxData>();
@@ -219,11 +219,12 @@ void MainWindow::readCameraSettings()
         qDebug() << "Failed to get exposure value";
     }
 
-    int32_t emin,emax;
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &emin, &emax)==CAPRESULT_OK)
+    int32_t emin,emax,edefault;
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "Exposure min: " << emin;
         qDebug() << "Exposure max: " << emax;
+        qDebug() << "Exposure default: " << edefault;
         m_exposureSlider->setRange(emin, emax);
     }
     else
@@ -232,10 +233,11 @@ void MainWindow::readCameraSettings()
         m_exposureSlider->setRange(0, 0);
     }
 
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &emin, &emax)==CAPRESULT_OK)
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "White balance min: " << emin;
         qDebug() << "White balance max: " << emax;
+        qDebug() << "White balance default: " << edefault;
         m_whiteBalanceSlider->setRange(emin, emax);
     }
     else
@@ -244,10 +246,11 @@ void MainWindow::readCameraSettings()
         m_whiteBalanceSlider->setRange(0, 0);
     }
 
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_GAIN, &emin, &emax)==CAPRESULT_OK)
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_GAIN, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "Gain min: " << emin;
         qDebug() << "Gain max: " << emax;
+        qDebug() << "Gain default: " << edefault;
         m_gainSlider->setRange(emin, emax);
     }
     else
@@ -267,10 +270,11 @@ void MainWindow::readCameraSettings()
         qDebug() << "Failed to get gain value";
     }
 
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_CONTRAST, &emin, &emax)==CAPRESULT_OK)
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_CONTRAST, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "Contrast min: " << emin;
         qDebug() << "Contrast max: " << emax;
+        qDebug() << "Contrast default: " << edefault;
         m_contrastSlider->setRange(emin, emax);
     }
     else
@@ -278,10 +282,11 @@ void MainWindow::readCameraSettings()
         m_contrastSlider->setRange(0, 0);
     }
 
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, &emin, &emax)==CAPRESULT_OK)
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "Brightness min: " << emin;
         qDebug() << "Brightness max: " << emax;
+        qDebug() << "Brightness default: " << edefault;
         m_brightnessSlider->setRange(emin, emax);
     }
     else
