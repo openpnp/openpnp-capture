@@ -12,10 +12,27 @@ struct CustomComboBoxData
 
 Q_DECLARE_METATYPE(CustomComboBoxData)
 
+static MainWindow *g_logWindowPtr = 0;
+void customLogFunction(uint32_t logLevel, const char *message)
+{
+    if (g_logWindowPtr != 0)
+    {
+        g_logWindowPtr->logMessage(logLevel, message);
+    }
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    // install a custom log function so Qt can
+    // show us all the messages!
+    if (g_logWindowPtr == nullptr)
+    {
+        g_logWindowPtr = this;
+        Cap_installCustomLogFunction(customLogFunction);
+    }
+
     Cap_setLogLevel(8);
     qDebug() << Cap_getLibraryVersion();
 
@@ -31,9 +48,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     m_frameData.resize(m_finfo.width*m_finfo.height*3);
 
-    m_frameDisplay = new QLabel();
-    m_frameDisplay->setFixedSize(QSize(m_finfo.width, m_finfo.height));
-    m_frameDisplay->setStyleSheet("border: 1px solid red");
+    ui->frameDisplay->setFixedSize(QSize(m_finfo.width, m_finfo.height));
+    ui->frameDisplay->setStyleSheet("border: 1px solid red");
 
     qDebug() << "Frame size:" << m_finfo.width << m_finfo.height;
 
@@ -63,42 +79,28 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
 
-    ui->verticalLayout->addWidget(m_frameDisplay);
-
-    connect(ui->cameraChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCamera(int)));
+    connect(ui->cameraChooser, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCamera()));
 
     // add exposure and white balance checkboxes
-    m_autoExposure = new QCheckBox("Auto Exposure");
-    m_exposureSlider = new QSlider(Qt::Horizontal);
-    m_autoWhiteBalance = new QCheckBox("Auto White Balance");
-    m_whiteBalanceSlider = new QSlider(Qt::Horizontal);
-    m_autoGain = new QCheckBox("Auto Gain");
-    m_gainSlider = new QSlider(Qt::Horizontal);
-    m_contrastSlider = new QSlider(Qt::Horizontal);
-    m_brightnessSlider = new QSlider(Qt::Horizontal);
-
-    ui->verticalLayout->addWidget(m_autoExposure);
-    ui->verticalLayout->addWidget(m_exposureSlider);
-    ui->verticalLayout->addWidget(m_autoWhiteBalance);
-    ui->verticalLayout->addWidget(m_whiteBalanceSlider);
-    ui->verticalLayout->addWidget(m_autoGain);
-    ui->verticalLayout->addWidget(m_gainSlider);
-    ui->verticalLayout->addWidget(m_contrastSlider);
-    ui->verticalLayout->addWidget(m_brightnessSlider);
-
-    connect(m_autoExposure, SIGNAL(toggled(bool)), this, SLOT(onAutoExposure(bool)));
-    connect(m_autoWhiteBalance, SIGNAL(toggled(bool)),this, SLOT(onAutoWhiteBalance(bool)));
-    connect(m_exposureSlider, SIGNAL(valueChanged(int)),this, SLOT(onExposureSlider(int)));
-    connect(m_whiteBalanceSlider, SIGNAL(valueChanged(int)),this, SLOT(onWhiteBalanceSlider(int)));
-    connect(m_autoGain, SIGNAL(toggled(bool)), this, SLOT(onAutoGain(bool)));
-    connect(m_gainSlider, SIGNAL(valueChanged(int)), this, SLOT(onGainSlider(int)));
-    connect(m_contrastSlider, SIGNAL(valueChanged(int)), this, SLOT(onContrastSlider(int)));
-    connect(m_brightnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onBrightnessSlider(int)));
+    connect(ui->autoExposure, SIGNAL(toggled(bool)), this, SLOT(onAutoExposure(bool)));
+    connect(ui->autoWhiteBalance, SIGNAL(toggled(bool)),this, SLOT(onAutoWhiteBalance(bool)));
+    connect(ui->exposureSlider, SIGNAL(valueChanged(int)),this, SLOT(onExposureSlider(int)));
+    connect(ui->whitebalanceSlider, SIGNAL(valueChanged(int)),this, SLOT(onWhiteBalanceSlider(int)));
+    connect(ui->autoGain, SIGNAL(toggled(bool)), this, SLOT(onAutoGain(bool)));
+    connect(ui->gainSlider, SIGNAL(valueChanged(int)), this, SLOT(onGainSlider(int)));
+    connect(ui->contrastSlider, SIGNAL(valueChanged(int)), this, SLOT(onContrastSlider(int)));
+    connect(ui->brightnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onBrightnessSlider(int)));
+    connect(ui->gammaSlider, SIGNAL(valueChanged(int)), this, SLOT(onGammaSlider(int)));
+    connect(ui->focusSlider, SIGNAL(valueChanged(int)), this, SLOT(onFocusSlider(int)));
+    connect(ui->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onZoomSlider(int)));
 
     // add timer to refresh the frame display
     m_refreshTimer = new QTimer(this);
     connect(m_refreshTimer, SIGNAL(timeout()), this, SLOT(doFrameUpdate()));
     m_refreshTimer->start(50);
+
+    // update GUI to reflect the actual camera settings
+    readCameraSettings();
 }
 
 MainWindow::~MainWindow()
@@ -109,6 +111,14 @@ MainWindow::~MainWindow()
     Cap_closeStream(m_ctx, m_streamID);
     Cap_releaseContext(m_ctx);
     delete ui;
+
+    g_logWindowPtr = nullptr;
+}
+
+void MainWindow::logMessage(uint32_t level, const char *message)
+{
+    QMutexLocker locker(&m_logMutex);
+    m_logMessages.push_back(message);
 }
 
 void MainWindow::doFrameUpdate()
@@ -128,7 +138,7 @@ void MainWindow::doFrameUpdate()
             return;
         }
 
-        m_frameDisplay->setPixmap(QPixmap::fromImage(img));
+        ui->frameDisplay->setPixmap(QPixmap::fromImage(img));
 
         QString frameInfo = QString::asprintf("%d x %d frames:%d",
                                               m_finfo.width,
@@ -137,6 +147,32 @@ void MainWindow::doFrameUpdate()
 
         ui->statusBar->showMessage(frameInfo);
     }
+
+    // also update the log messages, if there are some
+    updateLogMessages();
+}
+
+void MainWindow::updateLogMessages()
+{
+    QMutexLocker locker(&m_logMutex);
+    if (m_logMessages.size() == 0)
+    {
+        return;
+    }
+
+    for(uint32_t i=0; i<m_logMessages.size(); i++)
+    {
+        // if there is an end-of-line CR,
+        // remove it, as appendPlainText already does this
+        // by itself ..
+        if (m_logMessages[i].at(m_logMessages[i].size()-1)==10)
+        {
+            m_logMessages[i].erase(m_logMessages[i].size()-1);
+        }
+
+        ui->logWidget->appendPlainText(m_logMessages[i].c_str());
+    }
+    m_logMessages.clear();
 }
 
 void MainWindow::changeCamera()
@@ -157,8 +193,9 @@ void MainWindow::changeCamera()
     // resize the display window
     Cap_getFormatInfo(m_ctx, data.m_device, data.m_format, &m_finfo);
     m_frameData.resize(m_finfo.width*m_finfo.height*3);
-    m_frameDisplay->setFixedSize(QSize(m_finfo.width, m_finfo.height));
-    m_frameDisplay->setStyleSheet("border: 1px solid red");
+
+    ui->frameDisplay->setFixedSize(QSize(m_finfo.width, m_finfo.height));
+    ui->frameDisplay->setStyleSheet("border: 1px solid red");
 
     readCameraSettings();
 }
@@ -167,57 +204,95 @@ void MainWindow::onAutoExposure(bool state)
 {
     qDebug() << "Auto exposure set to " << state;
     Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, state ? 1 : 0);
+    ui->exposureSlider->setEnabled((!state) & m_hasExposure);
 }
 
 void MainWindow::onAutoWhiteBalance(bool state)
 {
     qDebug() << "Auto white balance set to " << state;
     Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, state ? 1 : 0);
+    ui->whitebalanceSlider->setEnabled((!state) & m_hasWhiteBalance);
 }
 
 void MainWindow::onAutoGain(bool state)
 {
     qDebug() << "Auto gain set to " << state;
     Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_GAIN, state ? 1 : 0);
+    ui->gainSlider->setEnabled((!state) & m_hasGain);
 }
 
 void MainWindow::readCameraSettings()
 {
     qDebug() << "readCameraSettings -> Context = " << m_ctx;
 
-    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, false);
-    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_GAIN, false);
-    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, false);
+    // enable the sliders that also have an AUTO setting.
+    // we will disable them later on when we check the
+    // AUTO settings.
 
-    uint32_t v = 0;
-    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &v)==CAPRESULT_OK)
+    m_hasBrightness = false;
+    m_hasExposure = false;
+    m_hasGamma = false;
+    m_hasWhiteBalance = false;
+    m_hasGain = false;
+    m_hasContrast = false;
+    m_hasSaturation = false;
+    m_hasFocus = false;
+    m_hasZoom = false;
+
+    ui->exposureSlider->setEnabled(true);
+    ui->gainSlider->setEnabled(true);
+    ui->whitebalanceSlider->setEnabled(true);
+
+    // ********************************************************************************
+    //   AUTO EXPOSURE
+    // ********************************************************************************
+
+    uint32_t bValue;
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &bValue) != CAPRESULT_OK)
     {
-        qDebug() << "Auto white balance is " << ((v==1) ? "ON" : "OFF");
+        ui->autoExposure->setEnabled(false);
+        ui->autoExposure->setCheckState(Qt::Unchecked);
     }
     else
     {
-        qDebug() << "Auto white balance read failed";
+        ui->autoExposure->setEnabled(true);
+        ui->autoExposure->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
     }
 
-    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &v)==CAPRESULT_OK)
+    // ********************************************************************************
+    //   AUTO GAIN
+    // ********************************************************************************
+
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_GAIN, &bValue) != CAPRESULT_OK)
     {
-        qDebug() << "Auto exposure is" << ((v==1) ? "ON" : "OFF");
+        ui->autoGain->setEnabled(false);
+        ui->autoGain->setCheckState(Qt::Unchecked);
     }
     else
     {
-        qDebug() << "Auto exposure read failed";
+        ui->autoGain->setEnabled(true);
+        ui->autoGain->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
     }
 
-    int32_t exposure;
-    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &exposure)==CAPRESULT_OK)
+    // ********************************************************************************
+    //   AUTO WHITE BALANCE
+    // ********************************************************************************
+
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &bValue) != CAPRESULT_OK)
     {
-        qDebug() << "Exposure: " << exposure;
-        m_exposureSlider->setValue(exposure);
+        ui->autoWhiteBalance->setEnabled(false);
+        ui->autoWhiteBalance->setCheckState(Qt::Unchecked);
     }
     else
     {
-        qDebug() << "Failed to get exposure value";
+        ui->autoWhiteBalance->setEnabled(true);
+        ui->autoWhiteBalance->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
+        ui->whitebalanceSlider->setEnabled(false);
     }
+
+    // ********************************************************************************
+    //   EXPOSURE
+    // ********************************************************************************
 
     int32_t emin,emax,edefault;
     if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &emin, &emax, &edefault)==CAPRESULT_OK)
@@ -225,95 +300,280 @@ void MainWindow::readCameraSettings()
         qDebug() << "Exposure min: " << emin;
         qDebug() << "Exposure max: " << emax;
         qDebug() << "Exposure default: " << edefault;
-        m_exposureSlider->setRange(emin, emax);
+        ui->exposureSlider->setRange(emin, emax);
+        m_hasExposure = true;
     }
     else
     {
         qDebug() << "Failed to get exposure limits";
-        m_exposureSlider->setRange(0, 0);
+        ui->exposureSlider->setEnabled(false);
+        ui->exposureSlider->setRange(0, 0);
     }
+
+    int32_t exposure;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_EXPOSURE, &exposure)==CAPRESULT_OK)
+    {
+        qDebug() << "Exposure: " << exposure;
+        ui->exposureSlider->setValue(exposure);
+    }    
+    else
+    {
+        qDebug() << "Failed to get exposure value";
+        ui->exposureSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   WHITE BALANCE
+    // ********************************************************************************
 
     if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "White balance min: " << emin;
         qDebug() << "White balance max: " << emax;
         qDebug() << "White balance default: " << edefault;
-        m_whiteBalanceSlider->setRange(emin, emax);
+        ui->whitebalanceSlider->setRange(emin, emax);
+        m_hasWhiteBalance = true;
     }
     else
     {
         qDebug() << "Failed to get white balance limits";
-        m_whiteBalanceSlider->setRange(0, 0);
+        ui->whitebalanceSlider->setRange(0, 0);
+        ui->whitebalanceSlider->setEnabled(false);
     }
+
+    int32_t whitebalance;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, &whitebalance)==CAPRESULT_OK)
+    {
+        qDebug() << "White Balance: " << whitebalance;
+        ui->whitebalanceSlider->setValue(whitebalance);
+    }
+    else
+    {
+        qDebug() << "Failed to get gain value";
+        ui->whitebalanceSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   GAIN
+    // ********************************************************************************
 
     if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_GAIN, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "Gain min: " << emin;
         qDebug() << "Gain max: " << emax;
         qDebug() << "Gain default: " << edefault;
-        m_gainSlider->setRange(emin, emax);
+        ui->gainSlider->setEnabled(true);
+        ui->gainSlider->setRange(emin, emax);
+        m_hasGain = true;
     }
     else
     {
         qDebug() << "Failed to get gain limits";
-        m_gainSlider->setRange(0, 0);
+        ui->gainSlider->setRange(0, 0);
+        ui->gainSlider->setEnabled(false);
     }
 
     int32_t gain;
     if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_GAIN, &gain)==CAPRESULT_OK)
     {
         qDebug() << "Gain: " << gain;
-        m_gainSlider->setValue(gain);
+        ui->gainSlider->setValue(gain);
     }
     else
     {
         qDebug() << "Failed to get gain value";
+        ui->gainSlider->setEnabled(false);
     }
+
+    // ********************************************************************************
+    //   CONTRAST
+    // ********************************************************************************
 
     if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_CONTRAST, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
         qDebug() << "Contrast min: " << emin;
         qDebug() << "Contrast max: " << emax;
         qDebug() << "Contrast default: " << edefault;
-        m_contrastSlider->setRange(emin, emax);
+        ui->contrastSlider->setEnabled(true);
+        ui->contrastSlider->setRange(emin, emax);
+        m_hasContrast = true;
     }
     else
     {
-        m_contrastSlider->setRange(0, 0);
-    }
-
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, &emin, &emax, &edefault)==CAPRESULT_OK)
-    {
-        qDebug() << "Brightness min: " << emin;
-        qDebug() << "Brightness max: " << emax;
-        qDebug() << "Brightness default: " << edefault;
-        m_brightnessSlider->setRange(emin, emax);
-    }
-    else
-    {
-        m_brightnessSlider->setRange(0, 0);
+        ui->contrastSlider->setRange(0, 0);
+        ui->contrastSlider->setEnabled(false);
     }
 
     int32_t contrast;
     if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_CONTRAST, &contrast)==CAPRESULT_OK)
     {
         qDebug() << "Contrast: " << contrast;
-        m_contrastSlider->setValue(contrast);
+        ui->contrastSlider->setValue(contrast);
     }
     else
     {
         qDebug() << "Failed to get contrast value";
+        ui->contrastSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   BRIGHTNESS
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "Brightness min: " << emin;
+        qDebug() << "Brightness max: " << emax;
+        qDebug() << "Brightness default: " << edefault;
+        ui->brightnessSlider->setEnabled(true);
+        ui->brightnessSlider->setRange(emin, emax);
+        m_hasBrightness = true;
+    }
+    else
+    {
+        ui->brightnessSlider->setRange(0, 0);
+        ui->brightnessSlider->setEnabled(false);
     }
 
     int32_t brightness;
     if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, &brightness)==CAPRESULT_OK)
     {
         qDebug() << "Brightness: " << brightness;
-        m_brightnessSlider->setValue(brightness);
+        ui->brightnessSlider->setEnabled(true);
+        ui->brightnessSlider->setValue(brightness);
     }
     else
     {
         qDebug() << "Failed to get brightness value";
+        ui->brightnessSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   GAMMA
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_GAMMA, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "Gamma min: " << emin;
+        qDebug() << "Gamma max: " << emax;
+        qDebug() << "Gamma default: " << edefault;
+        ui->gammaSlider->setEnabled(true);
+        ui->gammaSlider->setRange(emin, emax);
+        m_hasGamma = true;
+    }
+    else
+    {
+        ui->gammaSlider->setRange(0, 0);
+        ui->gammaSlider->setEnabled(false);
+    }
+
+    int32_t gamma;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_GAMMA, &gamma)==CAPRESULT_OK)
+    {
+        qDebug() << "Gamma: " << gamma;
+        ui->gammaSlider->setEnabled(true);
+        ui->gammaSlider->setValue(gamma);
+    }
+    else
+    {
+        qDebug() << "Failed to get gamma value";
+        ui->gammaSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   SATURATION
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_SATURATION, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "Saturation min: " << emin;
+        qDebug() << "Saturation max: " << emax;
+        qDebug() << "Saturation default: " << edefault;
+        ui->saturationSlider->setEnabled(true);
+        ui->saturationSlider->setRange(emin, emax);
+        m_hasSaturation = true;
+    }
+    else
+    {
+        ui->saturationSlider->setRange(0, 0);
+        ui->saturationSlider->setEnabled(false);
+    }
+
+    int32_t saturation;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_SATURATION, &saturation)==CAPRESULT_OK)
+    {
+        qDebug() << "Saturation: " << saturation;
+        ui->saturationSlider->setEnabled(true);
+        ui->saturationSlider->setValue(saturation);
+    }
+    else
+    {
+        qDebug() << "Failed to get saturation value";
+        ui->saturationSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   ZOOM
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_ZOOM, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "zoom min: " << emin;
+        qDebug() << "zoom max: " << emax;
+        qDebug() << "zoom default: " << edefault;
+        ui->zoomSlider->setEnabled(true);
+        ui->zoomSlider->setRange(emin, emax);
+        m_hasZoom = true;
+    }
+    else
+    {
+        ui->zoomSlider->setRange(0, 0);
+        ui->zoomSlider->setEnabled(false);
+    }
+
+    int32_t zoom;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_ZOOM, &zoom)==CAPRESULT_OK)
+    {
+        qDebug() << "zoom: " << zoom;
+        ui->zoomSlider->setEnabled(true);
+        ui->zoomSlider->setValue(zoom);
+    }
+    else
+    {
+        qDebug() << "Failed to get zoom value";
+        ui->zoomSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   FOCUS
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_FOCUS, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "focus min: " << emin;
+        qDebug() << "focus max: " << emax;
+        qDebug() << "focus default: " << edefault;
+        ui->focusSlider->setEnabled(true);
+        ui->focusSlider->setRange(emin, emax);
+        m_hasFocus = true;
+    }
+    else
+    {
+        ui->focusSlider->setRange(0, 0);
+        ui->focusSlider->setEnabled(false);
+    }
+
+    int32_t focus;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_FOCUS, &focus)==CAPRESULT_OK)
+    {
+        qDebug() << "focus: " << focus;
+        ui->focusSlider->setEnabled(true);
+        ui->focusSlider->setValue(focus);
+    }
+    else
+    {
+        qDebug() << "Failed to get focus value";
+        ui->focusSlider->setEnabled(false);
     }
 
 }
@@ -325,7 +585,7 @@ void MainWindow::onExposureSlider(int value)
 
 void MainWindow::onWhiteBalanceSlider(int value)
 {
-    if (Cap_setProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, value)!=CAPRESULT_OK)
+    if (Cap_setProperty(m_ctx, m_streamID, CAPPROPID_WHITEBALANCE, value) != CAPRESULT_OK)
     {
         qDebug() << "Setting white balance failed";
     }
@@ -344,4 +604,24 @@ void MainWindow::onContrastSlider(int value)
 void MainWindow::onBrightnessSlider(int value)
 {
     Cap_setProperty(m_ctx, m_streamID, CAPPROPID_BRIGHTNESS, value);
+}
+
+void MainWindow::onGammaSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_GAMMA, value);
+}
+
+void MainWindow::onSaturationSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_SATURATION, value);
+}
+
+void MainWindow::onFocusSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_FOCUS, value);
+}
+
+void MainWindow::onZoomSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_ZOOM, value);
 }

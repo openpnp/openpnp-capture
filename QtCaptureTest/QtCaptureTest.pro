@@ -11,9 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = QtCaptureTest
 TEMPLATE = app
 
-#CONFIG += app_bundle
-CONFIG -= app_bundle
-CONFIG += console
+macx:CONFIG -= app_bundle
+#CONFIG += console
 
 # add the openpnp-capture include path
 INCLUDEPATH += ../include
