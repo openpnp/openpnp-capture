@@ -642,7 +642,9 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
             if (m_camControl->Set(gs_properties[propID].dsProp, value, flags) != S_OK)
             {
                 return false;
-            }            
+            }
+
+            return true;
         }
         else
         {
@@ -662,7 +664,9 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
             if (m_videoProcAmp->Set(gs_properties[propID].dsProp, value, flags) != S_OK)
             {
                 return false;
-            } 
+            }
+
+            return true;
         }
     }
 

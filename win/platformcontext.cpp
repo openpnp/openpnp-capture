@@ -30,20 +30,20 @@ Context* createPlatformContext()
     return new PlatformContext();
 }
 
-PlatformContext::PlatformContext() :
-    Context()
+PlatformContext::PlatformContext() : Context()
 {
     HRESULT hr;
     hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
     if (hr != S_OK)
     {
-        LOG(LOG_CRIT, "Context creation failed!\n");
-        //FIXME: ok, what now? is it acceptable to throw an
-        //       exception here?
+        // This might happen when another part of the program
+        // as already called CoInitializeEx.
+        // and we can carry on without problems... 
+        LOG(LOG_ERR, "PlatformContext creation failed (HRESULT = %08X)!\n", hr);
     }
     else
     {
-        LOG(LOG_DEBUG, "Context created\n");
+        LOG(LOG_DEBUG, "PlatformContext created\n");
     }
 
     enumerateDevices();
