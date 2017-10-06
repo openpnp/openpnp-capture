@@ -525,10 +525,10 @@ bool UVCCtrl::getProperty(uint32_t propID, int32_t *value)
         switch(propertyInfo[propID].length)
         {
             case 2:
-                *value &= 0xFFFF;
+                *value = static_cast<int16_t>(*value);
                 break;
             case 1:
-                *value &= 0xFF;
+                *value = static_cast<int8_t>(*value);
                 break;
             default:
                 break;
@@ -668,14 +668,14 @@ bool UVCCtrl::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *emax, i
         switch(propertyInfo[propID].length)
         {
             case 2:
-                *emin &= 0xFFFF;
-                *emax &= 0xFFFF;
-                *dValue &= 0xFFFF;
+                *emin = static_cast<int16_t>(*emin);
+                *emax = static_cast<int16_t>(*emax);
+                *dValue = static_cast<int16_t>(*dValue);
                 break;
             case 1:
-                *emin &= 0xFF;
-                *emax &= 0xFF;
-                *dValue &= 0xFF;
+                *emin = static_cast<int8_t>(*emin);
+                *emax = static_cast<int8_t>(*emax);
+                *dValue = static_cast<int8_t>(*dValue);
                 break;
             default:
                 break;
