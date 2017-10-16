@@ -11,8 +11,8 @@
 
 */
 
-#ifndef uvcctrl_h
-#define uvcctrl_h
+#ifndef mac_uvcctrl_h
+#define mac_uvcctrl_h
 
 #import <CoreFoundation/CoreFoundation.h>
 

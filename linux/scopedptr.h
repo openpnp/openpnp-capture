@@ -7,8 +7,8 @@
 
 */
 
-#ifndef scopedptr_h
-#define scopedptr_h
+#ifndef linux_scopedptr_h
+#define linux_scopedptr_h
 
 /** The ScopedPtr takes a pointer to a generic object and will 
     delete/destroy the object when the owning ScopedComPtr is 

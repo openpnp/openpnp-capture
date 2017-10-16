@@ -11,8 +11,8 @@
 
 */
 
-#ifndef win32platform_stream_h
-#define win32platform_stream_h
+#ifndef linux_platformstream_h
+#define linux_platformstream_h
 
 #include <stdint.h>
 #include <vector>

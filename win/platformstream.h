@@ -11,8 +11,8 @@
 
 */
 
-#ifndef win32platform_stream_h
-#define win32platform_stream_h
+#ifndef win_platformstream_h
+#define win_platformstream_h
 
 #include <windows.h>
 #include <dshow.h>

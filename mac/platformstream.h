@@ -11,8 +11,8 @@
 
 */
 
-#ifndef macplatform_stream_h
-#define macplatform_stream_h
+#ifndef mac_platformstream_h
+#define mac_platformstream_h
 
 #include <stdint.h>
 #include "../common/logging.h"

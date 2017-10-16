@@ -7,8 +7,8 @@
 
 */
 
-#ifndef scopedcomptr_h
-#define scopedcomptr_h
+#ifndef win_scopedcomptr_h
+#define win_scopedcomptr_h
 
 /** The ScopedComPtr takes a pointer to a generic COM
     interface object and will release the object when

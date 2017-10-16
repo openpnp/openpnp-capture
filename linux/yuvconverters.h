@@ -11,8 +11,8 @@
 
 */
 
-#ifndef yuvconverters_h
-#define yuvconverters_h
+#ifndef linux_yuvconverters_h
+#define linux_yuvconverters_h
 
 #include <stdint.h>
 

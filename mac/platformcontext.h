@@ -1,5 +1,5 @@
-#ifndef openpnp_macplatformcontext_h
-#define openpnp_macplatformcontext_h
+#ifndef mac_platformcontext_h
+#define mac_platformcontext_h
 
 #include "openpnp-capture.h"
 

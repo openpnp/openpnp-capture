@@ -9,8 +9,8 @@
 
 */
 
-#ifndef mjpeghelper_h
-#define mjpeghelper_h
+#ifndef linux_mjpeghelper_h
+#define linux_mjpeghelper_h
 
 #include <turbojpeg.h>
 #include <stdint.h>

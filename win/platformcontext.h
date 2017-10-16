@@ -10,8 +10,8 @@
 
 */
 
-#ifndef openpnp_win32platformcontext_h
-#define openpnp_win32platformcontext_h
+#ifndef win_platformcontext_h
+#define win_platformcontext_h
 
 #include <vector>
 #include <string>

@@ -10,8 +10,8 @@
 
 */
 
-#ifndef openpnp_win32platformcontext_h
-#define openpnp_win32platformcontext_h
+#ifndef linux_platformcontext_h
+#define linux_platformcontext_h
 
 #define _CRT_SECURE_NO_WARNINGS
 

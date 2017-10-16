@@ -1,5 +1,5 @@
-#ifndef platformdeviceinfo_h
-#define platformdeviceinfo_h
+#ifndef linux_platformdeviceinfo_h
+#define linux_platformdeviceinfo_h
 
 #include <linux/videodev2.h>
 #include <string>

@@ -9,8 +9,8 @@
 
 */
 
-#ifndef platformdeviceinfo_h
-#define platformdeviceinfo_h
+#ifndef mac_platformdeviceinfo_h
+#define mac_platformdeviceinfo_h
 
 #include <string>
 #include <vector>
