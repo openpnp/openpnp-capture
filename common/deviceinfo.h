@@ -1,4 +1,4 @@
-/**
+/*
 
     Platform independent device information class.
 
