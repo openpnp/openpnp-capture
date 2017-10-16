@@ -50,9 +50,6 @@ protected:
 
     /** Enumerate V4L capture devices and put their 
         information into the m_devices array 
-        
-        Implement this function in a platform-dependent
-        derived class.
     */
     virtual bool enumerateDevices();
 

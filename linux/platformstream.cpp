@@ -314,7 +314,7 @@ void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSiz
     } // while  
 
     // Note: the destruction of the PlatformHelper 
-    // by the scoped pointer will automaticall
+    // by the scoped pointer will automatically
     // turn off streaming and remove the
     // memory mapped buffers from the system.
     LOG(LOG_DEBUG, "captureThreadFunctionAsync exited\n");

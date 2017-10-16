@@ -3,7 +3,6 @@
 #include "platformcontext.h"
 #import <AVFoundation/AVFoundation.h>
 
-
 // a platform factory function needed by
 // libmain.cpp
 Context* createPlatformContext()
@@ -53,7 +52,7 @@ bool PlatformContext::enumerateDevices()
 
         LOG(LOG_DEBUG, "USB      : vid=%04X  pid=%04X\n", deviceInfo->m_vid, deviceInfo->m_pid);
 
-        // he unique ID seem to be comprised of a 10-character PCI/USB location address
+        // the unique ID seem to be comprised of a 10-character PCI/USB location address
         // followed by the VID and PID in hex, e.g. 0x26210000046d0825
         deviceInfo->m_busLocation = 0;
         if (device.uniqueID.length == 18)

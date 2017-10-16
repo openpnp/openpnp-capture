@@ -28,7 +28,7 @@
 #include <stdarg.h>
 #include "logging.h"
 
-/* In their infinite "wisdom" Microsoft have declared snprintf deprecated
+/* In their infinite "wisdom" Microsoft have declared snprintf is deprecated
    and we must therefore resort to a macro to fix something that shouldn't
    be a problem */
 #ifdef _MSC_VER

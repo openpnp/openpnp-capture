@@ -2,8 +2,7 @@
 
     OpenPnp-Capture: a video capture subsystem.
 
-    Platform independent context class to keep track
-    of the global state.
+    Platform independent context class to keep track of the global state.
 
     Copyright (c) 2017 Jason von Nieda, Niels Moseley.
 

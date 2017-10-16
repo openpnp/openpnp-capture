@@ -32,7 +32,7 @@ class PlatformContext : public Context
 {
 public:
     /** Create a context for the library.
-        Device enumeration is perform in the constructor,
+        Device enumeration is performed in the constructor,
         so all devices must be present in the system when
         the Context is created or devices will not be found.
 

@@ -25,7 +25,7 @@
 
 #include "uvcctrl.h"
 
-class Context;          // pre-declaration
+class Context;         // pre-declaration
 class PlatformStream;  // pre-declaration
 
 /** An OBJC++ interface to handle callbacks from the
