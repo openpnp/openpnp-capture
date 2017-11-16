@@ -53,7 +53,7 @@ PlatformContext::PlatformContext() : Context()
         // This might happen when another part of the program
         // as already called CoInitializeEx.
         // and we can carry on without problems... 
-        LOG(LOG_ERR, "PlatformContext creation failed (HRESULT = %08X)!\n", hr);
+        LOG(LOG_WARNING, "PlatformContext::CoInitializeEx failed (HRESULT = %08X)!\n", hr);
     }
     else
     {
