@@ -643,6 +643,17 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
     case CAPPROPID_GAMMA:
         ctrl.id = V4L2_CID_GAMMA;
         break;        
+    case CAPPROPID_HUE:
+        crtl.id = V4L2_CID_HUE;
+        break;
+    case CAPPROPID_SHARPNESS:
+        ctrl.id = V4L2_CID_SHARPNESS;
+        break;
+    case CAPPROPID_BACKLIGHTCOMP:
+        ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;
+    // CAPPROPID_COLORENABLE is probably the same as V4L2_CID_COLOR_KILLER
+    // but that is a boolean -- do we need special handling of this?
     default:
         return false;
     }
@@ -731,7 +742,16 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
         break;
     case CAPPROPID_GAMMA:
         ctrl.id = V4L2_CID_GAMMA;
-        break;               
+        break;   
+    case CAPPROPID_HUE:
+        crtl.id = V4L2_CID_HUE;
+        break;
+    case CAPPROPID_SHARPNESS:
+        ctrl.id = V4L2_CID_SHARPNESS;
+        break;
+    case CAPPROPID_BACKLIGHTCOMP:
+        ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;                    
     default:
         return false;
     }
@@ -777,7 +797,16 @@ bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
         break;
     case CAPPROPID_GAMMA:
         ctrl.id = V4L2_CID_GAMMA;
-        break;                
+        break;   
+    case CAPPROPID_HUE:
+        crtl.id = V4L2_CID_HUE;
+        break;
+    case CAPPROPID_SHARPNESS:
+        ctrl.id = V4L2_CID_SHARPNESS;
+        break;
+    case CAPPROPID_BACKLIGHTCOMP:
+        ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;                     
     default:
         return false;
     }
