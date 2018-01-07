@@ -61,6 +61,27 @@
           <string>Camera Settings</string>
          </property>
          <layout class="QGridLayout" name="gridLayout">
+          <item row="13" column="1">
+           <widget class="QSlider" name="sharpnessSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="1">
+           <widget class="QSlider" name="powerlineFreqSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>Power line freq</string>
+            </property>
+           </widget>
+          </item>
           <item row="3" column="1">
            <widget class="QSlider" name="gainSlider">
             <property name="orientation">
@@ -240,27 +261,6 @@
            <widget class="QLabel" name="label_12">
             <property name="text">
              <string>Sharpness</string>
-            </property>
-           </widget>
-          </item>
-          <item row="13" column="1">
-           <widget class="QSlider" name="sharpnessSlider">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="15" column="0">
-           <widget class="QLabel" name="label_13">
-            <property name="text">
-             <string>Color enable</string>
-            </property>
-           </widget>
-          </item>
-          <item row="15" column="1">
-           <widget class="QSlider" name="colorEnableSlider">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>

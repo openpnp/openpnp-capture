@@ -96,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->hueSlider, SIGNAL(valueChanged(int)), this, SLOT(onHueSlider(int)));
     connect(ui->backlightSlider, SIGNAL(valueChanged(int)), this, SLOT(onBacklightSlider(int)));
     connect(ui->sharpnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onSharpnessSlider(int)));
-    connect(ui->colorEnableSlider, SIGNAL(valueChanged(int)), this, SLOT(onColorEnableSlider(int)));
+    connect(ui->powerlineFreqSlider, SIGNAL(valueChanged(int)), this, SLOT(onColorEnableSlider(int)));
 
     // add timer to refresh the frame display
     m_refreshTimer = new QTimer(this);
@@ -692,32 +692,32 @@ void MainWindow::readCameraSettings()
     //   COLOR ENABLE
     // ********************************************************************************
 
-    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_COLORENABLE, &emin, &emax, &edefault)==CAPRESULT_OK)
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_POWERLINEFREQ, &emin, &emax, &edefault)==CAPRESULT_OK)
     {
-        qDebug() << "color enable min: " << emin;
-        qDebug() << "backlightcomp max: " << emax;
-        qDebug() << "backlightcomp default: " << edefault;
-        ui->colorEnableSlider->setEnabled(true);
-        ui->colorEnableSlider->setRange(emin, emax);
+        qDebug() << "power line freq min: " << emin;
+        qDebug() << "power line freq max: " << emax;
+        qDebug() << "power line freq default: " << edefault;
+        ui->powerlineFreqSlider->setEnabled(true);
+        ui->powerlineFreqSlider->setRange(emin, emax);
         m_hasBacklightcomp = true;
     }
     else
     {
-        ui->colorEnableSlider->setRange(0, 0);
-        ui->colorEnableSlider->setEnabled(false);
+        ui->powerlineFreqSlider->setRange(0, 0);
+        ui->powerlineFreqSlider->setEnabled(false);
     }
 
-    int32_t colorEnable;
-    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_COLORENABLE, &colorEnable)==CAPRESULT_OK)
+    int32_t powerline;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_POWERLINEFREQ, &powerline)==CAPRESULT_OK)
     {
-        qDebug() << "color enable: " << backlight;
-        ui->colorEnableSlider->setEnabled(true);
-        ui->colorEnableSlider->setValue(backlight);
+        qDebug() << "power line : " << powerline;
+        ui->powerlineFreqSlider->setEnabled(true);
+        ui->powerlineFreqSlider->setValue(powerline);
     }
     else
     {
-        qDebug() << "Failed to get color enable value";
-        ui->colorEnableSlider->setEnabled(false);
+        qDebug() << "Failed to get power line frequency value";
+        ui->powerlineFreqSlider->setEnabled(false);
     }
 
 }
@@ -787,5 +787,5 @@ void MainWindow::onSharpnessSlider(int value)
 
 void MainWindow::onColorEnableSlider(int value)
 {
-    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_COLORENABLE, value);
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_POWERLINEFREQ, value);
 }

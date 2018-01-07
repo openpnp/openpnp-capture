@@ -652,7 +652,10 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
     case CAPPROPID_BACKLIGHTCOMP:
         ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
         break;
-    default:
+    case CAPPROPID_POWERLINEFREQ:
+        ctrl.id = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;
+    default:    
         return false;
     }
 
@@ -750,6 +753,9 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
     case CAPPROPID_BACKLIGHTCOMP:
         ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
         break;                    
+    case CAPPROPID_POWERLINEFREQ:
+        ctrl.id = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;        
     default:
         return false;
     }
@@ -804,7 +810,10 @@ bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
         break;
     case CAPPROPID_BACKLIGHTCOMP:
         ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
-        break;                     
+        break;      
+    case CAPPROPID_POWERLINEFREQ:
+        ctrl.id = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;                       
     default:
         return false;
     }
