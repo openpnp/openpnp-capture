@@ -92,7 +92,7 @@ void LOG(uint32_t logLevel, const char *format, ...)
     }
     else
     {
-        fprintf(stderr, logbuffer);
+        fprintf(stderr, "%s", logbuffer);
     }
 }
 

@@ -644,7 +644,7 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
         ctrl.id = V4L2_CID_GAMMA;
         break;        
     case CAPPROPID_HUE:
-        crtl.id = V4L2_CID_HUE;
+        ctrl.id = V4L2_CID_HUE;
         break;
     case CAPPROPID_SHARPNESS:
         ctrl.id = V4L2_CID_SHARPNESS;
@@ -744,7 +744,7 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
         ctrl.id = V4L2_CID_GAMMA;
         break;   
     case CAPPROPID_HUE:
-        crtl.id = V4L2_CID_HUE;
+        ctrl.id = V4L2_CID_HUE;
         break;
     case CAPPROPID_SHARPNESS:
         ctrl.id = V4L2_CID_SHARPNESS;
@@ -799,7 +799,7 @@ bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
         ctrl.id = V4L2_CID_GAMMA;
         break;   
     case CAPPROPID_HUE:
-        crtl.id = V4L2_CID_HUE;
+        ctrl.id = V4L2_CID_HUE;
         break;
     case CAPPROPID_SHARPNESS:
         ctrl.id = V4L2_CID_SHARPNESS;
