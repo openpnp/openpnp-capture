@@ -652,8 +652,6 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
     case CAPPROPID_BACKLIGHTCOMP:
         ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
         break;
-    // CAPPROPID_COLORENABLE is probably the same as V4L2_CID_COLOR_KILLER
-    // but that is a boolean -- do we need special handling of this?
     default:
         return false;
     }

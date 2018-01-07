@@ -66,8 +66,10 @@ static const property_t gs_properties[] =
     {VideoProcAmp_Saturation, false},
     {VideoProcAmp_Gamma, false},
     {VideoProcAmp_Hue, false},
-    {VideoProcAmp_Sharpness, false}
+    {VideoProcAmp_Sharpness, false},
+    {VideoProcAmp_BacklightCompensation, false}
 };
+
 
 // **********************************************************************
 //   StreamCallbackHandler

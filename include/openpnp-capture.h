@@ -83,8 +83,7 @@ typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
 #define CAPPROPID_HUE           10
 #define CAPPROPID_SHARPNESS     11
 #define CAPPROPID_BACKLIGHTCOMP 12
-#define CAPPROPID_COLORENABLE   13
-#define CAPPROPID_LAST          14
+#define CAPPROPID_LAST          13
 
 typedef uint32_t CapPropertyID; ///< property ID (exposure, zoom, focus etc.)
 

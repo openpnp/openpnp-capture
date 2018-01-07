@@ -54,9 +54,11 @@
 #define CT_ZOOM_RELATIVE_CONTROL 0x0C
 
 // Processing unit control selectors
+#define PU_BACKLIGHT_COMPENSATION_CONTROL 0x01
 #define PU_BRIGHTNESS_CONTROL 0x02
 #define PU_CONTRAST_CONTROL 0x03
 #define PU_GAIN_CONTROL 0x04
+#define PU_POWER_LINE_FREQUENCY_CONTROL 0x05
 #define PU_HUE_CONTROL 0x06
 #define PU_SATURATION_CONTROL 0x07
 #define PU_SHARPNESS_CONTROL 0x08
@@ -98,6 +100,9 @@ struct propertyInfo_t
     uint32_t    length;     // length (bytes)
 };
 
+/** The order of the propertyInfo structure must
+    be the same as the PROPID numbers in the
+    openpnp-capture.h header */
 const propertyInfo_t propertyInfo[] =
 {
     {0,0,0},
@@ -109,8 +114,21 @@ const propertyInfo_t propertyInfo[] =
     {PU_BRIGHTNESS_CONTROL               , 1, 2},
     {PU_CONTRAST_CONTROL                 , 1, 2},
     {PU_SATURATION_CONTROL               , 1, 2},
-    {PU_GAMMA_CONTROL                    , 1, 2}
+    {PU_GAMMA_CONTROL                    , 1, 2},
+    {PU_HUE_CONTROL                      , 1, 2},
+    {PU_SHARPNESS_CONTROL                , 1, 2},
+    {PU_BACKLIGHT_COMPENSATION_CONTROL   , 1, 2},
+
+    {PU_POWER_LINE_FREQUENCY_CONTROL     , 1, 2}
 };
+
+#define CAPPROPID_SATURATION    8
+#define CAPPROPID_GAMMA         9
+#define CAPPROPID_HUE           10
+#define CAPPROPID_SHARPNESS     11
+#define CAPPROPID_BACKLIGHTCOMP 12
+#define CAPPROPID_COLORENABLE   13
+
 
 UVCCtrl::UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID)
     : m_pud(processingUnitID),
