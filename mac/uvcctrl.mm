@@ -118,7 +118,6 @@ const propertyInfo_t propertyInfo[] =
     {PU_HUE_CONTROL                      , 1, 2},
     {PU_SHARPNESS_CONTROL                , 1, 2},
     {PU_BACKLIGHT_COMPENSATION_CONTROL   , 1, 2},
-
     {PU_POWER_LINE_FREQUENCY_CONTROL     , 1, 2}
 };
 

@@ -67,7 +67,8 @@ static const property_t gs_properties[] =
     {VideoProcAmp_Gamma, false},
     {VideoProcAmp_Hue, false},
     {VideoProcAmp_Sharpness, false},
-    {VideoProcAmp_BacklightCompensation, false}
+    {VideoProcAmp_BacklightCompensation, false},
+    {KSPROPERTY_VIDEOPROCAMP_POWERLINE_FREQUENCY, false}
 };
 
 
