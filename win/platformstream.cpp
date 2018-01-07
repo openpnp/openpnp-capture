@@ -64,9 +64,10 @@ static const property_t gs_properties[] =
     {VideoProcAmp_Brightness, false},
     {VideoProcAmp_Contrast, false},
     {VideoProcAmp_Saturation, false},
-    {VideoProcAmp_Gamma, false}
+    {VideoProcAmp_Gamma, false},
+    {VideoProcAmp_Hue, false},
+    {VideoProcAmp_Sharpness, false}
 };
-
 
 // **********************************************************************
 //   StreamCallbackHandler
@@ -86,7 +87,9 @@ HRESULT __stdcall StreamCallbackHandler::SampleCB(double time, IMediaSample* sam
     if ((sample->GetPointer(&ptr) == S_OK) && (m_stream != nullptr))
     {
         m_stream->submitBuffer(ptr, bytes);
+    
     }
+    //sample->Release(); //who owns the IMediaSample ?!?
     return S_OK;
 }
 

@@ -49,6 +49,10 @@ public slots:
     void onFocusSlider(int value);
     void onZoomSlider(int value);
     void onGammaSlider(int value);
+    void onHueSlider(int value);
+    void onBacklightSlider(int value);
+    void onSharpnessSlider(int value);
+    void onColorEnableSlider(int value);
 
 private:
     QMutex                   m_logMutex;
@@ -66,6 +70,10 @@ private:
     bool        m_hasSaturation;
     bool        m_hasFocus;
     bool        m_hasZoom;
+    bool        m_hasHue;
+    bool        m_hasSharpness;
+    bool        m_hasBacklightcomp;
+    bool        m_hasColorEnable;
 
     QTimer*     m_refreshTimer;
     CapContext  m_ctx;
