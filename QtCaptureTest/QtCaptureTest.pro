@@ -26,5 +26,12 @@ FORMS    += mainwindow.ui
 
 LIBS += -L../build/ -lopenpnp-capture
 
+# add nvidia to library search path
+# your linux installation will probably have
+# a different location...
+linux {
+    LIBS += -L/usr/lib/nvidia-304/
+}
+
 # add run-path relative dylib search path
 QMAKE_RPATHDIR += .
