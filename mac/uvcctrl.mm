@@ -118,15 +118,8 @@ const propertyInfo_t propertyInfo[] =
     {PU_HUE_CONTROL                      , 1, 2},
     {PU_SHARPNESS_CONTROL                , 1, 2},
     {PU_BACKLIGHT_COMPENSATION_CONTROL   , 1, 2},
-    {PU_POWER_LINE_FREQUENCY_CONTROL     , 1, 2}
+    {PU_POWER_LINE_FREQUENCY_CONTROL     , 1, 1}
 };
-
-#define CAPPROPID_SATURATION    8
-#define CAPPROPID_GAMMA         9
-#define CAPPROPID_HUE           10
-#define CAPPROPID_SHARPNESS     11
-#define CAPPROPID_BACKLIGHTCOMP 12
-#define CAPPROPID_COLORENABLE   13
 
 
 UVCCtrl::UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID)
