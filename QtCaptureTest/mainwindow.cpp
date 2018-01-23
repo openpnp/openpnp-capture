@@ -97,6 +97,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->backlightSlider, SIGNAL(valueChanged(int)), this, SLOT(onBacklightSlider(int)));
     connect(ui->sharpnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onSharpnessSlider(int)));
     connect(ui->powerlineFreqSlider, SIGNAL(valueChanged(int)), this, SLOT(onColorEnableSlider(int)));
+    connect(ui->saturationSlider, SIGNAL(valueChanged(int)), this, SLOT(onSaturationSlider(int)));
 
     // add timer to refresh the frame display
     m_refreshTimer = new QTimer(this);
