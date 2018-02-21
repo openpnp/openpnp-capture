@@ -595,7 +595,7 @@ void PlatformStream::dumpCameraProperties()
 /** get the limits and default value of a camera/stream property (exposure, zoom etc) */
 bool PlatformStream::getPropertyLimits(CapPropertyID propID, int32_t *emin, int32_t *emax, int32_t *dValue)
 {
-    if ((m_camControl == nullptr) || (emin == nullptr) || (emax == nullptr))
+    if ((m_camControl == nullptr) || (emin == nullptr) || (emax == nullptr) || (dValue == nullptr))
     {
         return false;
     }
