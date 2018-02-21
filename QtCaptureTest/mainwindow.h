@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QCheckBox>
 #include <QSlider>
+#include <QMutex>
 #include <vector>
 #include "openpnp-capture.h"
 
