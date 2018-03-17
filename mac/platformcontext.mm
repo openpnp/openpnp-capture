@@ -69,14 +69,30 @@ bool PlatformContext::enumerateDevices()
 
         // extract the PID/VID from the model name
         NSRange vidRange = [device.modelID rangeOfString:@"VendorID_"];
-        uint32_t maxLen = device.modelID.length - vidRange.location - 9;
-        maxLen = (maxLen > 5) ? 5 : maxLen;        
-        deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, maxLen)] intValue];
+        if (vidRange.length > 0)
+        {
+            uint32_t maxLen = device.modelID.length - vidRange.location - 9;
+            maxLen = (maxLen > 5) ? 5 : maxLen;        
+            deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, maxLen)] intValue];
+        }
+        else
+        {
+            LOG(LOG_WARNING, "OSX Unable to extract vendor ID\n");
+        }
+        
 
         NSRange pidRange = [device.modelID rangeOfString:@"ProductID_"];
-        maxLen = device.modelID.length - pidRange.location - 10;
-        maxLen = (maxLen > 5) ? 5 : maxLen;
-        deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, maxLen)] intValue];
+        if (pidRange.length > 0)
+        {
+            uint32_t maxLen = device.modelID.length - pidRange.location - 10;
+            maxLen = (maxLen > 5) ? 5 : maxLen;
+            deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, maxLen)] intValue];
+        }
+        else
+        {
+            LOG(LOG_WARNING, "OSX Unable to extract product ID\n");
+        }
+        
 
         LOG(LOG_DEBUG, "USB      : vid=%04X  pid=%04X\n", deviceInfo->m_vid, deviceInfo->m_pid);
 
