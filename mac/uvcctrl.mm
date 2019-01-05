@@ -607,6 +607,9 @@ bool UVCCtrl::setAutoProperty(uint32_t propID, bool enabled)
     case CAPPROPID_WHITEBALANCE:
         LOG(LOG_VERBOSE, "UVCCtrl::setAutoProperty (white balance %s)\n", enabled ? "ON" : "OFF");
         return setData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, m_pud, 1, value);
+    case CAPPROPID_FOCUS:
+        LOG(LOG_VERBOSE, "UVCCtrl::setAutoProperty (focus %s)\n", enabled ? "ON" : "OFF");
+        return setData(CT_FOCUS_AUTO_CONTROL, UVC_INPUT_TERMINAL_ID, 1, value);
     default:
         return false;
     }
@@ -649,7 +652,16 @@ bool UVCCtrl::getAutoProperty(uint32_t propID, bool *enabled)
             *enabled = (value==1) ? true : false; 
             return true;
         }
-        return false;     
+        return false;
+    case CAPPROPID_FOCUS:
+        LOG(LOG_VERBOSE, "UVCCtrl::getAutoProperty focus\n");
+        if (getData(CT_FOCUS_AUTO_CONTROL, UVC_INPUT_TERMINAL_ID, 1, &value))
+        {
+            LOG(LOG_VERBOSE,"CT_FOCUS_AUTO_CONTROL returned %08Xh\n", value & 0xFF);
+            value &= 0xFF; // make 8-bit
+            *enabled = (value==1) ? true : false;
+            return true;
+        }
     default:
         return false;
     }
