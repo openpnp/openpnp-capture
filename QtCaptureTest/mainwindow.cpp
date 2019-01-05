@@ -87,6 +87,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->exposureSlider, SIGNAL(valueChanged(int)),this, SLOT(onExposureSlider(int)));
     connect(ui->whitebalanceSlider, SIGNAL(valueChanged(int)),this, SLOT(onWhiteBalanceSlider(int)));
     connect(ui->autoGain, SIGNAL(toggled(bool)), this, SLOT(onAutoGain(bool)));
+    connect(ui->autoFocus, SIGNAL(toggled(bool)), this, SLOT(onAutoFocus(bool)));
     connect(ui->gainSlider, SIGNAL(valueChanged(int)), this, SLOT(onGainSlider(int)));
     connect(ui->contrastSlider, SIGNAL(valueChanged(int)), this, SLOT(onContrastSlider(int)));
     connect(ui->brightnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onBrightnessSlider(int)));
@@ -226,6 +227,13 @@ void MainWindow::onAutoGain(bool state)
     ui->gainSlider->setEnabled((!state) & m_hasGain);
 }
 
+void MainWindow::onAutoFocus(bool state)
+{
+    qDebug() << "Auto focus set to " << state;
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_FOCUS, state ? 1 : 0);
+    ui->gainSlider->setEnabled((!state) & m_hasGain);
+}
+
 void MainWindow::readCameraSettings()
 {
     qDebug() << "readCameraSettings -> Context = " << m_ctx;
@@ -248,6 +256,7 @@ void MainWindow::readCameraSettings()
     ui->exposureSlider->setEnabled(false);
     ui->gainSlider->setEnabled(false);
     ui->whitebalanceSlider->setEnabled(false);
+    ui->focusSlider->setEnabled(false);
 
     // ********************************************************************************
     //   AUTO EXPOSURE
@@ -293,6 +302,23 @@ void MainWindow::readCameraSettings()
     {
         ui->autoWhiteBalance->setEnabled(true);
         ui->autoWhiteBalance->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
+    }
+
+    // ********************************************************************************
+    //   AUTO FOCUS
+    // ********************************************************************************
+
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_FOCUS, &bValue) != CAPRESULT_OK)
+    {
+        qDebug() << "Autofocus unsupported";
+        ui->autoFocus->setEnabled(false);
+        ui->autoFocus->setCheckState(Qt::Unchecked);
+    }
+    else
+    {
+        qDebug() << "Autofocus supported";
+        ui->autoFocus->setEnabled(true);
+        ui->autoFocus->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
     }
 
     // ********************************************************************************

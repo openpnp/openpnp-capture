@@ -41,6 +41,7 @@ public slots:
     void onAutoExposure(bool state);
     void onAutoWhiteBalance(bool state);
     void onAutoGain(bool state);
+    void onAutoFocus(bool state);
     void onExposureSlider(int value);
     void onWhiteBalanceSlider(int value);
     void onGainSlider(int value);
