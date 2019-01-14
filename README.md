@@ -87,7 +87,6 @@ Run 'bootstrap_linux.sh'. Run make.
 * PlatformStream is responsible for capturing and decoding the camera stream to a 8-bit per channel RGB frame buffer.
 * Statically link external dependencies.
 
-# Downloading Binaries
+# Releases
 
-openpnp-capture is still under development, but you can download releases that are built automatically
-from https://github.com/openpnp/openpnp-capture/releases/latest.
+Releases are build automatically for all supported platforms. See https://github.com/openpnp/openpnp-capture/releases/latest to download the latest.
