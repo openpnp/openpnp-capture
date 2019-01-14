@@ -89,4 +89,4 @@ Run 'bootstrap_linux.sh'. Run make.
 
 # Releases
 
-Releases are build automatically for all supported platforms. See https://github.com/openpnp/openpnp-capture/releases/latest to download the latest.
+Releases are built automatically for all supported platforms. See https://github.com/openpnp/openpnp-capture/releases/latest to download the latest.
