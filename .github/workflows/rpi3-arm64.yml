@@ -27,5 +27,5 @@ jobs:
             --platform linux/arm64 \
             --output "type=image,push=true" \
             --file ./docker/Dockerfile.rpi3_arm64 \
-            --tag docker.pkg.github.com/CCHS-Melbourne/openpnp-capture:$VERSION .
-          docker push docker.pkg.github.com/CCHS-Melbourne/openpnp-capture:$VERSION
+            --tag docker.pkg.github.com/cchs-melbourne/openpnp-capture:$VERSION .
+          docker push docker.pkg.github.com/cchs-melbourne/openpnp-capture:$VERSION
