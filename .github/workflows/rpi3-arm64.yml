@@ -20,12 +20,12 @@ jobs:
         with:
           version: latest
       -
-        name: Available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-      -
-        name: Run Buildx
+        name: Run Buildx and publish the container to GitHub packages
         run: |
+          VERSION=$(date +%s)
           docker buildx build \
             --platform linux/arm64 \
-            --output "type=image,push=false" \
-            --file ./docker/Dockerfile.rpi3_arm64 .
+            --output "type=image,push=true" \
+            --file ./docker/Dockerfile.rpi3_arm64 \
+            --tag docker.pkg.github.com/CCHS-Melbourne/openpnp-capture:$VERSION .
+          docker push docker.pkg.github.com/CCHS-Melbourne/openpnp-capture:$VERSION
