@@ -78,7 +78,7 @@ Go to the build directory and run nmake or ninja to build the library and the te
 ### Build instructions (OSX)
 Run 'bootstrap_osx.sh'. Run make.
 
-### Build instructions (Linux)
+### Build instructions (Linux) (works for ARM64 targets such as RPI3 too)
 Run 'bootstrap_linux.sh'. Run make.
 
 ## Supporting other platforms
