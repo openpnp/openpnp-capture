@@ -27,6 +27,6 @@ jobs:
             --platform linux/arm64 \
             --output "type=image,push=true" \
             --file ./docker/Dockerfile.rpi3_arm64 \
-            --tag docker.pkg.github.com/cchs-melbourne/openpnp-capture-rpi3-arm64:$VERSION .
-          docker login docker.pkg.github.com --username cchs-melbourne --password "${{ secrets.GITHUB_TOKEN }}"
-          docker push docker.pkg.github.com/cchs-melbourne/openpnp-capture-rpi3-arm64:$VERSION
+            --tag docker.pkg.github.com/${{ github.repository }}/openpnp-capture-rpi3-arm64:$VERSION .
+          echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com --username ${{ github.actor }} --password-stdin
+          docker push docker.pkg.github.com/${{ github.repository }}/openpnp-capture-rpi3-arm64:$VERSION
