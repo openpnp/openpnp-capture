@@ -1,0 +1,4 @@
+FROM balenalib/raspberrypi3-64
+
+RUN apt-get update && apt-get install -y git build-essential cmake pkg-config libgtk-3-dev
+RUN git clone https://github.com/openpnp/openpnp-capture && cd openpnp-capture && ./bootstrap_linux.sh && cd build && make
