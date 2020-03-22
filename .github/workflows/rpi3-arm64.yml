@@ -28,4 +28,4 @@ jobs:
           docker buildx build \
             --platform linux/arm64 \
             --output "type=image,push=false" \
-            --file ./docker/Dockerfile.rpi3_arm64
+            --file ./docker/Dockerfile.rpi3_arm64 .
