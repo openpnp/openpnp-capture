@@ -81,6 +81,16 @@ Run 'bootstrap_osx.sh'. Run make.
 ### Build instructions (Linux) (works for ARM64 targets such as RPI3 too)
 Run 'bootstrap_linux.sh'. Run make.
 
+### Docker
+
+For instance, to cross-compile for a RaspberryPi 3:
+
+```
+$ git clone https://github.com/openpnp/openpnp-capture && cd openpnp-capture
+$ docker build --tag openpnp-capture-rpi3-arm64:latest . -f docker/Dockerfile.rpi3_arm64
+$ docker run -it -v $PWD:/openpnp-capture openpnp-capture-rpi3-arm64 ./bootstrap_linux.sh
+```
+
 ## Supporting other platforms
 * Implement all PlatformXXX classes, like in the win or linux directories.
 * PlatformContext handles device and internal frame buffer format enumeration.
