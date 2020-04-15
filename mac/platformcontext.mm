@@ -41,7 +41,13 @@ Context* createPlatformContext()
 PlatformContext::PlatformContext() :
     Context()
 {
-    LOG(LOG_DEBUG, "Platform context created\n");
+    LOG(LOG_INFO, "Platform context created\n");
+    NSLog(@"%@", [[NSBundle mainBundle] bundlePath]);
+    NSLog(@"authorizationStatusForMediaType %ld", (long)[AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo]);
+    [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
+        NSLog(@"%d", granted);
+    } ];
+    NSLog(@"authorizationStatusForMediaType %ld", (long)[AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo]);
     enumerateDevices();
 }
 
