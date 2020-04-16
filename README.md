@@ -96,6 +96,7 @@ $ docker run -it -v $PWD:/openpnp-capture openpnp-capture-rpi3-arm64 ./bootstrap
 * PlatformContext handles device and internal frame buffer format enumeration.
 * PlatformStream is responsible for capturing and decoding the camera stream to a 8-bit per channel RGB frame buffer.
 * Statically link external dependencies.
+* Tweak .travisci.yml accordingly for it to be released automatically.
 
 # Releases
 
