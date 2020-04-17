@@ -48,7 +48,7 @@ before_deploy:
 #  - if [ $TRAVIS_OS_NAME = windows ]; then cp libopenpnp-capture.dll deploy; cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-windows; fi
   - if [ $TRAVIS_OS_NAME = osx ]; then cp libopenpnp-capture.dylib deploy; cp mac/tests/openpnp-capture-test deploy/openpnp-capture-test-mac; fi
   - if [ $TRAVIS_OS_NAME = linux ]; then cp libopenpnp-capture.so deploy; cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-linux; fi
-  - if [ $TRAVIS_CPU_ARCH = arm64 ]; then cp libopenpnp-capture.so deploy; cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-linux-arm64; fi
+  - if [ $TRAVIS_CPU_ARCH = arm64 ]; then cp libopenpnp-capture.so deploy/libopenpnp-capture-arm64.so; cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-linux-arm64; fi
 
 deploy:
   provider: releases
