@@ -41,8 +41,24 @@ Context* createPlatformContext()
 PlatformContext::PlatformContext() :
     Context()
 {
-    LOG(LOG_DEBUG, "Platform context created\n");
-    enumerateDevices();
+    LOG(LOG_INFO, "Platform context created\n");
+    /**
+     If we are not yet authorized to use the camera, request auth. If we're already authed we can go
+     ahead and enumerate.
+     */
+    if ([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo] == AVAuthorizationStatusAuthorized) {
+        enumerateDevices();
+    }
+    else {
+        NSLog(@"Bundle path for Info.plist: %@", [[NSBundle mainBundle] bundlePath]);
+        [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
+            /**
+             TODO Would like to call enumerateDevices(); here so that once the user has authorized they
+             can list the cameras, but this crashes. Probbaly we need to do it on the same thread
+             as this was originally called from.
+             */
+        } ];
+    }
 }
 
 PlatformContext::~PlatformContext()
