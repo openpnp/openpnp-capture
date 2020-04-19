@@ -1,4 +1,0 @@
-FROM balenalib/raspberrypi3-64
-
-WORKDIR /openpnp-capture
-RUN apt-get update && apt-get install -y build-essential cmake pkg-config libjpeg-dev
