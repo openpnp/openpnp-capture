@@ -26,7 +26,7 @@ deploy:
   description: 'Auto generated release.'
   provider: GitHub
   auth_token:
-    secure: Lw1sX9C9TI7Xb9xXIHPn1hnp6CPHQAwr2ZOIF4QHDUWV8VOsZz+LkjAHlz2lMaSa
+    secure: RHSku07eePuou1i9Ergy9p0dz4Hhn+sH+0XwKOJMrtyj9ghHA+0oD0QeQhcKETNY
   on:
     appveyor_repo_tag: true
     configuration: Release
