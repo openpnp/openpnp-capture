@@ -4,6 +4,8 @@ os:
   - linux
   - osx
 
+osx_image: xcode11.3
+
 compiler:
   - gcc
 
