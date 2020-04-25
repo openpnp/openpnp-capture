@@ -1,30 +1,21 @@
 language: cpp
 dist: bionic
-#services:
-#  - docker
-
 arch:
-  - amd64
-  - arm64
-
+- amd64
+- arm64
 os:
-  - linux
-  - osx
-#  - windows
-
+- linux
+- osx
 compiler:
-  - gcc
-
+- gcc
 jobs:
   fast_finish: true
   include:
-    - os: linux
-      arch: amd64
-    - os: linux
-      arch: arm64
-#    - os: windows
-    - os: osx
-
+  - os: linux
+    arch: amd64
+  - os: linux
+    arch: arm64
+  - os: osx
 addons:
   apt:
     packages:
@@ -33,30 +24,24 @@ addons:
     - build-essential
     - cmake
     - libjpeg-dev
-
 before_script:
-#  - docker build --tag openpnp-capture-rpi3-arm64:latest . -f docker/Dockerfile.rpi3_arm64 
-  - mkdir build
-  - cd build
-  - cmake ..
-
+- mkdir build
+- cd build
+- cmake ..
 script: make
-# docker run -v $PWD:/openpnp-capture openpnp-capture-rpi3-arm64 make
-
 before_deploy:
-  - mkdir deploy
-#  - if [ $TRAVIS_OS_NAME = windows ]; then cp libopenpnp-capture.dll deploy; cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-windows; fi
-  - if [ $TRAVIS_OS_NAME = osx ]; then cp libopenpnp-capture.dylib deploy; cp mac/tests/openpnp-capture-test deploy/openpnp-capture-test-mac; fi
-  - if [ $TRAVIS_OS_NAME = linux ]; then cp libopenpnp-capture.so deploy; cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-linux; fi
-  - if [ $TRAVIS_CPU_ARCH = arm64 ]; then cp libopenpnp-capture.so deploy/libopenpnp-capture-arm64.so; cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-linux-arm64; fi
-
+- mkdir deploy
+- if [ $TRAVIS_OS_NAME = osx ]; then cp libopenpnp-capture.dylib deploy; cp mac/tests/openpnp-capture-test
+  deploy/openpnp-capture-test-mac; fi
+- if [ $TRAVIS_OS_NAME = linux ]; then cp libopenpnp-capture.so deploy; cp linux/tests/openpnp-capture-test
+  deploy/openpnp-capture-test-linux; fi
+- if [ $TRAVIS_CPU_ARCH = arm64 ]; then cp libopenpnp-capture.so deploy/libopenpnp-capture-arm64.so;
+  cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-linux-arm64; fi
 deploy:
   provider: releases
   token:
-    secure: KCWaBhQUErPrtFJjd967ERl7Bd3qCvd1tCYtPsI19JC7VHRlbn9pIJmACLKn8ZYd9WiL0214QJohoppQtov+g0wF+l7nTIHAImjVq/dYXvOtsSuOqcjpxxqf4AfmRy3uOyHyOrcvFW2OzZnCwER3iMOcsNXD3jdCDhQycBr2stzASmcbBLvt21xwMhGP8HjarALwpTuvEwSVda19bgKz7bsxaLETV/d4W79DBKTscdR8R41wur0fi4Z5WCtsJ6yT2ILmOQb5AXxTeqwvr1a522F668WlrQ/T7V+vkzAGBDGzQmmbGw/utHirwfncBcVXK/ap/DTiaFZvdvIgtkWglFjtOpLrPbuikccu6Lxetie22AMuHc867FgFmMi1BT7oO5faFODQ95L1apTNzsbERTiMetny0HAJxfAlmmz//MIe2KoK9U5raRESmQAR7hCdYX7fzXYkW/rPvvyK5KIQa2bd/ifE/iITVeRL1/cZvb/E+sCk8Z10nf/qt1nWKIlxPicrIhmMazDqSd6FHlqEVBPHPy9nQtvN7DpJTo6XOuoAKVT6RqukmltcxpsAJYqK1CDRPIJbevW40oX1ZjTlpULI1PsBzHJcGJd0Trt98PhiUtRJC776zU6ItjrR6MBNKov+Ffy27TXUrVmedf+2U83io2hQn3ugzkVfyyQoeIM=
-  file_glob: true
+    secure: bDSMOH/IdfNfc8eKT7alPn1ON9A2f+ffHssTCUfHB4ziOdtQyKAHNgwkmFutbkSQg6rgW0nZvgq+tBl26SwOKJO9KHQf2HnlT8X6KvI+Y5LC672joDcUToR2PAejgrMnneglKfweAi8ePB+OQNbFtGWrlZUgLJURCHZ1FhYib07IPVob3NjAU26+fgnWzDhEblTG9XHPATZBpaCfeX3TIbqfYWWj++A0V9TJkVLk8LNNcPzt1P73PeTl9p5PQj1Wv/Zak+AgqfqQC4kMmC/84thAJO0o9Z1Tih5uTNneYA83mUy6LMg1QxlG9qIfWouY1Hkr/vcIBYa9t6GdoCYFT9EIl8OGq1uzb7Ga0BUxyN9+/VkSDx0+JQ8GieaoUantunjwj8y5/bk99Pagab1/z7Hv60D1Rm9BkfsrLGRB5VQq1Mn5O/UqhpwvbWmiQlBXg4hdjUrCRSN/Pz3HMTAEFyEmttyyL63bgnHp9P6BZWvJUQ3zcuxe1fUdKwzqilmom3/4cZ5qi9FOB7Jto4H6j0wX5u+x1/m8u4/W+VdXckyaH5t6rZDAqxk7weZQwyD4P94VZUssb5xUI5P07N4j4YWw4i4nVcvipJ4H9vfx94qO/7TB012E9dHoPsZN0daDWaG9gRJKloHvSTTgcZBRP3/R7RYvSPQInUoG6/g5Ras=
   file: deploy/*
   edge: true
-  cleanup: false
   on:
-    tags: true
+    branch: rpi3-arm64
