@@ -8,3 +8,5 @@ common/version.h
 /build*
 *.pro.user
 QtCaptureTest/build
+.DS_Store
+.vscode
