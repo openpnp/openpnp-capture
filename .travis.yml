@@ -1,5 +1,4 @@
 language: cpp
-dist: bionic
 arch:
 - amd64
 - arm64
@@ -21,9 +20,6 @@ addons:
     packages:
     - libgtk-3-dev
     - nasm
-    - build-essential
-    - cmake
-    - libjpeg-dev
 before_script:
 - mkdir build
 - cd build
@@ -43,6 +39,7 @@ deploy:
     secure: TpN8wC/JzkHRdJ3FlOsLgDoRopdk7lp3ym/x9lvFqpDQ+Pbf2n2OMjHEYaEUJGyQjmq/NX4yXnziZLufZW61lLtBuKcwHvAVhCkX0nOqL8+jvzacRjITm/R9m7nn+GZDqUsDZ9lZ4ZMZOde7DTTGYw1IDX+UrxjTpT2kbLbGfWyYR3UsBb1gNcwfouFkgq3KR/R6Vm/bkGFpX/6G3hzu/hOV6dOzju1xNlojJWo8UjI3k3mBnZyUD5MH4fnoLcI9YlEqJA0oaNEyM11JQQSUoK/c66/KwXKvUP1KJx0erZWFckEOVb/7Tk78lcw4Z+7V3nVt5UwWixIKmzPC21lxf37XWlNyoZSO6O07WFUlnbKNAiaEBhGhNuYU6qTlHejPBnLU3NBxWuCsO2102H5Nx9812VY4Moc4yHat7VXfQmHmmKOVPHSyRIEiudmLXKckKVxGOcFMUzToa+EE3W+fN2HAgZi2HO4rAoKeR3rpGEWExF28h79u8O/7z22PlurYSowTsFx4OhNvZwhf1faGVXh4gy7ApSTvkMg6eGPZ4AKRt+SXJ7/xx1O66IAxU41CPV+ZgB9lnlj13CBI25gn6jWHzSMEz0RhiOT1nFmIM5z6gUDEgKbBq2T1M/tWVkiOxc72LMb9z8dQc7fPYNzSuXvjLnN7zGQ7wARqBVjooVo=
   file: deploy/*
   file_glob: true
+  edge: true
   skip_cleanup: true
   on:
     tags: true
