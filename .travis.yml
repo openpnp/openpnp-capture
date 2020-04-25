@@ -41,7 +41,9 @@ deploy:
   provider: releases
   token:
     secure: bDSMOH/IdfNfc8eKT7alPn1ON9A2f+ffHssTCUfHB4ziOdtQyKAHNgwkmFutbkSQg6rgW0nZvgq+tBl26SwOKJO9KHQf2HnlT8X6KvI+Y5LC672joDcUToR2PAejgrMnneglKfweAi8ePB+OQNbFtGWrlZUgLJURCHZ1FhYib07IPVob3NjAU26+fgnWzDhEblTG9XHPATZBpaCfeX3TIbqfYWWj++A0V9TJkVLk8LNNcPzt1P73PeTl9p5PQj1Wv/Zak+AgqfqQC4kMmC/84thAJO0o9Z1Tih5uTNneYA83mUy6LMg1QxlG9qIfWouY1Hkr/vcIBYa9t6GdoCYFT9EIl8OGq1uzb7Ga0BUxyN9+/VkSDx0+JQ8GieaoUantunjwj8y5/bk99Pagab1/z7Hv60D1Rm9BkfsrLGRB5VQq1Mn5O/UqhpwvbWmiQlBXg4hdjUrCRSN/Pz3HMTAEFyEmttyyL63bgnHp9P6BZWvJUQ3zcuxe1fUdKwzqilmom3/4cZ5qi9FOB7Jto4H6j0wX5u+x1/m8u4/W+VdXckyaH5t6rZDAqxk7weZQwyD4P94VZUssb5xUI5P07N4j4YWw4i4nVcvipJ4H9vfx94qO/7TB012E9dHoPsZN0daDWaG9gRJKloHvSTTgcZBRP3/R7RYvSPQInUoG6/g5Ras=
+  file_glob: true
   file: deploy/*
+  skip_cleanup: true
   edge: true
   on:
-    branch: rpi3-arm64
+    tags: true
