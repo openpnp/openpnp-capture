@@ -36,10 +36,10 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: TpN8wC/JzkHRdJ3FlOsLgDoRopdk7lp3ym/x9lvFqpDQ+Pbf2n2OMjHEYaEUJGyQjmq/NX4yXnziZLufZW61lLtBuKcwHvAVhCkX0nOqL8+jvzacRjITm/R9m7nn+GZDqUsDZ9lZ4ZMZOde7DTTGYw1IDX+UrxjTpT2kbLbGfWyYR3UsBb1gNcwfouFkgq3KR/R6Vm/bkGFpX/6G3hzu/hOV6dOzju1xNlojJWo8UjI3k3mBnZyUD5MH4fnoLcI9YlEqJA0oaNEyM11JQQSUoK/c66/KwXKvUP1KJx0erZWFckEOVb/7Tk78lcw4Z+7V3nVt5UwWixIKmzPC21lxf37XWlNyoZSO6O07WFUlnbKNAiaEBhGhNuYU6qTlHejPBnLU3NBxWuCsO2102H5Nx9812VY4Moc4yHat7VXfQmHmmKOVPHSyRIEiudmLXKckKVxGOcFMUzToa+EE3W+fN2HAgZi2HO4rAoKeR3rpGEWExF28h79u8O/7z22PlurYSowTsFx4OhNvZwhf1faGVXh4gy7ApSTvkMg6eGPZ4AKRt+SXJ7/xx1O66IAxU41CPV+ZgB9lnlj13CBI25gn6jWHzSMEz0RhiOT1nFmIM5z6gUDEgKbBq2T1M/tWVkiOxc72LMb9z8dQc7fPYNzSuXvjLnN7zGQ7wARqBVjooVo=
-  file: deploy/*
-  file_glob: true
-  edge: true
-  skip_cleanup: true
-  on:
-    tags: true
+    secure: MGbod5gqzyyZSGjgv1XHaEBvF4tNRGk+fooFeQnVKXl3giKREqnCAGzm/sjMf1QpNP9WfNXB+e6UPNc76ACt5tG4csJH/9J6epbIajrdUX9ueI0YSgUZInYLkMYq72DeM7wDv7h6TeD1Pi1LVJGamp205AFnmB+0f5I9LHJFPNqGVc98j7AQgVYyrHnou2GmzxCKV5xKCSv35KG93Dd18jqO9BUWVeXUAe1CUfVYHfbwqz3P2vuYkPHBMSFOH1GZQoCvR0Yu30xHS+p3aGtOqWps6Kopa4w4z6/vqMvAk625JdVLMGPg97CNY8BSXd5Dsn8xG4/edgr4FwGvvhy1PhzDH12CWfIsV/XxuRG/TkHt6TlV1bpBCg+Yaun7Ajj8hG4s9AaQZhLzKqWUB4LYvi157Xnb+BHiLnzRyl5hLGB5A0X3Q1tYgU0xTXrax6hOykd5rPZ4fmqimgxse5sOvpbqIeeUYHVKeOKMx5ULqHv2UhtDP9oJMLsae5MQJ9zuMtHNVzUe7vP1A/1P2nl7bYOJHYFk04hyiNdx5+P2LtXVgfsFoFvHS3TzgHgc7KAqPOIog/wmfBmgoAPAu+vmhLy+Rxon7pRfvs55HJqgzt8etPcbfwSpuAh5ek9D5k08VfbQqrSQ7MjXsY6UIyNgvJaVVa2xmV3QaUe+ItTCecQ=
+    file_glob: true
+    file: deploy/*
+    skip_cleanup: true
+    edge: true
+    on:
+      tags: true
