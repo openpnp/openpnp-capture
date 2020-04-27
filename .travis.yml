@@ -35,12 +35,12 @@ before_deploy:
   cp linux/tests/openpnp-capture-test deploy/openpnp-capture-test-linux-arm64; fi
 deploy:
   provider: releases
-  api_key:
+  token:
     secure: MGbod5gqzyyZSGjgv1XHaEBvF4tNRGk+fooFeQnVKXl3giKREqnCAGzm/sjMf1QpNP9WfNXB+e6UPNc76ACt5tG4csJH/9J6epbIajrdUX9ueI0YSgUZInYLkMYq72DeM7wDv7h6TeD1Pi1LVJGamp205AFnmB+0f5I9LHJFPNqGVc98j7AQgVYyrHnou2GmzxCKV5xKCSv35KG93Dd18jqO9BUWVeXUAe1CUfVYHfbwqz3P2vuYkPHBMSFOH1GZQoCvR0Yu30xHS+p3aGtOqWps6Kopa4w4z6/vqMvAk625JdVLMGPg97CNY8BSXd5Dsn8xG4/edgr4FwGvvhy1PhzDH12CWfIsV/XxuRG/TkHt6TlV1bpBCg+Yaun7Ajj8hG4s9AaQZhLzKqWUB4LYvi157Xnb+BHiLnzRyl5hLGB5A0X3Q1tYgU0xTXrax6hOykd5rPZ4fmqimgxse5sOvpbqIeeUYHVKeOKMx5ULqHv2UhtDP9oJMLsae5MQJ9zuMtHNVzUe7vP1A/1P2nl7bYOJHYFk04hyiNdx5+P2LtXVgfsFoFvHS3TzgHgc7KAqPOIog/wmfBmgoAPAu+vmhLy+Rxon7pRfvs55HJqgzt8etPcbfwSpuAh5ek9D5k08VfbQqrSQ7MjXsY6UIyNgvJaVVa2xmV3QaUe+ItTCecQ=
-    file_glob: true
-    file: deploy/*
-    skip_cleanup: true
-    edge: true
-    on:
-      all_branches: true
-        tags: true
+  file_glob: true
+  file: deploy/*
+  cleanup: false
+  edge: true
+  on:
+    all_branches: true
+    tags: true
