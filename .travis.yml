@@ -43,4 +43,4 @@ deploy:
     edge: true
     on:
       all_branches: true
-      tags: true
+        tags: true
