@@ -78,26 +78,36 @@ Go to the build directory and run nmake or ninja to build the library and the te
 ### Build instructions (OSX)
 Run 'bootstrap_osx.sh'. Run make.
 
-### Build instructions (Linux) (works for ARM64 targets such as RPI3 too)
+### Build instructions (Linux)
 Run 'bootstrap_linux.sh'. Run make.
-
-### Docker
-
-For instance, to cross-compile for a RaspberryPi 3:
-
-```
-$ git clone https://github.com/openpnp/openpnp-capture && cd openpnp-capture
-$ docker build --tag openpnp-capture-rpi3-arm64:latest . -f docker/Dockerfile.rpi3_arm64
-$ docker run -it -v $PWD:/openpnp-capture openpnp-capture-rpi3-arm64 ./bootstrap_linux.sh
-```
 
 ## Supporting other platforms
 * Implement all PlatformXXX classes, like in the win or linux directories.
 * PlatformContext handles device and internal frame buffer format enumeration.
 * PlatformStream is responsible for capturing and decoding the camera stream to a 8-bit per channel RGB frame buffer.
 * Statically link external dependencies.
-* Tweak .travisci.yml accordingly for it to be released automatically.
 
 # Releases
 
 Releases are built automatically for all supported platforms. See https://github.com/openpnp/openpnp-capture/releases/latest to download the latest.
+
+# Platform Notes
+
+## MacOS
+
+On MacOS as of 10.15 Camera permission is needed to open the camera. The library will automatically
+execute the permission request, but an Info.plist is required to exist in the application bundle.
+An example Info.plist is:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSCameraUsageDescription</key>
+	<string>openpnp-capture needs permission to access the camera to capture images.</string>
+</dict>
+</plist>
+```
+
+You can reset the camera permissions in MacOS for testing purposes by running ` tccutil reset Camera`.
