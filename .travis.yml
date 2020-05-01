@@ -24,11 +24,14 @@ addons:
     packages:
     - libgtk-3-dev
     - nasm
+
 before_script:
   - mkdir build
   - cd build
   - cmake ..
+
 script: make
+
 before_deploy:
   - mkdir deploy
   - if [ $TRAVIS_OS_NAME = osx ]; then cp libopenpnp-capture.dylib deploy; cp mac/tests/openpnp-capture-test deploy/openpnp-capture-test-mac; fi
