@@ -1,4 +1,4 @@
-/**
+/*
 
     Logging subsystem for OpenPnP Capture library.
 

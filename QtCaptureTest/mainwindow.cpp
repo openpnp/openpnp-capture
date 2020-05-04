@@ -87,12 +87,18 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->exposureSlider, SIGNAL(valueChanged(int)),this, SLOT(onExposureSlider(int)));
     connect(ui->whitebalanceSlider, SIGNAL(valueChanged(int)),this, SLOT(onWhiteBalanceSlider(int)));
     connect(ui->autoGain, SIGNAL(toggled(bool)), this, SLOT(onAutoGain(bool)));
+    connect(ui->autoFocus, SIGNAL(toggled(bool)), this, SLOT(onAutoFocus(bool)));
     connect(ui->gainSlider, SIGNAL(valueChanged(int)), this, SLOT(onGainSlider(int)));
     connect(ui->contrastSlider, SIGNAL(valueChanged(int)), this, SLOT(onContrastSlider(int)));
     connect(ui->brightnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onBrightnessSlider(int)));
     connect(ui->gammaSlider, SIGNAL(valueChanged(int)), this, SLOT(onGammaSlider(int)));
     connect(ui->focusSlider, SIGNAL(valueChanged(int)), this, SLOT(onFocusSlider(int)));
     connect(ui->zoomSlider, SIGNAL(valueChanged(int)), this, SLOT(onZoomSlider(int)));
+    connect(ui->hueSlider, SIGNAL(valueChanged(int)), this, SLOT(onHueSlider(int)));
+    connect(ui->backlightSlider, SIGNAL(valueChanged(int)), this, SLOT(onBacklightSlider(int)));
+    connect(ui->sharpnessSlider, SIGNAL(valueChanged(int)), this, SLOT(onSharpnessSlider(int)));
+    connect(ui->powerlineFreqSlider, SIGNAL(valueChanged(int)), this, SLOT(onColorEnableSlider(int)));
+    connect(ui->saturationSlider, SIGNAL(valueChanged(int)), this, SLOT(onSaturationSlider(int)));
 
     // add timer to refresh the frame display
     m_refreshTimer = new QTimer(this);
@@ -221,6 +227,13 @@ void MainWindow::onAutoGain(bool state)
     ui->gainSlider->setEnabled((!state) & m_hasGain);
 }
 
+void MainWindow::onAutoFocus(bool state)
+{
+    qDebug() << "Auto focus set to " << state;
+    Cap_setAutoProperty(m_ctx, m_streamID, CAPPROPID_FOCUS, state ? 1 : 0);
+    ui->gainSlider->setEnabled((!state) & m_hasGain);
+}
+
 void MainWindow::readCameraSettings()
 {
     qDebug() << "readCameraSettings -> Context = " << m_ctx;
@@ -238,10 +251,12 @@ void MainWindow::readCameraSettings()
     m_hasSaturation = false;
     m_hasFocus = false;
     m_hasZoom = false;
+    m_hasColorEnable = false;
 
     ui->exposureSlider->setEnabled(false);
     ui->gainSlider->setEnabled(false);
     ui->whitebalanceSlider->setEnabled(false);
+    ui->focusSlider->setEnabled(false);
 
     // ********************************************************************************
     //   AUTO EXPOSURE
@@ -287,6 +302,23 @@ void MainWindow::readCameraSettings()
     {
         ui->autoWhiteBalance->setEnabled(true);
         ui->autoWhiteBalance->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
+    }
+
+    // ********************************************************************************
+    //   AUTO FOCUS
+    // ********************************************************************************
+
+    if (Cap_getAutoProperty(m_ctx, m_streamID, CAPPROPID_FOCUS, &bValue) != CAPRESULT_OK)
+    {
+        qDebug() << "Autofocus unsupported";
+        ui->autoFocus->setEnabled(false);
+        ui->autoFocus->setCheckState(Qt::Unchecked);
+    }
+    else
+    {
+        qDebug() << "Autofocus supported";
+        ui->autoFocus->setEnabled(true);
+        ui->autoFocus->setCheckState((bValue==0) ? Qt::Unchecked : Qt::Checked);
     }
 
     // ********************************************************************************
@@ -586,6 +618,135 @@ void MainWindow::readCameraSettings()
         ui->focusSlider->setEnabled(false);
     }
 
+
+    // ********************************************************************************
+    //   HUE
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_HUE, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "hue min: " << emin;
+        qDebug() << "hue max: " << emax;
+        qDebug() << "hue default: " << edefault;
+        ui->hueSlider->setEnabled(true);
+        ui->hueSlider->setRange(emin, emax);
+        m_hasHue = true;
+    }
+    else
+    {
+        ui->hueSlider->setRange(0, 0);
+        ui->hueSlider->setEnabled(false);
+    }
+
+    int32_t hue;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_HUE, &hue)==CAPRESULT_OK)
+    {
+        qDebug() << "hue: " << hue;
+        ui->hueSlider->setEnabled(true);
+        ui->hueSlider->setValue(hue);
+    }
+    else
+    {
+        qDebug() << "Failed to get hue value";
+        ui->hueSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   SHARPNESS
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_SHARPNESS, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "sharpness min: " << emin;
+        qDebug() << "sharpness max: " << emax;
+        qDebug() << "sharpness default: " << edefault;
+        ui->sharpnessSlider->setEnabled(true);
+        ui->sharpnessSlider->setRange(emin, emax);
+        m_hasSharpness = true;
+    }
+    else
+    {
+        ui->sharpnessSlider->setRange(0, 0);
+        ui->sharpnessSlider->setEnabled(false);
+    }
+
+    int32_t sharpness;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_SHARPNESS, &sharpness)==CAPRESULT_OK)
+    {
+        qDebug() << "sharpness: " << sharpness;
+        ui->sharpnessSlider->setEnabled(true);
+        ui->sharpnessSlider->setValue(sharpness);
+    }
+    else
+    {
+        qDebug() << "Failed to get sharpness value";
+        ui->sharpnessSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   BACKLIGHT COMP
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_BACKLIGHTCOMP, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "backlightcomp min: " << emin;
+        qDebug() << "backlightcomp max: " << emax;
+        qDebug() << "backlightcomp default: " << edefault;
+        ui->backlightSlider->setEnabled(true);
+        ui->backlightSlider->setRange(emin, emax);
+        m_hasBacklightcomp = true;
+    }
+    else
+    {
+        ui->backlightSlider->setRange(0, 0);
+        ui->backlightSlider->setEnabled(false);
+    }
+
+    int32_t backlight;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_BACKLIGHTCOMP, &backlight)==CAPRESULT_OK)
+    {
+        qDebug() << "backlight: " << backlight;
+        ui->backlightSlider->setEnabled(true);
+        ui->backlightSlider->setValue(backlight);
+    }
+    else
+    {
+        qDebug() << "Failed to get backlight value";
+        ui->backlightSlider->setEnabled(false);
+    }
+
+    // ********************************************************************************
+    //   COLOR ENABLE
+    // ********************************************************************************
+
+    if (Cap_getPropertyLimits(m_ctx, m_streamID, CAPPROPID_POWERLINEFREQ, &emin, &emax, &edefault)==CAPRESULT_OK)
+    {
+        qDebug() << "power line freq min: " << emin;
+        qDebug() << "power line freq max: " << emax;
+        qDebug() << "power line freq default: " << edefault;
+        ui->powerlineFreqSlider->setEnabled(true);
+        ui->powerlineFreqSlider->setRange(emin, emax);
+        m_hasBacklightcomp = true;
+    }
+    else
+    {
+        ui->powerlineFreqSlider->setRange(0, 0);
+        ui->powerlineFreqSlider->setEnabled(false);
+    }
+
+    int32_t powerline;
+    if (Cap_getProperty(m_ctx, m_streamID, CAPPROPID_POWERLINEFREQ, &powerline)==CAPRESULT_OK)
+    {
+        qDebug() << "power line : " << powerline;
+        ui->powerlineFreqSlider->setEnabled(true);
+        ui->powerlineFreqSlider->setValue(powerline);
+    }
+    else
+    {
+        qDebug() << "Failed to get power line frequency value";
+        ui->powerlineFreqSlider->setEnabled(false);
+    }
+
 }
 
 void MainWindow::onExposureSlider(int value)
@@ -634,4 +795,24 @@ void MainWindow::onFocusSlider(int value)
 void MainWindow::onZoomSlider(int value)
 {
     Cap_setProperty(m_ctx, m_streamID, CAPPROPID_ZOOM, value);
+}
+
+void MainWindow::onHueSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_HUE, value);
+}
+
+void MainWindow::onBacklightSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_BACKLIGHTCOMP, value);
+}
+
+void MainWindow::onSharpnessSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_SHARPNESS, value);
+}
+
+void MainWindow::onColorEnableSlider(int value)
+{
+    Cap_setProperty(m_ctx, m_streamID, CAPPROPID_POWERLINEFREQ, value);
 }

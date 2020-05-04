@@ -3,11 +3,28 @@
     OpenPnp-Capture: a video capture subsystem.
 
     Linux platform code
+    Stream class
 
     Created by Niels Moseley on 7/6/17.
-    Copyright © 2017 Niels Moseley. All rights reserved.
+    Copyright (c) 2017 Niels Moseley.
 
-    Stream class
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 
 */
 
@@ -314,7 +331,7 @@ void captureThreadFunctionAsync(PlatformStream *stream, int fd, size_t bufferSiz
     } // while  
 
     // Note: the destruction of the PlatformHelper 
-    // by the scoped pointer will automaticall
+    // by the scoped pointer will automatically
     // turn off streaming and remove the
     // memory mapped buffers from the system.
     LOG(LOG_DEBUG, "captureThreadFunctionAsync exited\n");
@@ -626,7 +643,19 @@ bool PlatformStream::setProperty(uint32_t propID, int32_t value)
     case CAPPROPID_GAMMA:
         ctrl.id = V4L2_CID_GAMMA;
         break;        
-    default:
+    case CAPPROPID_HUE:
+        ctrl.id = V4L2_CID_HUE;
+        break;
+    case CAPPROPID_SHARPNESS:
+        ctrl.id = V4L2_CID_SHARPNESS;
+        break;
+    case CAPPROPID_BACKLIGHTCOMP:
+        ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;
+    case CAPPROPID_POWERLINEFREQ:
+        ctrl.id = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;
+    default:    
         return false;
     }
 
@@ -714,7 +743,19 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
         break;
     case CAPPROPID_GAMMA:
         ctrl.id = V4L2_CID_GAMMA;
-        break;               
+        break;   
+    case CAPPROPID_HUE:
+        ctrl.id = V4L2_CID_HUE;
+        break;
+    case CAPPROPID_SHARPNESS:
+        ctrl.id = V4L2_CID_SHARPNESS;
+        break;
+    case CAPPROPID_BACKLIGHTCOMP:
+        ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;                    
+    case CAPPROPID_POWERLINEFREQ:
+        ctrl.id = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;        
     default:
         return false;
     }
@@ -760,7 +801,19 @@ bool PlatformStream::getProperty(uint32_t propID, int32_t &value)
         break;
     case CAPPROPID_GAMMA:
         ctrl.id = V4L2_CID_GAMMA;
-        break;                
+        break;   
+    case CAPPROPID_HUE:
+        ctrl.id = V4L2_CID_HUE;
+        break;
+    case CAPPROPID_SHARPNESS:
+        ctrl.id = V4L2_CID_SHARPNESS;
+        break;
+    case CAPPROPID_BACKLIGHTCOMP:
+        ctrl.id = V4L2_CID_BACKLIGHT_COMPENSATION;
+        break;      
+    case CAPPROPID_POWERLINEFREQ:
+        ctrl.id = V4L2_CID_POWER_LINE_FREQUENCY;
+        break;                       
     default:
         return false;
     }

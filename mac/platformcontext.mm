@@ -1,8 +1,35 @@
+/*
+
+    OpenPnp-Capture: a video capture subsystem.
+
+    OSX platform context class
+
+    Copyright (c) 2017 Jason von Nieda, Niels Moseley.
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+*/
+
 #include "../common/logging.h"
 #include "platformstream.h"
 #include "platformcontext.h"
 #import <AVFoundation/AVFoundation.h>
-
 
 // a platform factory function needed by
 // libmain.cpp
@@ -14,8 +41,24 @@ Context* createPlatformContext()
 PlatformContext::PlatformContext() :
     Context()
 {
-    LOG(LOG_DEBUG, "Platform context created\n");
-    enumerateDevices();
+    LOG(LOG_INFO, "Platform context created\n");
+    /**
+     If we are not yet authorized to use the camera, request auth. If we're already authed we can go
+     ahead and enumerate.
+     */
+    if ([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo] == AVAuthorizationStatusAuthorized) {
+        enumerateDevices();
+    }
+    else {
+        NSLog(@"Bundle path for Info.plist: %@", [[NSBundle mainBundle] bundlePath]);
+        [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
+            /**
+             TODO Would like to call enumerateDevices(); here so that once the user has authorized they
+             can list the cameras, but this crashes. Probbaly we need to do it on the same thread
+             as this was originally called from.
+             */
+        } ];
+    }
 }
 
 PlatformContext::~PlatformContext()
@@ -42,18 +85,34 @@ bool PlatformContext::enumerateDevices()
 
         // extract the PID/VID from the model name
         NSRange vidRange = [device.modelID rangeOfString:@"VendorID_"];
-        uint32_t maxLen = device.modelID.length - vidRange.location - 9;
-        maxLen = (maxLen > 5) ? 5 : maxLen;        
-        deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, maxLen)] intValue];
+        if (vidRange.length > 0)
+        {
+            uint32_t maxLen = device.modelID.length - vidRange.location - 9;
+            maxLen = (maxLen > 5) ? 5 : maxLen;        
+            deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, maxLen)] intValue];
+        }
+        else
+        {
+            LOG(LOG_WARNING, "OSX Unable to extract vendor ID\n");
+        }
+        
 
         NSRange pidRange = [device.modelID rangeOfString:@"ProductID_"];
-        maxLen = device.modelID.length - pidRange.location - 10;
-        maxLen = (maxLen > 5) ? 5 : maxLen;
-        deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, maxLen)] intValue];
+        if (pidRange.length > 0)
+        {
+            uint32_t maxLen = device.modelID.length - pidRange.location - 10;
+            maxLen = (maxLen > 5) ? 5 : maxLen;
+            deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, maxLen)] intValue];
+        }
+        else
+        {
+            LOG(LOG_WARNING, "OSX Unable to extract product ID\n");
+        }
+        
 
         LOG(LOG_DEBUG, "USB      : vid=%04X  pid=%04X\n", deviceInfo->m_vid, deviceInfo->m_pid);
 
-        // he unique ID seem to be comprised of a 10-character PCI/USB location address
+        // the unique ID seem to be comprised of a 10-character PCI/USB location address
         // followed by the VID and PID in hex, e.g. 0x26210000046d0825
         deviceInfo->m_busLocation = 0;
         if (device.uniqueID.length == 18)

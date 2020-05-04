@@ -3,11 +3,28 @@
     OpenPnp-Capture: a video capture subsystem.
 
     OSX platform code
+    UVC camera controls
 
     Created by Niels Moseley on 7/6/17.
-    Copyright © 2017 Niels Moseley, Jason von Nieda.
+    Copyright (c) 2017 Jason von Nieda, Niels Moseley.
 
-    UVC camera controls
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
 
 */
 
@@ -37,9 +54,11 @@
 #define CT_ZOOM_RELATIVE_CONTROL 0x0C
 
 // Processing unit control selectors
+#define PU_BACKLIGHT_COMPENSATION_CONTROL 0x01
 #define PU_BRIGHTNESS_CONTROL 0x02
 #define PU_CONTRAST_CONTROL 0x03
 #define PU_GAIN_CONTROL 0x04
+#define PU_POWER_LINE_FREQUENCY_CONTROL 0x05
 #define PU_HUE_CONTROL 0x06
 #define PU_SATURATION_CONTROL 0x07
 #define PU_SHARPNESS_CONTROL 0x08
@@ -81,6 +100,9 @@ struct propertyInfo_t
     uint32_t    length;     // length (bytes)
 };
 
+/** The order of the propertyInfo structure must
+    be the same as the PROPID numbers in the
+    openpnp-capture.h header */
 const propertyInfo_t propertyInfo[] =
 {
     {0,0,0},
@@ -92,8 +114,13 @@ const propertyInfo_t propertyInfo[] =
     {PU_BRIGHTNESS_CONTROL               , 1, 2},
     {PU_CONTRAST_CONTROL                 , 1, 2},
     {PU_SATURATION_CONTROL               , 1, 2},
-    {PU_GAMMA_CONTROL                    , 1, 2}
+    {PU_GAMMA_CONTROL                    , 1, 2},
+    {PU_HUE_CONTROL                      , 1, 2},
+    {PU_SHARPNESS_CONTROL                , 1, 2},
+    {PU_BACKLIGHT_COMPENSATION_CONTROL   , 1, 2},
+    {PU_POWER_LINE_FREQUENCY_CONTROL     , 1, 1}
 };
+
 
 UVCCtrl::UVCCtrl(IOUSBInterfaceInterface190 **controller, uint32_t processingUnitID)
     : m_pud(processingUnitID),
@@ -580,6 +607,9 @@ bool UVCCtrl::setAutoProperty(uint32_t propID, bool enabled)
     case CAPPROPID_WHITEBALANCE:
         LOG(LOG_VERBOSE, "UVCCtrl::setAutoProperty (white balance %s)\n", enabled ? "ON" : "OFF");
         return setData(PU_WHITE_BALANCE_TEMPERATURE_AUTO_CONTROL, m_pud, 1, value);
+    case CAPPROPID_FOCUS:
+        LOG(LOG_VERBOSE, "UVCCtrl::setAutoProperty (focus %s)\n", enabled ? "ON" : "OFF");
+        return setData(CT_FOCUS_AUTO_CONTROL, UVC_INPUT_TERMINAL_ID, 1, value);
     default:
         return false;
     }
@@ -622,7 +652,16 @@ bool UVCCtrl::getAutoProperty(uint32_t propID, bool *enabled)
             *enabled = (value==1) ? true : false; 
             return true;
         }
-        return false;     
+        return false;
+    case CAPPROPID_FOCUS:
+        LOG(LOG_VERBOSE, "UVCCtrl::getAutoProperty focus\n");
+        if (getData(CT_FOCUS_AUTO_CONTROL, UVC_INPUT_TERMINAL_ID, 1, &value))
+        {
+            LOG(LOG_VERBOSE,"CT_FOCUS_AUTO_CONTROL returned %08Xh\n", value & 0xFF);
+            value &= 0xFF; // make 8-bit
+            *enabled = (value==1) ? true : false;
+            return true;
+        }
     default:
         return false;
     }

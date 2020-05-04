@@ -7,3 +7,4 @@ mac/openpnp-capture.xcodeproj/project.xcworkspace/xcuserdata
 common/version.h
 /build*
 *.pro.user
+QtCaptureTest/build

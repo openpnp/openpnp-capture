@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>OpenPnP OSX Capture Test</string>
+   <string>OpenPnP-Capture Test Program</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -61,17 +61,24 @@
           <string>Camera Settings</string>
          </property>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="8" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>White Balance</string>
+          <item row="14" column="1">
+           <widget class="QSlider" name="sharpnessSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
+          <item row="16" column="1">
+           <widget class="QSlider" name="powerlineFreqSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="0">
+           <widget class="QLabel" name="label_13">
             <property name="text">
-             <string>Exposure</string>
+             <string>Power line freq</string>
             </property>
            </widget>
           </item>
@@ -89,6 +96,13 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Exposure</string>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="1">
            <widget class="QSlider" name="exposureSlider">
             <property name="orientation">
@@ -96,10 +110,17 @@
             </property>
            </widget>
           </item>
-          <item row="8" column="1">
-           <widget class="QSlider" name="whitebalanceSlider">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+          <item row="9" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>White Balance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>Gamma</string>
             </property>
            </widget>
           </item>
@@ -117,15 +138,50 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Gamma</string>
+          <item row="9" column="1">
+           <widget class="QSlider" name="whitebalanceSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
           <item row="2" column="1">
            <widget class="QSlider" name="gammaSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QSlider" name="brightnessSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="0">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>Zoom</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>Brightness</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="1">
+           <widget class="QCheckBox" name="autoWhiteBalance">
+            <property name="text">
+             <string>Auto White Balance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="1">
+           <widget class="QSlider" name="zoomSlider">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -138,52 +194,10 @@
             </property>
            </widget>
           </item>
-          <item row="9" column="1">
-           <widget class="QCheckBox" name="autoWhiteBalance">
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_9">
             <property name="text">
-             <string>Auto White Balance</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Brightness</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1">
-           <widget class="QSlider" name="brightnessSlider">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="11" column="0">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Zoom</string>
-            </property>
-           </widget>
-          </item>
-          <item row="11" column="1">
-           <widget class="QSlider" name="zoomSlider">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="0">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>Focus</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="1">
-           <widget class="QSlider" name="focusSlider">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <string>Saturation</string>
             </property>
            </widget>
           </item>
@@ -194,10 +208,17 @@
             </property>
            </widget>
           </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="label_9">
+          <item row="12" column="1">
+           <widget class="QSlider" name="focusSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="1">
+           <widget class="QCheckBox" name="autoFocus">
             <property name="text">
-             <string>Saturation</string>
+             <string>Auto Focus</string>
             </property>
            </widget>
           </item>
@@ -205,6 +226,48 @@
            <widget class="QSlider" name="saturationSlider">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Focus</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="1">
+           <widget class="QSlider" name="backlightSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Backlight comp</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Hue</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QSlider" name="hueSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="0">
+           <widget class="QLabel" name="label_12">
+            <property name="text">
+             <string>Sharpness</string>
             </property>
            </widget>
           </item>

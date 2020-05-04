@@ -71,16 +71,20 @@ typedef uint32_t CapDeviceID;   ///< unique device ID
 typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
 
 // supported properties:
-#define CAPPROPID_EXPOSURE     1
-#define CAPPROPID_FOCUS        2
-#define CAPPROPID_ZOOM         3
-#define CAPPROPID_WHITEBALANCE 4
-#define CAPPROPID_GAIN         5
-#define CAPPROPID_BRIGHTNESS   6
-#define CAPPROPID_CONTRAST     7
-#define CAPPROPID_SATURATION   8
-#define CAPPROPID_GAMMA        9
-#define CAPPROPID_LAST         10
+#define CAPPROPID_EXPOSURE      1
+#define CAPPROPID_FOCUS         2 
+#define CAPPROPID_ZOOM          3
+#define CAPPROPID_WHITEBALANCE  4
+#define CAPPROPID_GAIN          5
+#define CAPPROPID_BRIGHTNESS    6
+#define CAPPROPID_CONTRAST      7
+#define CAPPROPID_SATURATION    8
+#define CAPPROPID_GAMMA         9
+#define CAPPROPID_HUE           10
+#define CAPPROPID_SHARPNESS     11
+#define CAPPROPID_BACKLIGHTCOMP 12
+#define CAPPROPID_POWERLINEFREQ 13
+#define CAPPROPID_LAST          14
 
 typedef uint32_t CapPropertyID; ///< property ID (exposure, zoom, focus etc.)
 
