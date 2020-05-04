@@ -217,6 +217,17 @@ int main(int argc, char*argv[])
     std::vector<uint8_t> m_buffer;
     m_buffer.resize(finfo.width*finfo.height*3);
 
+    printf("Use the following keys:\n");
+    printf("  +/-    : change the exposure\n");
+    printf("  0      : set exposure to 0\n");
+    printf("  f/g    : change the focus\n");
+    printf("  z/x    : change the zoom\n");
+    printf("  [/]    : change the white balance\n");
+    printf("  a/s    : change the gain\n");
+    printf("  p      : estimate the frame rate\n");
+    printf("  w      : write one frame to a PPM file\n");
+    printf("  q      : quit\n");
+
     char c = 0;
     int32_t v = 0;
     uint32_t frameWriteCounter=0;    
