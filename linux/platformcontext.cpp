@@ -157,7 +157,7 @@ bool PlatformContext::enumerateDevices()
                         frmindex++;
                         cinfo.fps = findMaxFrameRate(fd, fmtdesc.pixelformat, cinfo.width, cinfo.height);
                         dinfo->m_formats.push_back(cinfo);
-                        LOG(LOG_INFO, "  %d x %d\n", cinfo.width, cinfo.height);
+                        LOG(LOG_VERBOSE, "  %d x %d\n", cinfo.width, cinfo.height);
                     }
                 }
                 index++;
@@ -207,11 +207,12 @@ uint32_t PlatformContext::findMaxFrameRate(int fd, uint32_t pixelformat,
     ivals.width = width;
     ivals.height = height;
     ivals.index = 0;
+    LOG(LOG_VERBOSE,"Finding max frame rates: \n");
     while (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &ivals) != -1)
     {
         if (ivals.type == V4L2_FRMIVAL_TYPE_DISCRETE)
         {
-            LOG(LOG_INFO,"  FPS %d/%d", ivals.discrete.denominator, ivals.discrete.numerator);
+            LOG(LOG_VERBOSE,"  FPS %d/%d\n", ivals.discrete.denominator, ivals.discrete.numerator);
             uint32_t v = ivals.discrete.denominator/ivals.discrete.numerator;
             if (fps < v)
             {

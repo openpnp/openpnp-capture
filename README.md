@@ -69,6 +69,7 @@ OpenPnP Capture is a cross platform video capture library with a focus on machin
 * MAKE (osx, linux)
 * Visual Studio 2013 + NMake or Ninja Build (windows)
 * NASM for building libjpeg-turbo (linux)
+* libgtk-3-dev (linux, test program)
 
 ### Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
