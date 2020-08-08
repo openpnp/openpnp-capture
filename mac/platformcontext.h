@@ -55,7 +55,8 @@ protected:
         information into the m_devices array 
     */
     virtual bool enumerateDevices();
-
+private:
+    int cameraPermissionReceived; // 0 = waiting, 1 = success, -1 = error
 };
 
 #endif
