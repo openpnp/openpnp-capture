@@ -10,3 +10,5 @@ common/version.h
 QtCaptureTest/build
 .DS_Store
 .vscode
+.idea/
+cmake-build-*/

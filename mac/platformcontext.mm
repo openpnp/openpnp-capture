@@ -31,6 +31,9 @@
 #include "platformcontext.h"
 #import <AVFoundation/AVFoundation.h>
 
+#include <chrono>
+#include <thread>
+
 // a platform factory function needed by
 // libmain.cpp
 Context* createPlatformContext()
@@ -42,22 +45,31 @@ PlatformContext::PlatformContext() :
     Context()
 {
     LOG(LOG_INFO, "Platform context created\n");
-    /**
-     If we are not yet authorized to use the camera, request auth. If we're already authed we can go
-     ahead and enumerate.
-     */
+    cameraPermissionReceived = 0;
     if ([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo] == AVAuthorizationStatusAuthorized) {
-        enumerateDevices();
+        NSLog(@"Already have camera permission");
+        cameraPermissionReceived = 1;
     }
     else {
-        NSLog(@"Bundle path for Info.plist: %@", [[NSBundle mainBundle] bundlePath]);
+        NSLog(@"Requesting permission, bundle path for Info.plist: %@", [[NSBundle mainBundle] bundlePath]);
         [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
-            /**
-             TODO Would like to call enumerateDevices(); here so that once the user has authorized they
-             can list the cameras, but this crashes. Probbaly we need to do it on the same thread
-             as this was originally called from.
-             */
+            if (granted) {
+                cameraPermissionReceived = 1;
+            } else {
+                cameraPermissionReceived = -1;
+            }
+            if (granted) {
+                NSLog(@"Permission granted");
+            } else {
+                NSLog(@"Failed to get permission");
+            }
         } ];
+        while (cameraPermissionReceived == 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+    }
+    if (cameraPermissionReceived == 1) {
+        enumerateDevices();
     }
 }
 
