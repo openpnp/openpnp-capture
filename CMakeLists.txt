@@ -103,16 +103,6 @@ ELSEIF(APPLE)
     add_subdirectory(mac/tests)
 
 ELSEIF(UNIX)
-
-    # compile libjpeg-turbo for MJPEG decoding support
-    # right now, we need to disable SIMD because it
-    # causes a compile problem.. we need to fix this
-    # later...
-    
-    set(ENABLE_SHARED OFF)
-    set(WITH_SIMD OFF)      
-    add_subdirectory(linux/contrib/libjpeg-turbo-dev)
-
     # set the platform identification string
     add_definitions(-D__PLATFORM__="Linux ${COMPILERBITS}")
 
@@ -129,8 +119,23 @@ ELSEIF(UNIX)
     find_package(Threads REQUIRED)    
     target_link_libraries(openpnp-capture Threads::Threads)
 
-    # add turbojpeg-static library
-    target_link_libraries(openpnp-capture turbojpeg-static)
+    # add turbojpeg library
+    find_package(PkgConfig REQUIRED)
+    pkg_search_module(TurboJPEG libturbojpeg)
+    if( TurboJPEG_FOUND )
+        link_directories(${TurboJPEG_LIBDIR})
+        target_include_directories(openpnp-capture PUBLIC ${TurboJPEG_INCLUDE_DIRS})
+    else()
+        # compile libjpeg-turbo for MJPEG decoding support
+        # right now, we need to disable SIMD because it
+        # causes a compile problem.. we need to fix this
+        # later...
+        set(ENABLE_SHARED OFF)
+        set(WITH_SIMD OFF)    
+        set(TurboJPEG_LIBRARIES turbojpeg-static)  
+        add_subdirectory(linux/contrib/libjpeg-turbo-dev)
+    endif()
+    target_link_libraries(openpnp-capture ${TurboJPEG_LIBRARIES})
 
     # add linux-specific test application
     add_subdirectory(linux/tests)

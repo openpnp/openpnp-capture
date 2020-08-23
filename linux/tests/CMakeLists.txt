@@ -21,7 +21,7 @@ include_directories(../include ..)
 add_executable(openpnp-capture-test ${SOURCE})
 
 target_link_libraries(openpnp-capture-test openpnp-capture)
-target_link_libraries(openpnp-capture-test turbojpeg-static)
+target_link_libraries(openpnp-capture-test ${TurboJPEG_LIBRARIES})
 
 ########################################################
 ### GTK test application
@@ -41,5 +41,5 @@ set (SOURCE2 gtkmain.cpp ../../common/logging.cpp)
 add_executable(oc-gtk ${SOURCE2})
 
 target_link_libraries(oc-gtk openpnp-capture)
-target_link_libraries(oc-gtk turbojpeg-static)
+target_link_libraries(oc-gtk ${TurboJPEG_LIBRARIES})
 target_link_libraries(oc-gtk ${GTK3_LIBRARIES})
