@@ -12,6 +12,8 @@
 
 cmake_minimum_required(VERSION 3.1)
 project (openpnp-capture)
+set(OPENPNP_CAPTURE_LIB_VERSION "0.0.20" CACHE STRING "openpnp-capture library version")
+set(OPENPNP_CAPTURE_LIB_SOVERSION "0.0.20" CACHE STRING "openpnp-capture library soversion")
 
 # make sure the libjpegturbo is compiled with the
 # position independent flag -fPIC
@@ -62,6 +64,11 @@ add_library(openpnp-capture SHARED common/libmain.cpp
                                    common/logging.cpp
                                    common/stream.cpp)
 
+# define common properties
+set_target_properties(openpnp-capture PROPERTIES
+                      VERSION ${OPENPNP_CAPTURE_LIB_VERSION}
+                      SOVERSION ${OPENPNP_CAPTURE_LIB_SOVERSION})
+
 IF (WIN32)
 	# build with static runtime rather than DLL based so that we
 	# don't have to distribute it
@@ -103,6 +110,9 @@ ELSEIF(APPLE)
     add_subdirectory(mac/tests)
 
 ELSEIF(UNIX)
+    # install path resolving
+    include(GNUInstallDirs)
+
     # set the platform identification string
     add_definitions(-D__PLATFORM__="Linux ${COMPILERBITS}")
 
@@ -117,7 +127,7 @@ ELSEIF(UNIX)
     # add pthreads library 
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)    
-    target_link_libraries(openpnp-capture Threads::Threads)
+    target_link_libraries(openpnp-capture PUBLIC Threads::Threads)
 
     # add turbojpeg library
     find_package(PkgConfig REQUIRED)
@@ -125,6 +135,7 @@ ELSEIF(UNIX)
     if( TurboJPEG_FOUND )
         link_directories(${TurboJPEG_LIBDIR})
         target_include_directories(openpnp-capture PUBLIC ${TurboJPEG_INCLUDE_DIRS})
+        target_link_libraries(openpnp-capture PUBLIC ${TurboJPEG_LIBRARIES})
     else()
         # compile libjpeg-turbo for MJPEG decoding support
         # right now, we need to disable SIMD because it
@@ -134,11 +145,24 @@ ELSEIF(UNIX)
         set(WITH_SIMD OFF)    
         set(TurboJPEG_LIBRARIES turbojpeg-static)  
         add_subdirectory(linux/contrib/libjpeg-turbo-dev)
+        target_link_libraries(openpnp-capture PRIVATE ${TurboJPEG_LIBRARIES})
     endif()
-    target_link_libraries(openpnp-capture ${TurboJPEG_LIBRARIES})
 
     # add linux-specific test application
     add_subdirectory(linux/tests)
+
+    # install lib and headers
+    install(FILES include/openpnp-capture.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            COMPONENT headers)
+    install(TARGETS openpnp-capture EXPORT openpnp-capture
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT libraries)
+
+    # add cmake install target
+    install(EXPORT openpnp-capture
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/openpnp-capture
+            COMPONENT libraries)
 
 ENDIF()
 
