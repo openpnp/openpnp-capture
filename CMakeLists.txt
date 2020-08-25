@@ -56,6 +56,12 @@ endif(CMAKE_BUILD_TYPE MATCHES Release)
 # add include directory 
 include_directories(include)
 
+# create our capture library
+add_library(openpnp-capture SHARED common/libmain.cpp
+                                   common/context.cpp
+                                   common/logging.cpp
+                                   common/stream.cpp)
+
 IF (WIN32)
 	# build with static runtime rather than DLL based so that we
 	# don't have to distribute it
@@ -69,15 +75,8 @@ IF (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
     # add files for WIN32
-    set (SOURCE common/libmain.cpp
-                common/context.cpp
-                common/logging.cpp
-                common/stream.cpp
-                win/platformcontext.cpp
-                win/platformstream.cpp)
-
-    # create the library
-    add_library(openpnp-capture SHARED ${SOURCE})
+    target_sources(openpnp-capture PRIVATE win/platformcontext.cpp
+                                           win/platformstream.cpp)
 
     # add windows-specific test application
     add_subdirectory(win/tests)
@@ -86,17 +85,9 @@ ELSEIF(APPLE)
     # set the platform identification string
     add_definitions(-D__PLATFORM__="OSX ${COMPILERBITS}")
 
-    set (SOURCE common/libmain.cpp
-                common/context.cpp
-                common/logging.cpp
-                common/stream.cpp
-                mac/platformcontext.mm
-                mac/platformstream.mm
-                mac/uvcctrl.mm)
-
-
-    # create the library
-    add_library(openpnp-capture SHARED ${SOURCE})
+    target_sources(openpnp-capture PRIVATE mac/platformcontext.mm
+                                           mac/platformstream.mm
+                                           mac/uvcctrl.mm)
 
     # include OS X specific frameworks
     target_link_libraries(openpnp-capture
@@ -125,20 +116,13 @@ ELSEIF(UNIX)
     # set the platform identification string
     add_definitions(-D__PLATFORM__="Linux ${COMPILERBITS}")
 
-    set (SOURCE common/libmain.cpp
-                common/context.cpp
-                common/logging.cpp
-                common/stream.cpp
-                linux/platformcontext.cpp
-                linux/platformstream.cpp
-                linux/mjpeghelper.cpp
-                linux/yuvconverters.cpp)
+    target_sources(openpnp-capture PRIVATE linux/platformcontext.cpp
+                                           linux/platformstream.cpp
+                                           linux/mjpeghelper.cpp
+                                           linux/yuvconverters.cpp)
 
     # force include directories for libjpeg-turbo
     include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/linux/contrib/libjpeg-turbo-dev")
-    
-    # create our capture library
-    add_library(openpnp-capture SHARED ${SOURCE})
 
     # add pthreads library 
     set(THREADS_PREFER_PTHREAD_FLAG ON)
