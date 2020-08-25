@@ -361,7 +361,6 @@ void PlatformStream::close()
     m_owner = nullptr;
     m_width = 0;
     m_height = 0;
-    m_frameBuffer.resize(0);
     m_isOpen = false; 
     m_quitThread = true;
 
@@ -374,6 +373,7 @@ void PlatformStream::close()
         m_helperThread = nullptr;
     }
 
+    m_frameBuffer.resize(0);
     ::close(m_deviceHandle);
 
     m_deviceHandle = -1;    
