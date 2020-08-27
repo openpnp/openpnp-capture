@@ -88,14 +88,14 @@ typedef uint32_t CapFormatID;   ///< format identifier 0 .. numFormats
 
 typedef uint32_t CapPropertyID; ///< property ID (exposure, zoom, focus etc.)
 
-struct CapFormatInfo
+typedef struct
 {
     uint32_t width;     ///< width in pixels
     uint32_t height;    ///< height in pixels
     uint32_t fourcc;    ///< fourcc code (platform dependent)
     uint32_t fps;       ///< frames per second
     uint32_t bpp;       ///< bits per pixel
-};
+} CapFormatInfo;
 
 #define CAPRESULT_OK  0
 #define CAPRESULT_ERR 1

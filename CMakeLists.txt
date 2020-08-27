@@ -12,6 +12,8 @@
 
 cmake_minimum_required(VERSION 3.1)
 project (openpnp-capture)
+set(OPENPNP_CAPTURE_LIB_VERSION "0.0.20" CACHE STRING "openpnp-capture library version")
+set(OPENPNP_CAPTURE_LIB_SOVERSION "0.0.20" CACHE STRING "openpnp-capture library soversion")
 
 # make sure the libjpegturbo is compiled with the
 # position independent flag -fPIC
@@ -56,6 +58,17 @@ endif(CMAKE_BUILD_TYPE MATCHES Release)
 # add include directory 
 include_directories(include)
 
+# create our capture library
+add_library(openpnp-capture SHARED common/libmain.cpp
+                                   common/context.cpp
+                                   common/logging.cpp
+                                   common/stream.cpp)
+
+# define common properties
+set_target_properties(openpnp-capture PROPERTIES
+                      VERSION ${OPENPNP_CAPTURE_LIB_VERSION}
+                      SOVERSION ${OPENPNP_CAPTURE_LIB_SOVERSION})
+
 IF (WIN32)
 	# build with static runtime rather than DLL based so that we
 	# don't have to distribute it
@@ -69,15 +82,8 @@ IF (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
     # add files for WIN32
-    set (SOURCE common/libmain.cpp
-                common/context.cpp
-                common/logging.cpp
-                common/stream.cpp
-                win/platformcontext.cpp
-                win/platformstream.cpp)
-
-    # create the library
-    add_library(openpnp-capture SHARED ${SOURCE})
+    target_sources(openpnp-capture PRIVATE win/platformcontext.cpp
+                                           win/platformstream.cpp)
 
     # add windows-specific test application
     add_subdirectory(win/tests)
@@ -86,17 +92,9 @@ ELSEIF(APPLE)
     # set the platform identification string
     add_definitions(-D__PLATFORM__="OSX ${COMPILERBITS}")
 
-    set (SOURCE common/libmain.cpp
-                common/context.cpp
-                common/logging.cpp
-                common/stream.cpp
-                mac/platformcontext.mm
-                mac/platformstream.mm
-                mac/uvcctrl.mm)
-
-
-    # create the library
-    add_library(openpnp-capture SHARED ${SOURCE})
+    target_sources(openpnp-capture PRIVATE mac/platformcontext.mm
+                                           mac/platformstream.mm
+                                           mac/uvcctrl.mm)
 
     # include OS X specific frameworks
     target_link_libraries(openpnp-capture
@@ -112,44 +110,59 @@ ELSEIF(APPLE)
     add_subdirectory(mac/tests)
 
 ELSEIF(UNIX)
-
-    # compile libjpeg-turbo for MJPEG decoding support
-    # right now, we need to disable SIMD because it
-    # causes a compile problem.. we need to fix this
-    # later...
-    
-    set(ENABLE_SHARED OFF)
-    set(WITH_SIMD OFF)      
-    add_subdirectory(linux/contrib/libjpeg-turbo-dev)
+    # install path resolving
+    include(GNUInstallDirs)
 
     # set the platform identification string
     add_definitions(-D__PLATFORM__="Linux ${COMPILERBITS}")
 
-    set (SOURCE common/libmain.cpp
-                common/context.cpp
-                common/logging.cpp
-                common/stream.cpp
-                linux/platformcontext.cpp
-                linux/platformstream.cpp
-                linux/mjpeghelper.cpp
-                linux/yuvconverters.cpp)
+    target_sources(openpnp-capture PRIVATE linux/platformcontext.cpp
+                                           linux/platformstream.cpp
+                                           linux/mjpeghelper.cpp
+                                           linux/yuvconverters.cpp)
 
     # force include directories for libjpeg-turbo
     include_directories(SYSTEM "${CMAKE_CURRENT_SOURCE_DIR}/linux/contrib/libjpeg-turbo-dev")
-    
-    # create our capture library
-    add_library(openpnp-capture SHARED ${SOURCE})
 
     # add pthreads library 
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)    
-    target_link_libraries(openpnp-capture Threads::Threads)
+    target_link_libraries(openpnp-capture PUBLIC Threads::Threads)
 
-    # add turbojpeg-static library
-    target_link_libraries(openpnp-capture turbojpeg-static)
+    # add turbojpeg library
+    find_package(PkgConfig REQUIRED)
+    pkg_search_module(TurboJPEG libturbojpeg)
+    if( TurboJPEG_FOUND )
+        link_directories(${TurboJPEG_LIBDIR})
+        target_include_directories(openpnp-capture PUBLIC ${TurboJPEG_INCLUDE_DIRS})
+        target_link_libraries(openpnp-capture PUBLIC ${TurboJPEG_LIBRARIES})
+    else()
+        # compile libjpeg-turbo for MJPEG decoding support
+        # right now, we need to disable SIMD because it
+        # causes a compile problem.. we need to fix this
+        # later...
+        set(ENABLE_SHARED OFF)
+        set(WITH_SIMD OFF)    
+        set(TurboJPEG_LIBRARIES turbojpeg-static)  
+        add_subdirectory(linux/contrib/libjpeg-turbo-dev)
+        target_link_libraries(openpnp-capture PRIVATE ${TurboJPEG_LIBRARIES})
+    endif()
 
     # add linux-specific test application
     add_subdirectory(linux/tests)
+
+    # install lib and headers
+    install(FILES include/openpnp-capture.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+            COMPONENT headers)
+    install(TARGETS openpnp-capture EXPORT openpnp-capture
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT libraries)
+
+    # add cmake install target
+    install(EXPORT openpnp-capture
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/openpnp-capture
+            COMPONENT libraries)
 
 ENDIF()
 
