@@ -45,30 +45,35 @@ PlatformContext::PlatformContext() :
     Context()
 {
     LOG(LOG_INFO, "Platform context created\n");
-    cameraPermissionReceived = 0;
-    if ([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo] == AVAuthorizationStatusAuthorized) {
-        NSLog(@"Already have camera permission");
-        cameraPermissionReceived = 1;
-    }
-    else {
-        NSLog(@"Requesting permission, bundle path for Info.plist: %@", [[NSBundle mainBundle] bundlePath]);
-        [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
-            if (granted) {
-                cameraPermissionReceived = 1;
-            } else {
-                cameraPermissionReceived = -1;
+    if ([AVCaptureDevice respondsToSelector:@selector(authorizationStatusForMediaType:)]) {
+        cameraPermissionReceived = 0;
+        if ([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo] == AVAuthorizationStatusAuthorized) {
+            NSLog(@"Already have camera permission");
+            cameraPermissionReceived = 1;
+        }
+        else {
+            NSLog(@"Requesting permission, bundle path for Info.plist: %@", [[NSBundle mainBundle] bundlePath]);
+            [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
+                if (granted) {
+                    cameraPermissionReceived = 1;
+                } else {
+                    cameraPermissionReceived = -1;
+                }
+                if (granted) {
+                    NSLog(@"Permission granted");
+                } else {
+                    NSLog(@"Failed to get permission");
+                }
+            } ];
+            while (cameraPermissionReceived == 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));
             }
-            if (granted) {
-                NSLog(@"Permission granted");
-            } else {
-                NSLog(@"Failed to get permission");
-            }
-        } ];
-        while (cameraPermissionReceived == 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+        if (cameraPermissionReceived == 1) {
+            enumerateDevices();
         }
     }
-    if (cameraPermissionReceived == 1) {
+    else {
         enumerateDevices();
     }
 }
