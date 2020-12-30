@@ -31,6 +31,7 @@
 #include "platformcontext.h"
 #include "scopedcomptr.h"
 
+extern HRESULT FindCaptureDevice(IBaseFilter** ppSrcFilter, const wchar_t* wDeviceName);
 extern void _FreeMediaType(AM_MEDIA_TYPE& mt);
 
 // Delete a media type structure that was allocated on the heap.
@@ -225,12 +226,19 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
-    hr = m_graph->AddSourceFilterForMoniker(dinfo->m_moniker, 0, dinfo->m_filterName.c_str(), &m_sourceFilter);
+    hr = FindCaptureDevice(&m_sourceFilter, dinfo->m_devicePath.c_str());
     if (hr != S_OK)
     {
-        LOG(LOG_ERR,"Could add source filter to filter graph (HRESULT=%08X)\n", hr);
-        return false;        
-    } 
+        LOG(LOG_ERR, "Could not find source filter %s\n", dinfo->m_devicePath.c_str());
+        return false;
+    }
+
+    hr = m_graph->AddFilter(m_sourceFilter, L"Video Capture");
+    if (hr != S_OK)
+    {
+        LOG(LOG_ERR, "Could add source filter to filter graph (HRESULT=%08X)\n", hr);
+        return false;
+    }
 
     //set the desired frame buffer format
     IAMStreamConfig *pConfig = NULL;

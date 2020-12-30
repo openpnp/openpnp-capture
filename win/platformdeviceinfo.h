@@ -36,23 +36,12 @@
 class platformDeviceInfo : public deviceInfo
 {
 public:
-    platformDeviceInfo() : deviceInfo(), m_moniker(0) {}
+    platformDeviceInfo() : deviceInfo() {}
 
-    ~platformDeviceInfo()
-    {
-        if (m_moniker != nullptr)
-        {
-            //FIXME: not sure what to do with
-            // IMoniker* here. When I call
-            // ->Release(), the program crashes ?
-            // even an additional AddRef was
-            // applied.. ? Documentation unclear.
-        }
-    }
+    ~platformDeviceInfo() { }
 
     std::wstring    m_filterName;   ///< DirectShow internal device name
     std::wstring    m_devicePath;   ///< unique device path
-    IMoniker*       m_moniker;      ///< DirectShow object for capture device
 };
 
 #endif

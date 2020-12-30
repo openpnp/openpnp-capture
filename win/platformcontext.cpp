@@ -116,7 +116,6 @@ bool PlatformContext::enumerateDevices()
 	{
 		//get properties
 		hr = moniker->BindToStorage(0, 0, IID_IPropertyBag, (void**) &pbag);
-        ScopedComPtr<IPropertyBag> propertyBag(pbag);
 
 		if (hr >= 0)
 		{            
@@ -124,8 +123,8 @@ bool PlatformContext::enumerateDevices()
 			VariantInit(&name);
 
 			//get the description
-			hr = propertyBag->Read(L"Description", &name, 0);
-			if (hr < 0) hr = propertyBag->Read(L"FriendlyName", &name, 0);
+			hr = pbag->Read(L"Description", &name, 0);
+			if (hr < 0) hr = pbag->Read(L"FriendlyName", &name, 0);
 			if (hr >= 0)
 			{
 				BSTR BStringPtr = name.bstrVal;
@@ -146,7 +145,7 @@ bool PlatformContext::enumerateDevices()
                 LOG(LOG_ERR, "Could not generate device name for device!\n");
             }
 
-            hr = propertyBag->Read(L"DevicePath", &name, 0);
+            hr = pbag->Read(L"DevicePath", &name, 0);
 			if (hr >= 0)
 			{
         		BSTR BStringPtr = name.bstrVal;            
@@ -164,14 +163,23 @@ bool PlatformContext::enumerateDevices()
             }
 
             enumerateFrameInfo(moniker, info);
-
-            moniker->AddRef();
-            info->m_moniker = moniker;
             m_devices.push_back(info);
-            LOG(LOG_INFO, "ID %d -> %s\n", num_devices, info->m_name.c_str());            
-        }
 
-        num_devices++;
+            LOG(LOG_INFO, "ID %d -> %s\n", num_devices, info->m_name.c_str());
+
+            VariantClear(&name);
+
+            pbag->Release();
+            pbag = nullptr;
+
+            moniker->Release();
+            moniker = nullptr;
+
+            num_devices++; 
+        }
+        else{
+            moniker->Release();
+        }
     }
     return true;
 }
@@ -185,13 +193,13 @@ std::string PlatformContext::wstringToString(const std::wstring &wstr)
 std::string PlatformContext::wcharPtrToString(const wchar_t *sstr)
 {
     std::vector<char> buffer;
-    int32_t chars = WideCharToMultiByte(CP_UTF8, 0, sstr, -1, nullptr, 0, nullptr, nullptr);    
+    int32_t chars = WideCharToMultiByte(CP_UTF8, 0, sstr, -1, nullptr, 0, nullptr, nullptr);
     if (chars == 0) return std::string("");
 
     buffer.resize(chars);
     WideCharToMultiByte(CP_UTF8, 0, sstr, -1, &buffer[0], chars, nullptr, nullptr);
     return std::string(&buffer[0]);
-} 
+}
 
 
 // Release the format block for a media type.
@@ -216,7 +224,7 @@ void _DeleteMediaType(AM_MEDIA_TYPE *pmt)
 {
     if (pmt != NULL)
     {
-        _FreeMediaType(*pmt); 
+        _FreeMediaType(*pmt);
         CoTaskMemFree(pmt);
     }
 }
@@ -231,7 +239,7 @@ bool PinMatchesCategory(IPin *pPin, REFGUID Category)
     {
         GUID PinCategory;
         DWORD cbReturned;
-        hr = pKs->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0, 
+        hr = pKs->Get(AMPROPSETID_Pin, AMPROPERTY_PIN_CATEGORY, NULL, 0,
             &PinCategory, sizeof(GUID), &cbReturned);
         if (SUCCEEDED(hr) && (cbReturned == sizeof(GUID)))
         {
@@ -275,7 +283,7 @@ HRESULT FindPinByCategory(
 
         ScopedComPtr<IPin> myPin(pPin);
 
-        if ((ThisPinDir == PinDir) && 
+        if ((ThisPinDir == PinDir) &&
             PinMatchesCategory(pPin, Category))
         {
             *ppPin = pPin;
@@ -376,7 +384,7 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
 
                             newFrameInfo.width  = pVih->bmiHeader.biWidth;
                             newFrameInfo.height = pVih->bmiHeader.biHeight;
-                            
+
                             if (pVih->AvgTimePerFrame != 0)
                             {
                                 // pVih->AvgTimePerFrame is in units of 100ns
@@ -386,10 +394,10 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
                             {
                                 newFrameInfo.fps = 0;
                             }
-                            
+
                             std::string fourCCString = fourCCToString(newFrameInfo.fourcc);
 
-                            LOG(LOG_INFO, "%d x %d  %d fps  %d bpp FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height, 
+                            LOG(LOG_INFO, "%d x %d  %d fps  %d bpp FOURCC=%s\n", newFrameInfo.width, newFrameInfo.height,
                                 newFrameInfo.fps, newFrameInfo.bpp, fourCCString.c_str());
 
                             info->m_formats.push_back(newFrameInfo);
@@ -404,3 +412,60 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
 
     return true;
 }
+
+
+HRESULT FindCaptureDevice(IBaseFilter** ppSrcFilter, const wchar_t* devicePath)
+{
+    ICreateDevEnum* pDevEnum = NULL;
+    IEnumMoniker* pEnum = NULL;
+    IMoniker* pMoniker = nullptr;
+    IPropertyBag* pbag = nullptr;
+    HRESULT hr = S_OK;
+
+    std::wstring strDevicePath = devicePath;
+
+    hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+
+    if (FAILED(hr))
+        return hr;
+
+    ScopedComPtr<ICreateDevEnum> devEnum(pDevEnum);
+
+    hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnum, 0);
+
+    ScopedComPtr<IEnumMoniker> enumMoniker(pEnum);
+    if (hr == S_OK) {
+
+        while (enumMoniker->Next(1, &pMoniker, 0) == S_OK)
+        {
+            hr = pMoniker->BindToStorage(0, 0, IID_PPV_ARGS(&pbag));
+            ScopedComPtr<IPropertyBag> propertyBag(pbag);
+
+            if (FAILED(hr)) {
+                pMoniker->Release();
+                continue;  // Skip this one, maybe the next one will work.
+            }
+
+            bool bMatch = false;
+
+            VARIANT varName;
+            VariantInit(&varName);
+            hr = pbag->Read(L"DevicePath", &varName, 0);
+
+            if (SUCCEEDED(hr)) {
+                if (strDevicePath == varName.bstrVal)
+                    bMatch = true;
+            }
+            VariantClear(&varName);
+
+            if (bMatch)
+            {
+                hr = pMoniker->BindToObject(0, 0, IID_PPV_ARGS(ppSrcFilter));
+                return hr;
+            }
+        }
+    }
+
+    return E_FAIL;
+}
+
