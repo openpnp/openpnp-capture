@@ -1,0 +1,42 @@
+name: Build OpenPnP Capture Distribution
+
+on: 
+  push:
+  pull_request:
+
+jobs:
+  build: 
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        arch: [x86_64, aarch64]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+
+      - name: Install packages on Linux
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
+
+      - name: Build
+        run: |
+          mkdir -p build deploy && cd build && cmake .. && make
+          cp libopenpnp-capture.* ../deploy/
+          #ls -alh && pwd && find . -iname "openpnp-capture-test*"
+          #cp openpnp-capture-test ../deploy/openpnp-capture-test-${{ matrix.arch }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with: 
+          path: |
+            deploy/*
+
+      - name: Create Release
+        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+        uses: ncipollo/release-action@v1
+        with:
+            artifacts: "deploy/*"
+            token: ${{ secrets.GITHUB_TOKEN }}
