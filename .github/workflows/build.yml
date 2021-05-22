@@ -27,13 +27,13 @@ jobs:
       - name: Copy deploy artifacts if running on OSX
         run: |
                cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-               cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}
+               cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
         if: matrix.os == 'macos-latest'
 
       - name: Copy deploy artifacts if running on Linux
         run: |
                cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-               cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}
+               cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
         if: matrix.os == 'ubuntu-latest'
 
       - name: Upload Artifacts
