@@ -48,3 +48,4 @@ jobs:
         with:
             artifacts: "deploy/*"
             token: ${{ secrets.GITHUB_TOKEN }}
+            allowUpdates: true
