@@ -37,7 +37,7 @@ jobs:
         run: |
                cd build && cmake .. && make && cd ..
                cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-               cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
+               cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
         if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x86_64'
 
       - name: Cross compile artifacts for aarch64/arm64 if running on Linux
