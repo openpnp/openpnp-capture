@@ -11,4 +11,6 @@ QtCaptureTest/build
 .DS_Store
 .vscode
 .idea/
+openpnp-capture.iml
+out
 cmake-build-*/

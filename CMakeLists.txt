@@ -12,8 +12,8 @@
 
 cmake_minimum_required(VERSION 3.1)
 project (openpnp-capture)
-set(OPENPNP_CAPTURE_LIB_VERSION "0.0.20" CACHE STRING "openpnp-capture library version")
-set(OPENPNP_CAPTURE_LIB_SOVERSION "0.0.20" CACHE STRING "openpnp-capture library soversion")
+set(OPENPNP_CAPTURE_LIB_VERSION "0.0.23" CACHE STRING "openpnp-capture library version")
+set(OPENPNP_CAPTURE_LIB_SOVERSION "0.0.23" CACHE STRING "openpnp-capture library soversion")
 
 # make sure the libjpegturbo is compiled with the
 # position independent flag -fPIC
