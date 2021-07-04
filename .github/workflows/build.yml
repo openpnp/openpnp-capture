@@ -20,31 +20,41 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
 
-      - name: Build and prepare deploy
+      - name: Prepare deploy dirs
         run: |
-          mkdir -p build deploy && cd build && cmake .. && make
+          mkdir -p build deploy
 
-      # Will only build Intel artifacts for now since GHA still does not have support for Apple Silicon
+      # Will only build Intel artifacts for now since GHA still does not have support for Apple Silicon:
+      # https://github.com/actions/virtual-environments/issues/2187
       - name: Copy deploy artifacts if running on OSX
         run: |
+               cd build && cmake .. && make && cd ..
                cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
                cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-latest' && matrix.arch == 'x86_64'
 
-      - name: Copy deploy artifacts if running on Linux
+      - name: Copy deploy artifacts if running for x86_64 on Linux
+        run: |
+               cd build && cmake .. && make && cd ..
+               cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+               cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x86_64'
+
+      - name: Cross compile artifacts for aarch64/arm64 if running on Linux
         uses: uraimo/run-on-arch-action@v2.0.10
         with:
-          arch: ${{ matrix.arch }}
+          arch: aarch64 # No dockerfile for x86_64 on https://github.com/uraimo/run-on-arch-action/tree/master/Dockerfiles
           distro: ubuntu20.04 # Different from matrix.os on GHA: https://github.com/marketplace/actions/run-on-architecture#supported-platforms
           dockerRunArgs: |
             --volume "${PWD}/build:/build"
             --volume "${PWD}/deploy:/deploy"
 
           run: |
-                 apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev # install same packages as above within the cross-compiling container
+                 apt-get update -y && sudo apt-get install -y cmake make nasm libgtk-3-dev # install same packages as above within the cross-compiling container
+                 cd build && cmake .. && make && cd ..
                  cp /build/linux/tests/openpnp-capture-test /deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
                  cp /build/libopenpnp-capture.so /deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'aarch64'
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
