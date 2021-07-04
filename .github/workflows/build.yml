@@ -50,7 +50,7 @@ jobs:
             --volume "${PWD}/deploy:/deploy"
 
           run: |
-                 apt-get update -y && apt-get install -y cmake make nasm libgtk-3-dev # install same packages as above within the cross-compiling container
+                 apt-get update -y && apt-get install -y cmake make nasm libgtk-3-dev build-essential # install same packages as above within the cross-compiling container
                  cd build && cmake .. && make && cd ..
                  cp /build/linux/tests/openpnp-capture-test /deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
                  cp /build/libopenpnp-capture.so /deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
