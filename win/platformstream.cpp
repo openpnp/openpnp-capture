@@ -195,6 +195,11 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
+    // virtual cameras may not provide a valid devicepath;
+    if(dinfo->m_devicePath.empty()){
+        dinfo->m_devicePath = dinfo->m_filterName;
+    }
+
     m_owner = owner;
     m_frames = 0;
     m_width = 0;
@@ -339,10 +344,12 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     // create camera control interface for exposure control etc . 
     m_camControl = nullptr;
     hr = m_sourceFilter->QueryInterface(IID_IAMCameraControl, (void **)&m_camControl); 
+
     if (hr != S_OK) 
     {
         LOG(LOG_ERR,"Could not create IAMCameraControl\n");
-        return false;  
+        // BROKEN
+        // return false;  
     }
 
     dumpCameraProperties();

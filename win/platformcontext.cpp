@@ -452,20 +452,26 @@ HRESULT FindCaptureDevice(IBaseFilter** ppSrcFilter, const wchar_t* devicePath)
             VariantInit(&varName);
             hr = pbag->Read(L"DevicePath", &varName, 0);
 
+            if(varName.vt==VT_EMPTY){
+            // no device path
+            // fall back to friendlyName
+                hr = pbag->Read(L"FriendlyName", &varName, 0);
+            }
+
             if (SUCCEEDED(hr)) {
                 if (strDevicePath == varName.bstrVal)
                     bMatch = true;
+
             }
             VariantClear(&varName);
-
             if (bMatch)
             {
                 hr = pMoniker->BindToObject(0, 0, IID_PPV_ARGS(ppSrcFilter));
                 return hr;
             }
+
         }
     }
-
     return E_FAIL;
 }
 
