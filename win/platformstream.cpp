@@ -195,7 +195,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
-    // virtual cameras may not provide a valid devicepath;
+    // virtual cameras may not provide a valid devicepath
+    // fill devicePath with friendly name
     if(dinfo->m_devicePath.empty()){
         dinfo->m_devicePath = dinfo->m_filterName;
     }
@@ -347,8 +348,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
 
     if (hr != S_OK) 
     {
+        // note: OBS virtual camera does not provide a control interface
         LOG(LOG_ERR,"Could not create IAMCameraControl\n");
-        // BROKEN
         // return false;  
     }
 
