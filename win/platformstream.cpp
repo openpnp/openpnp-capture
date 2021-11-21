@@ -460,14 +460,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         return false;
     }
 
-    LONGLONG start=0, stop=MAXLONGLONG;
-    hr = m_capture->ControlStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_sourceFilter, &start, &stop, 1,2);
-    if (hr < 0)
-    {
-        LOG(LOG_ERR,"Could not start the video stream (HRESULT=%08X)\n", hr);
-        return false;
-    }    
-
     // look up the media type:
     AM_MEDIA_TYPE* info = new AM_MEDIA_TYPE();
     hr = m_sampleGrabber->GetConnectedMediaType(info);
