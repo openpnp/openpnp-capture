@@ -31,8 +31,7 @@
 
 #include <windows.h>
 #include <dshow.h>
-#include <Vidcap.h>
-#include <Ksmedia.h>
+#include <ksmedia.h>
 
 #include <stdint.h>
 #include <vector>
