@@ -318,6 +318,7 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
         LOG(LOG_ERR, "No frame information: EnumPins failed.\n");
         return false;
     }
+    ScopedComPtr<IEnumPins> pinEnum(pEnum);
 
     if (FindPinByCategory(pCap, PINDIR_OUTPUT, PIN_CATEGORY_CAPTURE, &pPin) == S_OK)
     {
@@ -461,6 +462,7 @@ HRESULT FindCaptureDevice(IBaseFilter** ppSrcFilter, const wchar_t* devicePath)
             if (bMatch)
             {
                 hr = pMoniker->BindToObject(0, 0, IID_PPV_ARGS(ppSrcFilter));
+                pMoniker->Release();
                 return hr;
             }
         }
