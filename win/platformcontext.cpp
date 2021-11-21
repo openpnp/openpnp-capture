@@ -312,13 +312,6 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
 
     ScopedComPtr<IBaseFilter> baseFilter(pCap);
 
-    hr = baseFilter->EnumPins(&pEnum);
-    if (FAILED(hr))
-    {
-        LOG(LOG_ERR, "No frame information: EnumPins failed.\n");
-        return false;
-    }
-
     if (FindPinByCategory(pCap, PINDIR_OUTPUT, PIN_CATEGORY_CAPTURE, &pPin) == S_OK)
     {
         LOG(LOG_INFO, "Capture pin found!\n");
