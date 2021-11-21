@@ -31,6 +31,7 @@
 
 #include <windows.h>
 #include <dshow.h>
+#include <ks.h>
 #include <ksmedia.h>
 
 #include <stdint.h>
