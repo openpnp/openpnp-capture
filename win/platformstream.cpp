@@ -341,8 +341,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     hr = m_sourceFilter->QueryInterface(IID_IAMCameraControl, (void **)&m_camControl); 
     if (hr != S_OK) 
     {
-        LOG(LOG_ERR,"Could not create IAMCameraControl\n");
-        return false;  
+        // note: this is not an error because some cameras do not support camera control
+        LOG(LOG_WARNING,"Could not create IAMCameraControl\n");
     }
 
     dumpCameraProperties();
