@@ -1,96 +1,76 @@
 ![OpenPNP Logo](https://raw.githubusercontent.com/openpnp/openpnp-logo/develop/logo_small.png)
 
 # openpnp-capture
-
-OpenPnP Capture is a cross platform video capture library with a focus on machine vision. It's goals are:
+OpenPnP Capture is a cross platform video capture library for C with a focus on machine vision. Its goals are:
 
 * Native camera access on Windows, Linux and Mac. Implemented with DirectShow, V4L2 and AVFoundation respectively.
 * Named device enumeration.
-* Strong, repeatable unique IDs.
-* Format control with support for at least YUV and MJPEG. MJPEG will allow the use of multiple USB cameras on a single hub.
+* Strong, repeatable, unique IDs.
+* Format control with support for at least YUV and MJPEG. Compressed formats such as MJPEG allow the use of multiple USB cameras on a hub or root controller.
 * Auto and manual exposure control.
 * Auto and manual focus control.
 * Simple, common C wrapper for the listed APIs.
 
-# Status
 
-### Windows
+# Features
+| Feature                  |  Windows   |    macOS     |     Linux      |
+| ------------------------ |:----------:|:------------:|:--------------:|
+| Platform API             | DirectShow | AVFoundation |      V4L2      |
+| Named Device Enumeration |    Yes     |     Yes      |      Yes       |
+| Capturing                |    Yes     |     Yes      |      Yes       |
+| MJPEG formats            |    Yes     |  Yes (dmb1)  |      Yes       |
+| YUV formats              |    Yes     |     Yes      | Yes, YUYV/YUV2 |
+| Exposure control         |    Yes     |     Yes      |      Yes       |
+| Focus control            |    Yes     |     Yes      |      Yes       |
+| Zoom control             |    Yes     |     Yes      |      Yes       |
+| Gain control             |    Yes     |     Yes      |      Yes       |
+| White balance control    |    Yes     |     Yes      |      Yes       |
+| Common C API             |    Yes     |     Yes      |      Yes       |
+| Framerate control        |     No     |      No      |       No       |
+| Re-Enumeration           |     No     |      No      |       No       |
 
-| Feature       | Implemented   |
-| ------------- |:-------------:|
-| Device Enumeration | Yes |
-| Capturing | Yes |
-| MJPEG formats | Yes |
-| YUV formats | Yes |
-| Exposure control | Yes |
-| Focus control | Yes / Untested |
-| Zoom control | Yes |
-| Gain control | Yes |
-| White balance control | Yes |
-| Framerate control | No |
 
-### Linux
+# Getting Started
+Packages and binaries are available in [releases](https://github.com/openpnp/openpnp-capture/releases).
 
-| Feature       | Implemented   |
-| ------------- |:-------------:|
-| Device Enumeration | Yes |
-| Capturing | Yes |
-| MJPEG formats | Yes |
-| YUV formats | Yes, YUYV/YUV2 |
-| Exposure control | Yes |
-| Focus control | Yes / Untested |
-| Zoom control | Yes |
-| Gain control | Yes / Untested |
-| White balance control | Yes |
-| Framerate control | No |
+Examples:
+  - [./QtCaptureTest/](./QtCaptureTest) is a cross platform test program for OpenPnP implemented with Qt.
+  - openpnp-capture includes simple examples for [Mac](./mac/tests/), [Linux](./linux/tests/), and [Windows](./win/tests/).
 
-### OSX
+See below for information about Building OpenPnP Capture. 
 
-| Feature       | Implemented   |
-| ------------- |:-------------:|
-| Device Enumeration | Yes |
-| Capturing | Yes |
-| MJPEG formats | Yes (dmb1) |
-| YUV formats | Yes |
-| Exposure control | Yes / Experimental |
-| Focus control | Yes / Experimental |
-| Zoom control | Yes / Experimental |
-| Gain control | Yes / Experimental |
-| White balance control | Yes / Experimental |
-| Framerate control | No |
+Documentation for openpnp-capture needs improvement. We would love your [help!](https://github.com/openpnp/openpnp-capture/edit/master/README.md)!
 
-# TODO
-* support for re-enumeration.
 
 # Building OpenPnP Capture
-
-### Dependencies
+## Dependencies
 * CMAKE 3.1 or better
 * MAKE (osx, linux)
 * Visual Studio 2013 + NMake or Ninja Build (windows)
 * NASM for building libjpeg-turbo (linux)
 * libgtk-3-dev (linux, test program)
 
-### Build instructions (Windows)
+## Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
 
 Go to the build directory and run nmake or ninja to build the library and the test application.
 
-### Build instructions (OSX)
+## Build instructions (OSX)
 Run 'bootstrap_osx.sh'. Run make.
 
-### Build instructions (Linux)
+## Build instructions (Linux)
 Run 'bootstrap_linux.sh'. Run make.
 
-## Supporting other platforms
+
+# Supporting Other Platforms
 * Implement all PlatformXXX classes, like in the win or linux directories.
 * PlatformContext handles device and internal frame buffer format enumeration.
 * PlatformStream is responsible for capturing and decoding the camera stream to a 8-bit per channel RGB frame buffer.
 * Statically link external dependencies.
 
-# Releases
 
-Releases are built automatically for all supported platforms. See https://github.com/openpnp/openpnp-capture/releases/latest to download the latest.
+# Releases
+Releases are built automatically for new tags on all supported platforms using [Github Actions](https://github.com/openpnp/openpnp-capture/blob/master/.github/workflows/build.yml). See https://github.com/openpnp/openpnp-capture/releases/latest to download the latest.
 
 # Platform Notes
 
