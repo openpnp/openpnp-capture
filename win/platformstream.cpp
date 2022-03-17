@@ -344,8 +344,8 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
     hr = m_sourceFilter->QueryInterface(IID_IAMCameraControl, (void **)&m_camControl); 
     if (hr != S_OK) 
     {
-        LOG(LOG_ERR,"Could not create IAMCameraControl\n");
-        return false;  
+        // note: this is not an error because some cameras do not support camera control
+        LOG(LOG_WARNING,"Could not create IAMCameraControl\n");
     }
 
     dumpCameraProperties();
@@ -462,14 +462,6 @@ bool PlatformStream::open(Context *owner, deviceInfo *device, uint32_t width, ui
         LOG(LOG_ERR,"Error calling RenderStream (HRESULT=%08X)\n", hr);
         return false;
     }
-
-    LONGLONG start=0, stop=MAXLONGLONG;
-    hr = m_capture->ControlStream(&PIN_CATEGORY_PREVIEW, &MEDIATYPE_Video, m_sourceFilter, &start, &stop, 1,2);
-    if (hr < 0)
-    {
-        LOG(LOG_ERR,"Could not start the video stream (HRESULT=%08X)\n", hr);
-        return false;
-    }    
 
     // look up the media type:
     AM_MEDIA_TYPE* info = new AM_MEDIA_TYPE();
