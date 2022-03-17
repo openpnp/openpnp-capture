@@ -31,6 +31,8 @@
 #include "platformcontext.h"
 #include "scopedcomptr.h"
 
+#include <cmath>
+
 extern HRESULT FindCaptureDevice(IBaseFilter** ppSrcFilter, const wchar_t* wDeviceName);
 extern void _FreeMediaType(AM_MEDIA_TYPE& mt);
 
@@ -544,8 +546,8 @@ void PlatformStream::dumpCameraProperties()
         if (m_camControl->GetRange(CameraControl_Exposure, &mmin, &mmax,
             &delta, &defaultValue, &flags) == S_OK)
         {
-            LOG(LOG_INFO, "Exposure min     : %2.3f seconds (%d integer)\n", pow(2.0f, (float)mmin), mmin);
-            LOG(LOG_INFO, "Exposure max     : %2.3f seconds (%d integer)\n", pow(2.0f, (float)mmax), mmax);
+            LOG(LOG_INFO, "Exposure min     : %2.3f seconds (%d integer)\n", std::pow(2.0f, (float)mmin), mmin);
+            LOG(LOG_INFO, "Exposure max     : %2.3f seconds (%d integer)\n", std::pow(2.0f, (float)mmax), mmax);
             LOG(LOG_INFO, "Exposure step    : %d (integer)\n", delta);
             LOG(LOG_INFO, "Exposure default : %2.3f seconds\n", pow(2.0f, (float)defaultValue));		
             LOG(LOG_INFO, "Flags            : %08X\n", flags);

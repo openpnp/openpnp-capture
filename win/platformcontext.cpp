@@ -32,6 +32,9 @@
 #include <vector>
 #include <stdio.h>
 
+#include <windows.h>
+#include <mmsystem.h> // for MAKEFOURCC macro
+
 #include "../common/logging.h"
 #include "scopedcomptr.h"
 #include "platformstream.h"
@@ -94,7 +97,7 @@ bool PlatformContext::enumerateDevices()
 
     ScopedComPtr<ICreateDevEnum> devEnum(dev_enum);
 
-	hr = devEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&enum_moniker,NULL);
+	hr = devEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&enum_moniker, 0);
 	if (hr == S_FALSE)
     {
         // no devices found!
@@ -371,11 +374,11 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
                             newFrameInfo.bpp = pVih->bmiHeader.biBitCount;
                             if (pVih->bmiHeader.biCompression == BI_RGB)
                             {
-                                newFrameInfo.fourcc = 'RGB ';
+                                newFrameInfo.fourcc = MAKEFOURCC('R', 'G', 'B', ' ');
                             }
                             else if (pVih->bmiHeader.biCompression == BI_BITFIELDS)
                             {
-                                newFrameInfo.fourcc = '   ';
+                                newFrameInfo.fourcc = MAKEFOURCC(' ', ' ', ' ', ' ');
                             }
                             else
                             {
