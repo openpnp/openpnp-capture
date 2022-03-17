@@ -32,6 +32,9 @@
 #include <vector>
 #include <stdio.h>
 
+#include <windows.h>
+#include <mmsystem.h> // for MAKEFOURCC macro
+
 #include "../common/logging.h"
 #include "scopedcomptr.h"
 #include "platformstream.h"
@@ -94,7 +97,7 @@ bool PlatformContext::enumerateDevices()
 
     ScopedComPtr<ICreateDevEnum> devEnum(dev_enum);
 
-	hr = devEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&enum_moniker,NULL);
+	hr = devEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory,&enum_moniker, 0);
 	if (hr == S_FALSE)
     {
         // no devices found!
@@ -309,6 +312,13 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
 
     ScopedComPtr<IBaseFilter> baseFilter(pCap);
 
+    hr = baseFilter->EnumPins(&pEnum);
+    if (FAILED(hr))
+    {
+        LOG(LOG_ERR, "No frame information: EnumPins failed.\n");
+        return false;
+    }
+    ScopedComPtr<IEnumPins> pinEnum(pEnum);
     if (FindPinByCategory(pCap, PINDIR_OUTPUT, PIN_CATEGORY_CAPTURE, &pPin) == S_OK)
     {
         LOG(LOG_INFO, "Capture pin found!\n");
@@ -361,11 +371,11 @@ bool PlatformContext::enumerateFrameInfo(IMoniker *moniker, platformDeviceInfo *
                             newFrameInfo.bpp = pVih->bmiHeader.biBitCount;
                             if (pVih->bmiHeader.biCompression == BI_RGB)
                             {
-                                newFrameInfo.fourcc = 'RGB ';
+                                newFrameInfo.fourcc = MAKEFOURCC('R', 'G', 'B', ' ');
                             }
                             else if (pVih->bmiHeader.biCompression == BI_BITFIELDS)
                             {
-                                newFrameInfo.fourcc = '   ';
+                                newFrameInfo.fourcc = MAKEFOURCC(' ', ' ', ' ', ' ');
                             }
                             else
                             {
@@ -442,8 +452,12 @@ HRESULT FindCaptureDevice(IBaseFilter** ppSrcFilter, const wchar_t* devicePath)
         if ((SUCCEEDED(hr) && strDevicePath == varName.bstrVal) ||
             (FAILED(hr) && strDevicePath == std::to_wstring(num_devices))) {
             VariantClear(&varName);
-            hr = moniker->BindToObject(0, 0, IID_PPV_ARGS(ppSrcFilter));
-            return hr;
+            if (bMatch)
+            {
+                hr = pMoniker->BindToObject(0, 0, IID_PPV_ARGS(ppSrcFilter));
+                pMoniker->Release();
+                return hr;
+            }
         }
         VariantClear(&varName);
     }
