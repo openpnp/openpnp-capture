@@ -34,12 +34,12 @@ OpenPnP Capture is a cross platform video capture library for C with a focus on 
 Packages and binaries are available in [releases](https://github.com/openpnp/openpnp-capture/releases).
 
 Examples:
-  - [./QtCaptureTest/](./QtCaptureTest) is a cross platform test program for OpenPnP implemented with Qt.
+  - [QtCaptureTest](./QtCaptureTest/) is a cross platform test program for OpenPnP implemented with Qt.
   - openpnp-capture includes simple examples for [Mac](./mac/tests/), [Linux](./linux/tests/), and [Windows](./win/tests/).
 
 See below for information about Building OpenPnP Capture. 
 
-Documentation for openpnp-capture needs improvement. We would love your [help!](https://github.com/openpnp/openpnp-capture/edit/master/README.md)!
+Documentation for openpnp-capture needs improvement. We would love your [help!](https://github.com/openpnp/openpnp-capture/edit/master/README.md)
 
 
 # Building OpenPnP Capture
