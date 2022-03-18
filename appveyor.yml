@@ -27,7 +27,7 @@ deploy:
   provider: GitHub
   force_update: true
   auth_token:
-    secure: RHSku07eePuou1i9Ergy9p0dz4Hhn+sH+0XwKOJMrtyj9ghHA+0oD0QeQhcKETNY
+    secure: 3v/KanZhhv0cW/IcjK45UOUXD3RoSx9doiNdvMHxGpVro/KD6eKQ23U0oHIgnZl0
   on:
     appveyor_repo_tag: true
     configuration: Release
