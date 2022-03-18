@@ -1,4 +1,5 @@
-# TODO add Debug and Releas to the matrix, and get deploy working, then remove the appveyor stuff.
+# TODO Get deploy working then remove the appveyor stuff.
+# TODO Probably also need to try to use older Visual Studio for compat.
 
 name: Build Windows
 
