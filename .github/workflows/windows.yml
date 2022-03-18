@@ -1,3 +1,4 @@
+# TODO add Debug and Releas to the matrix, and get deploy working, then remove the appveyor stuff.
 
 name: Build Windows
 
