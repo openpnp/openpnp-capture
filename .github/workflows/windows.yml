@@ -19,7 +19,7 @@ jobs:
 
       - name: Build
         run: |
-                mkdir build && cd build && cmake --help .. && make
+                mkdir build && cd build && cmake -G "Visual Studio 14 2015" .. && make
 
 #       - name: Upload Artifacts
 #         uses: actions/upload-artifact@v2
