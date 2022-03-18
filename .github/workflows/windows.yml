@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest]
-        arch: [x86_64, ]
+        arch: [x86, x64]
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -19,7 +19,7 @@ jobs:
 
       - name: Build
         run: |
-                mkdir build && cd build && cmake .. && make
+                mkdir build && cd build && cmake --help .. && make
 
 #       - name: Upload Artifacts
 #         uses: actions/upload-artifact@v2
