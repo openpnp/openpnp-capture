@@ -25,6 +25,7 @@ configuration:
 deploy:
   description: 'Auto generated release.'
   provider: GitHub
+  force_update: true
   auth_token:
     secure: RHSku07eePuou1i9Ergy9p0dz4Hhn+sH+0XwKOJMrtyj9ghHA+0oD0QeQhcKETNY
   on:
