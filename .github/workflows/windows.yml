@@ -1,5 +1,5 @@
 
-name: Build OpenPnP Capture Distribution for Windows
+name: Build Windows
 
 on: 
   push:
