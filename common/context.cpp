@@ -89,7 +89,7 @@ const char* Context::getDeviceUniqueID(CapDeviceID id) const
 
 uint32_t Context::getDeviceCount() const
 {
-    return m_devices.size();
+    return static_cast<uint32_t>(m_devices.size());
 }
 
 
@@ -105,7 +105,7 @@ int32_t Context::getNumFormats(CapDeviceID index) const
         LOG(LOG_ERR,"Internal device pointer is NULL");
         return -1; // device pointer is NULL!
     }
-    return m_devices[index]->m_formats.size();
+    return static_cast<int32_t>(m_devices[index]->m_formats.size());
 }
 
 
@@ -229,7 +229,7 @@ bool Context::captureFrame(int32_t streamID, uint8_t *RGBbufferPtr, size_t RGBbu
         return false; 
     }
     
-    return m_streams[streamID]->captureFrame(RGBbufferPtr, RGBbufferBytes);
+    return m_streams[streamID]->captureFrame(RGBbufferPtr, static_cast<uint32_t>(RGBbufferBytes));
 }
 
 bool Context::hasNewFrame(int32_t streamID)
