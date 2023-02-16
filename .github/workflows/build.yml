@@ -13,6 +13,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v3
+
       - name: Checkout Repo
         uses: actions/checkout@v2
 
@@ -24,8 +27,8 @@ jobs:
       - name: "macOS: Build and deploy"
         run: |
           cd build
-          cmake ..
-          make
+          cmake -DCMAKE_BUILD_TYPE=Release cmake -G Ninja ..
+          ninja
           cd ..
           cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
           cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
@@ -35,8 +38,8 @@ jobs:
         run: |
           sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
           cd build
-          cmake ..
-          make
+          cmake -DCMAKE_BUILD_TYPE=Release cmake -G Ninja ..
+          ninja
           cd ..
           cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
           cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
@@ -45,10 +48,10 @@ jobs:
       - name: "Windows: Build and deploy"
         run: |
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release ..
-          make
+          cmake -DCMAKE_BUILD_TYPE=Release cmake -G Ninja ..
+          ninja
           cd ..
-          ls build
+          ls -lR build
         if: matrix.os == 'windows-latest'
 
       # - name: Cross compile artifacts for aarch64/arm64 if running on Linux
