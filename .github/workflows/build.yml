@@ -45,8 +45,8 @@ jobs:
       - name: "Windows: Build and deploy"
         run: |
           cd build
-          cmake ..
-          nmake
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          make
           cd ..
           ls build
         if: matrix.os == 'windows-latest'
