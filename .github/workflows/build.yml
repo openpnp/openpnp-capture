@@ -175,6 +175,7 @@ jobs:
 
 
   create_release: 
+    needs: [macos_x86_64, macos_arm64, windows_x86_64, linux_arm64, linux_x86_64]
     runs-on: ubuntu-latest
     steps:
       - name: Create Release
