@@ -16,31 +16,33 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
-      - name: Install required packages on Linux
+      - name: "Linux: Install required packages"
         run: sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
         if: matrix.os == 'ubuntu-latest'
 
-      - name: Prepare deploy dirs
+      - name: Prepare build and deploy dirs
         run: |
-          mkdir -p build deploy
+          mkdir build
+          mkdir deploy
 
-      - name: Copy deploy artifacts if running on OSX
+      - name: Build it!
         run: |
-               cd build && cmake .. && make && cd ..
-               cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-               cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
+          cd build && cmake .. && make && cd ..
+
+      - name: "macOS: Copy deploy artifacts"
+        run: |
+          cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+          cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
         if: matrix.os == 'macos-latest'
 
-      - name: Copy deploy artifacts if running on Linux
+      - name: "Linux: Copy deploy artifacts"
         run: |
-               cd build && cmake .. && make && cd ..
-               cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-               cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
+            cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+            cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
         if: matrix.os == 'ubuntu-latest'
 
-      - name: Copy deploy artifacts if running on Linux
+      - name: "Windows: Copy deploy artifacts"
         run: |
-               cd build && cmake .. && make && cd ..
                ls build
         if: matrix.os == 'windows-latest'
 
