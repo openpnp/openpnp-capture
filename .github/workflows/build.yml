@@ -27,7 +27,7 @@ jobs:
       - name: "macOS: Build and deploy"
         run: |
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release cmake -G Ninja ..
+          cmake -DCMAKE_BUILD_TYPE=Release cmake ..
           ninja
           cd ..
           cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
@@ -38,7 +38,7 @@ jobs:
         run: |
           sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release cmake -G Ninja ..
+          cmake -DCMAKE_BUILD_TYPE=Release cmake ..
           ninja
           cd ..
           cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
@@ -48,8 +48,8 @@ jobs:
       - name: "Windows: Build and deploy"
         run: |
           cd build
-          cmake -DCMAKE_BUILD_TYPE=Release cmake -G Ninja ..
-          ninja
+          cmake -DCMAKE_BUILD_TYPE=Release cmake -G "Unix Makefiles" ..
+          make
           cd ..
           ls -lR build
         if: matrix.os == 'windows-latest'
