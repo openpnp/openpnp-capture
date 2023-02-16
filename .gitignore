@@ -14,3 +14,4 @@ QtCaptureTest/build
 openpnp-capture.iml
 out
 cmake-build-*/
+actions-runner
