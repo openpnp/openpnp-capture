@@ -51,7 +51,8 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=Release cmake -G "Unix Makefiles" ..
           make
           cd ..
-          ls -lR build
+          cp build/win/tests/openpnp-capture-test.exe deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}.exe
+          cp build/libopenpnp-capture.dll deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dll
         if: matrix.os == 'windows-latest'
 
       # - name: Cross compile artifacts for aarch64/arm64 if running on Linux
