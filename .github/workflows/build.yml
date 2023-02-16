@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install required packages on Linux
-        run: sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev libjpeg-turbo-dev
+        run: sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
         if: matrix.os == 'ubuntu-latest'
 
       - name: Prepare deploy dirs
