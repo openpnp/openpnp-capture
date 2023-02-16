@@ -16,34 +16,39 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
-      - name: "Linux: Install required packages"
-        run: sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
-        if: matrix.os == 'ubuntu-latest'
-
       - name: Prepare build and deploy dirs
         run: |
           mkdir build
           mkdir deploy
 
-      - name: Build it!
+      - name: "macOS: Build and deploy"
         run: |
-          cd build && cmake .. && make && cd ..
-
-      - name: "macOS: Copy deploy artifacts"
-        run: |
+          cd build
+          cmake ..
+          make
+          cd ..
           cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
           cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
         if: matrix.os == 'macos-latest'
 
-      - name: "Linux: Copy deploy artifacts"
+      - name: "Linux: Build and deploy"
         run: |
-            cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-            cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
+          sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
+          cd build
+          cmake ..
+          make
+          cd ..
+          cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+          cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
         if: matrix.os == 'ubuntu-latest'
 
-      - name: "Windows: Copy deploy artifacts"
+      - name: "Windows: Build and deploy"
         run: |
-               ls build
+          cd build
+          cmake ..
+          nmake
+          cd ..
+          ls build
         if: matrix.os == 'windows-latest'
 
       # - name: Cross compile artifacts for aarch64/arm64 if running on Linux
