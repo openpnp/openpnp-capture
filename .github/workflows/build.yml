@@ -98,7 +98,6 @@ jobs:
           cd ..
           cp build/win/tests/openpnp-capture-test.exe deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}.exe
           cp build/libopenpnp-capture.dll deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dll
-          build/win/tests/openpnp-capture-test.exe
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
