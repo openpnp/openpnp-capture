@@ -90,7 +90,7 @@ jobs:
 
       - name: Build
         run: |
-          C:\Program Files\Microsoft Visual Studio\2022\Enterprise\vcvarsall.bat
+          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\vcvarsall.bat"
           mkdir build
           mkdir deploy
           cd build
