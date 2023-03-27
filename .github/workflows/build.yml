@@ -3,79 +3,79 @@ on:
   pull_request:
 
 jobs:
-  macos_x86_64:
-    strategy:
-      matrix:
-        os: [macos-latest]
-        arch: [x86_64]
+  # macos_x86_64:
+  #   strategy:
+  #     matrix:
+  #       os: [macos-latest]
+  #       arch: [x86_64]
 
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@v2
 
-      - name: Build
-        run: |
-          mkdir build
-          mkdir deploy
-          cd build
-          cmake ..
-          make
-          cd ..
-          cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-          cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
+  #     - name: Build
+  #       run: |
+  #         mkdir build
+  #         mkdir deploy
+  #         cd build
+  #         cmake ..
+  #         make
+  #         cd ..
+  #         cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+  #         cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with: 
-          path: |
-            deploy/*
+  #     - name: Upload Artifacts
+  #       uses: actions/upload-artifact@v2
+  #       with: 
+  #         path: |
+  #           deploy/*
             
-      - name: Create Release
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-        uses: ncipollo/release-action@v1
-        with:
-            artifacts: "deploy/*"
-            token: ${{ secrets.GITHUB_TOKEN }}
-            allowUpdates: true
+  #     - name: Create Release
+  #       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #           artifacts: "deploy/*"
+  #           token: ${{ secrets.GITHUB_TOKEN }}
+  #           allowUpdates: true
 
-  macos_arm64: 
-    strategy:
-      matrix:
-        os: [macos-latest]
-        arch: [arm64]
+  # macos_arm64: 
+  #   strategy:
+  #     matrix:
+  #       os: [macos-latest]
+  #       arch: [arm64]
 
-    # Currently runs on Jason's Mac using a Github self hosted runner because
-    # Github doesn't yet support runners for Apple Silicon on macOS. 
-    runs-on: [self-hosted, macOS, ARM64]
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
+  #   # Currently runs on Jason's Mac using a Github self hosted runner because
+  #   # Github doesn't yet support runners for Apple Silicon on macOS. 
+  #   runs-on: [self-hosted, macOS, ARM64]
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@v2
 
-      - name: Build
-        run: |
-          mkdir build
-          mkdir deploy
-          cd build
-          cmake ..
-          make
-          cd ..
-          cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-          cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
+  #     - name: Build
+  #       run: |
+  #         mkdir build
+  #         mkdir deploy
+  #         cd build
+  #         cmake ..
+  #         make
+  #         cd ..
+  #         cp build/mac/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+  #         cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with: 
-          path: |
-            deploy/*
+  #     - name: Upload Artifacts
+  #       uses: actions/upload-artifact@v2
+  #       with: 
+  #         path: |
+  #           deploy/*
             
-      - name: Create Release
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-        uses: ncipollo/release-action@v1
-        with:
-            artifacts: "deploy/*"
-            token: ${{ secrets.GITHUB_TOKEN }}
-            allowUpdates: true
+  #     - name: Create Release
+  #       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #           artifacts: "deploy/*"
+  #           token: ${{ secrets.GITHUB_TOKEN }}
+  #           allowUpdates: true
 
   windows_x86_64: 
     strategy:
@@ -114,78 +114,78 @@ jobs:
             token: ${{ secrets.GITHUB_TOKEN }}
             allowUpdates: true
 
-  linux_arm64: 
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        arch: [arm64]
+  # linux_arm64: 
+  #   strategy:
+  #     matrix:
+  #       os: [ubuntu-latest]
+  #       arch: [arm64]
 
-    # Currently runs on Jason's Mac using a Github self hosted runner because
-    # Github doesn't yet support runners for Apple Silicon on macOS. 
-    runs-on: [self-hosted, Linux, ARM64]
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
+  #   # Currently runs on Jason's Mac using a Github self hosted runner because
+  #   # Github doesn't yet support runners for Apple Silicon on macOS. 
+  #   runs-on: [self-hosted, Linux, ARM64]
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@v2
 
-      - name: "Build"
-        run: |
-          sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
-          mkdir build
-          mkdir deploy
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Release cmake ..
-          make
-          cd ..
-          cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-          cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
+  #     - name: "Build"
+  #       run: |
+  #         sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
+  #         mkdir build
+  #         mkdir deploy
+  #         cd build
+  #         cmake -DCMAKE_BUILD_TYPE=Release cmake ..
+  #         make
+  #         cd ..
+  #         cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+  #         cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with: 
-          path: |
-            deploy/*
+  #     - name: Upload Artifacts
+  #       uses: actions/upload-artifact@v2
+  #       with: 
+  #         path: |
+  #           deploy/*
 
-      - name: Create Release
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-        uses: ncipollo/release-action@v1
-        with:
-            artifacts: "deploy/*"
-            token: ${{ secrets.GITHUB_TOKEN }}
-            allowUpdates: true
+  #     - name: Create Release
+  #       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #           artifacts: "deploy/*"
+  #           token: ${{ secrets.GITHUB_TOKEN }}
+  #           allowUpdates: true
 
-  linux_x86_64: 
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        arch: [x86_64]
+  # linux_x86_64: 
+  #   strategy:
+  #     matrix:
+  #       os: [ubuntu-latest]
+  #       arch: [x86_64]
 
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - name: Checkout Repo
+  #       uses: actions/checkout@v2
 
-      - name: "Build"
-        run: |
-          sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
-          mkdir build
-          mkdir deploy
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=Release cmake ..
-          make
-          cd ..
-          cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
-          cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
+  #     - name: "Build"
+  #       run: |
+  #         sudo apt-get update -y && sudo apt-get install -y nasm libgtk-3-dev
+  #         mkdir build
+  #         mkdir deploy
+  #         cd build
+  #         cmake -DCMAKE_BUILD_TYPE=Release cmake ..
+  #         make
+  #         cd ..
+  #         cp build/linux/tests/openpnp-capture-test deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}
+  #         cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with: 
-          path: |
-            deploy/*
+  #     - name: Upload Artifacts
+  #       uses: actions/upload-artifact@v2
+  #       with: 
+  #         path: |
+  #           deploy/*
 
-      - name: Create Release
-        if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
-        uses: ncipollo/release-action@v1
-        with:
-            artifacts: "deploy/*"
-            token: ${{ secrets.GITHUB_TOKEN }}
-            allowUpdates: true
+  #     - name: Create Release
+  #       if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+  #       uses: ncipollo/release-action@v1
+  #       with:
+  #           artifacts: "deploy/*"
+  #           token: ${{ secrets.GITHUB_TOKEN }}
+  #           allowUpdates: true
