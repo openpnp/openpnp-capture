@@ -100,8 +100,7 @@ jobs:
           cmake --build . --config Release
           cd ..
           cp build/win/tests/Release/openpnp-capture-test.exe deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}.exe
-          cp build/Release/libopenpnp-capture.dll deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dll
-          dir /s
+          cp build/Release/openpnp-capture.dll deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dll
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v2
