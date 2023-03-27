@@ -90,11 +90,12 @@ jobs:
 
       - name: Build
         run: |
+          C:\Program Files\Microsoft Visual Studio\2022\Enterprise\vcvarsall.bat
           mkdir build
           mkdir deploy
           cd build
-          cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..
-          mingw32-make
+          cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..
+          make
           cd ..
           cp build/win/tests/openpnp-capture-test.exe deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}.exe
           cp build/libopenpnp-capture.dll deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dll
