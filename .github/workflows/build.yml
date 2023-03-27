@@ -88,13 +88,15 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
 
+      - name: Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+
       - name: Build
         run: |
-          "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\vcvarsall.bat"
           mkdir build
           mkdir deploy
           cd build
-          cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..
+          cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..
           make
           cd ..
           cp build/win/tests/openpnp-capture-test.exe deploy/openpnp-capture-test-${{ matrix.os }}-${{ matrix.arch }}.exe
