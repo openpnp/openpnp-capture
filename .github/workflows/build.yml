@@ -119,7 +119,7 @@ jobs:
   linux_arm64: 
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-20.04]
         arch: [arm64]
 
     # Currently runs on Jason's Mac using a Github self hosted runner because
@@ -158,7 +158,7 @@ jobs:
   linux_x86_64: 
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-20.04]
         arch: [x86_64]
 
     runs-on: ${{ matrix.os }}
