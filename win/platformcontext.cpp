@@ -453,7 +453,6 @@ HRESULT FindCaptureDevice(IBaseFilter** ppSrcFilter, const wchar_t* devicePath)
             (FAILED(hr) && strDevicePath == std::to_wstring(num_devices))) {
             VariantClear(&varName);
             hr = pMoniker->BindToObject(0, 0, IID_PPV_ARGS(ppSrcFilter));
-            pMoniker->Release();
             return hr;
         }
         VariantClear(&varName);
