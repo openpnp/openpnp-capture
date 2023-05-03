@@ -90,7 +90,7 @@ bool PlatformContext::enumerateDevices()
     m_devices.clear();
     AVCaptureDeviceDiscoverySession *captureDeviceDiscoverySession = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[AVCaptureDeviceTypeBuiltInWideAngleCamera,AVCaptureDeviceTypeExternalUnknown]
                                           mediaType:AVMediaTypeVideo
-                                           position:AVCaptureDevicePositionBack];
+                                           position:AVCaptureDevicePositionUnspecified];
     for (AVCaptureDevice* device in [captureDeviceDiscoverySession devices])
     {
         platformDeviceInfo* deviceInfo = new platformDeviceInfo();
