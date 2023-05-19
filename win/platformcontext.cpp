@@ -50,7 +50,7 @@ Context* createPlatformContext()
 PlatformContext::PlatformContext() : Context()
 {
     HRESULT hr;
-    hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     if (hr != S_OK)
     {
         // This might happen when another part of the program
