@@ -146,7 +146,7 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t 
     CFMutableDictionaryRef dict = IOServiceMatching(kIOUSBDeviceClassName);
 
     io_iterator_t serviceIterator;
-    IOServiceGetMatchingServices(kIOMasterPortDefault, dict, &serviceIterator);
+    IOServiceGetMatchingServices(NULL, dict, &serviceIterator);
 
     io_service_t device;
     while((device = IOIteratorNext(serviceIterator)) != 0)

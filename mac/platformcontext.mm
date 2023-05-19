@@ -88,7 +88,10 @@ bool PlatformContext::enumerateDevices()
     LOG(LOG_DEBUG, "enumerateDevices called\n");
 
     m_devices.clear();
-    for (AVCaptureDevice* device in [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]) 
+    AVCaptureDeviceDiscoverySession *captureDeviceDiscoverySession = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[AVCaptureDeviceTypeBuiltInWideAngleCamera,AVCaptureDeviceTypeExternalUnknown]
+                                          mediaType:AVMediaTypeVideo
+                                           position:AVCaptureDevicePositionUnspecified];
+    for (AVCaptureDevice* device in [captureDeviceDiscoverySession devices])
     {
         platformDeviceInfo* deviceInfo = new platformDeviceInfo();
         deviceInfo->m_captureDevice = CFBridgingRetain(device);
@@ -104,7 +107,7 @@ bool PlatformContext::enumerateDevices()
         NSRange vidRange = [device.modelID rangeOfString:@"VendorID_"];
         if (vidRange.length > 0)
         {
-            uint32_t maxLen = device.modelID.length - vidRange.location - 9;
+            unsigned long maxLen = device.modelID.length - vidRange.location - 9;
             maxLen = (maxLen > 5) ? 5 : maxLen;        
             deviceInfo->m_vid = [[device.modelID substringWithRange:NSMakeRange(vidRange.location + 9, maxLen)] intValue];
         }
@@ -117,7 +120,7 @@ bool PlatformContext::enumerateDevices()
         NSRange pidRange = [device.modelID rangeOfString:@"ProductID_"];
         if (pidRange.length > 0)
         {
-            uint32_t maxLen = device.modelID.length - pidRange.location - 10;
+            unsigned long maxLen = device.modelID.length - pidRange.location - 10;
             maxLen = (maxLen > 5) ? 5 : maxLen;
             deviceInfo->m_pid = [[device.modelID substringWithRange:NSMakeRange(pidRange.location + 10, maxLen)] intValue];
         }
