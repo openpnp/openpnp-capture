@@ -166,14 +166,7 @@ int32_t Context::openStream(CapDeviceID id, CapFormatID formatID)
     }
     else
     {
-        printf("[DBG ] FOURCC = ");
-        uint32_t fcc = s->getFOURCC();
-        for(uint32_t i=0; i<4; i++)
-        {            
-            printf("%c", (fcc & 0xff));
-            fcc >>= 8;
-        }
-        printf("\n");
+        LOG(LOG_DEBUG, "FOURCC = %s\n", fourCCToString(s->getFOURCC()).c_str());
     }
 
     int32_t streamID = storeStream(s);

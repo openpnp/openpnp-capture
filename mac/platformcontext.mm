@@ -48,11 +48,11 @@ PlatformContext::PlatformContext() :
     if ([AVCaptureDevice respondsToSelector:@selector(authorizationStatusForMediaType:)]) {
         cameraPermissionReceived = 0;
         if ([AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo] == AVAuthorizationStatusAuthorized) {
-            NSLog(@"Already have camera permission");
+            LOG(LOG_DEBUG, "Already have camera permission\n");
             cameraPermissionReceived = 1;
         }
         else {
-            NSLog(@"Requesting permission, bundle path for Info.plist: %@", [[NSBundle mainBundle] bundlePath]);
+            LOG(LOG_INFO, "Requesting permission, bundle path for Info.plist: %s\n", [[[NSBundle mainBundle] bundlePath] UTF8String]);
             [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
                 if (granted) {
                     cameraPermissionReceived = 1;
@@ -60,9 +60,9 @@ PlatformContext::PlatformContext() :
                     cameraPermissionReceived = -1;
                 }
                 if (granted) {
-                    NSLog(@"Permission granted");
+                    LOG(LOG_INFO, "Permission granted\n");
                 } else {
-                    NSLog(@"Failed to get permission");
+                    LOG(LOG_WARNING, "Failed to get permission\n");
                 }
             } ];
             while (cameraPermissionReceived == 0) {
