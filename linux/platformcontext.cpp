@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <string>
+#include <memory.h>
 #include <linux/videodev2.h>
 
 #include "../common/logging.h"
@@ -175,6 +176,7 @@ bool PlatformContext::enumerateDevices()
 bool PlatformContext::queryFrameSize(int fd, uint32_t index, uint32_t pixelformat, uint32_t *width, uint32_t *height)
 {
     v4l2_frmsizeenum frmSize;
+    memset(&frmSize, 0, sizeof(frmSize));
     frmSize.index = index;
     frmSize.pixel_format = pixelformat;
     if (ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmSize) != -1)
@@ -203,6 +205,7 @@ uint32_t PlatformContext::findMaxFrameRate(int fd, uint32_t pixelformat,
 
     // now search the frame rates
     v4l2_frmivalenum ivals;
+    memset(&ivals, 0, sizeof(ivals));
     ivals.pixel_format = pixelformat;
     ivals.width = width;
     ivals.height = height;
