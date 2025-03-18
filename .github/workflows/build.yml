@@ -28,6 +28,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with: 
+          name: ${{ matrix.os }}
           path: |
             deploy/*
             
@@ -67,6 +68,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with: 
+          name: ${{ matrix.os }}
           path: |
             deploy/*
             
@@ -106,6 +108,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with: 
+          name: ${{ matrix.os }}
           path: |
             deploy/*
             
@@ -146,6 +149,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with: 
+          name: ${{ matrix.os }}
           path: |
             deploy/*
 
@@ -183,6 +187,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with: 
+          name: ${{ matrix.os }}
           path: |
             deploy/*
 
