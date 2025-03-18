@@ -26,7 +26,7 @@ jobs:
           cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with: 
           path: |
             deploy/*
@@ -47,7 +47,8 @@ jobs:
 
     # Currently runs on Jason's Mac using a Github self hosted runner because
     # Github doesn't yet support runners for Apple Silicon on macOS. 
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ${{ matrix.os }}
+    # runs-on: [self-hosted, macOS, ARM64]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -64,7 +65,7 @@ jobs:
           cp build/libopenpnp-capture.dylib deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dylib
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with: 
           path: |
             deploy/*
@@ -103,7 +104,7 @@ jobs:
           cp build/Release/openpnp-capture.dll deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.dll
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with: 
           path: |
             deploy/*
@@ -122,9 +123,10 @@ jobs:
         os: [ubuntu-20.04]
         arch: [arm64]
 
-    # Currently runs on Jason's Mac using a Github self hosted runner because
-    # Github doesn't yet support runners for Apple Silicon on macOS. 
-    runs-on: [self-hosted, Linux, ARM64]
+    # # Currently runs on Jason's Mac using a Github self hosted runner because
+    # # Github doesn't yet support runners for Apple Silicon on macOS. 
+    # runs-on: [self-hosted, Linux, ARM64]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -142,7 +144,7 @@ jobs:
           cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with: 
           path: |
             deploy/*
@@ -179,7 +181,7 @@ jobs:
           cp build/libopenpnp-capture.so deploy/libopenpnp-capture-${{ matrix.os }}-${{ matrix.arch }}.so
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with: 
           path: |
             deploy/*
