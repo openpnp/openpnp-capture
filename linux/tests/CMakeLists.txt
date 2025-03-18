@@ -15,9 +15,6 @@ project (openpnp-capture-test)
 
 set (SOURCE main.cpp ../../common/logging.cpp)
 
-# add include directory 
-include_directories(../include ..)
-
 add_executable(openpnp-capture-test ${SOURCE})
 
 target_link_libraries(openpnp-capture-test openpnp-capture)
