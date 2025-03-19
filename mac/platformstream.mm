@@ -83,10 +83,10 @@
         if (CVPixelBufferLockBaseAddress(pixelBuffer, 0) == kCVReturnSuccess)
         {
             const uint8_t *pixelPtr = static_cast<const uint8_t*>(CVPixelBufferGetBaseAddress(pixelBuffer));
-            uint32_t frameBytes = CVPixelBufferGetHeight(pixelBuffer) *
+            unsigned long frameBytes = CVPixelBufferGetHeight(pixelBuffer) *
                   CVPixelBufferGetBytesPerRow(pixelBuffer);
 
-            m_stream->callback(pixelPtr, frameBytes);
+            m_stream->callback(pixelPtr, (uint32_t)frameBytes);
 
             CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
         }
