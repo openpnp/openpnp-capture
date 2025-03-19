@@ -146,7 +146,11 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t 
     CFMutableDictionaryRef dict = IOServiceMatching(kIOUSBDeviceClassName);
 
     io_iterator_t serviceIterator;
-    IOServiceGetMatchingServices(kIOMasterPortDefault, dict, &serviceIterator);
+    kern_return_t result = IOServiceGetMatchingServices(kIOMasterPortDefault, dict, &serviceIterator);
+    if (result != kIOReturnSuccess) {
+        LOG(LOG_DEBUG, "UVCCtrl::findDevice() IOServiceGetMatchingServices failed: %d\n", result);
+        return NULL;
+    }
 
     io_service_t device;
     while((device = IOIteratorNext(serviceIterator)) != 0)
@@ -162,6 +166,7 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t 
         if ((result != kIOReturnSuccess) || (plugInInterface == nullptr))
         {
             LOG(LOG_DEBUG, "UVCCtrl::findDevice() Camera control error %d\n", result);
+            IOObjectRelease(device);
             continue;
         }
         else
@@ -173,7 +178,8 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t 
             if (hr || (deviceInterface == nullptr))
             {
                 (*plugInInterface)->Release(plugInInterface);
-                //FIXME: log error
+                IOObjectRelease(device);
+                LOG(LOG_DEBUG, "UVCCtrl::findDevice() QueryInterface failed\n");
                 continue;
             }
 
@@ -193,13 +199,18 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t 
             if ((vendorID == vid) && (productID == pid) && (locationID == location))
             {
                 (*plugInInterface)->Release(plugInInterface);
+                IOObjectRelease(device);
+                IOObjectRelease(serviceIterator);
                 return deviceInterface;
             }
 
+            (*deviceInterface)->Release(deviceInterface);
             (*plugInInterface)->Release(plugInInterface);
+            IOObjectRelease(device);
         }
     }
 
+    IOObjectRelease(serviceIterator);
     return NULL;
 }
 
