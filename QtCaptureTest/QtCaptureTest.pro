@@ -14,9 +14,6 @@ TEMPLATE = app
 macx:CONFIG -= app_bundle
 #CONFIG += console
 
-# add the openpnp-capture include path
-INCLUDEPATH += ../include
-
 SOURCES += main.cpp\
         mainwindow.cpp
 
