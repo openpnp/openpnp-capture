@@ -38,7 +38,8 @@
 Stream::Stream() :
     m_owner(nullptr),
     m_isOpen(false),
-    m_frames(0)
+    m_frames(0),
+    m_newFrame(false)
 {
 }
 

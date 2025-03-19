@@ -346,7 +346,7 @@ PlatformStream::PlatformStream() :
     m_quitThread(false),
     m_helperThread(nullptr)
 {
-
+    CLEAR(m_fmt);
 }
 
 PlatformStream::~PlatformStream()
