@@ -128,6 +128,7 @@ bool PlatformContext::enumerateDevices()
             
             // enumerate the frame formats
             v4l2_fmtdesc fmtdesc;
+            memset(&fmtdesc, 0, sizeof(fmtdesc));
             uint32_t index = 0;
             fmtdesc.type  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
