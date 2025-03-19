@@ -146,7 +146,7 @@ IOUSBDeviceInterface** UVCCtrl::findDevice(uint16_t vid, uint16_t pid, uint32_t 
     CFMutableDictionaryRef dict = IOServiceMatching(kIOUSBDeviceClassName);
 
     io_iterator_t serviceIterator;
-    kern_return_t result = IOServiceGetMatchingServices(kIOMasterPortDefault, dict, &serviceIterator);
+    kern_return_t result = IOServiceGetMatchingServices(NULL, dict, &serviceIterator);
     if (result != kIOReturnSuccess) {
         LOG(LOG_DEBUG, "UVCCtrl::findDevice() IOServiceGetMatchingServices failed: %d\n", result);
         return NULL;
