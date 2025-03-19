@@ -152,8 +152,6 @@ bool PlatformContext::enumerateDevices()
                 [scanner scanHexInt:&(deviceInfo->m_busLocation)];
 
                 LOG(LOG_DEBUG, "Location : %08X\n", deviceInfo->m_busLocation);
-                [scanner dealloc];
-                [hexString dealloc];
             }
             else
             {
