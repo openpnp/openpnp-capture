@@ -205,9 +205,9 @@ uint32_t Context::isOpenStream(int32_t streamID)
         return 0;
     }    
 
-    if (static_cast<uint32_t>(streamID) >= m_streams.size())
+    if (m_streams.find(streamID) == m_streams.cend())
     {
-        LOG(LOG_ERR, "isOpenStream was called with an out-of-bounds stream ID\n");
+        LOG(LOG_ERR, "isOpenStream was called with an invalid stream ID\n");
         return 0;        
     }
 
