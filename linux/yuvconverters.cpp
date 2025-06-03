@@ -74,3 +74,52 @@ void YUYV2RGB(const uint8_t *yuv, uint8_t *rgb, uint32_t bytes)
         bytes -= 4;
     }
 }
+
+/*
+    NV12 format has two planes:
+    - Y plane: Full resolution luminance samples
+    - UV plane: 2x2 subsampled interleaved U,V (Cb,Cr) samples
+
+    Memory layout:
+    YYYYYYYY
+    YYYYYYYY
+    YYYYYYYY
+    YYYYYYYY
+    UVUVUVUV
+    UVUVUVUV
+
+    Each 2x2 Y block shares one U,V pair.
+*/
+void NV122RGB(const uint8_t *nv12, uint8_t *rgb, uint32_t width, uint32_t height)
+{
+    const uint8_t *y_plane = nv12;
+    const uint8_t *uv_plane = nv12 + (width * height);
+
+    for (uint32_t row = 0; row < height; row++)
+    {
+        for (uint32_t col = 0; col < width; col++)
+        {
+            // Get Y value for current pixel
+            int16_t y = y_plane[row * width + col];
+
+            // Get U,V values (shared by 2x2 pixel blocks)
+            uint32_t uv_row = row / 2;
+            uint32_t uv_col = col / 2;
+            uint32_t uv_index = uv_row * width + uv_col * 2;
+
+            int16_t u = uv_plane[uv_index];      // Cb
+            int16_t v = uv_plane[uv_index + 1];  // Cr
+
+            // Convert YUV to RGB using the same coefficients as YUYV
+            int16_t yy = 19 * (y - 16);
+
+            // Calculate RGB index
+            uint32_t rgb_index = (row * width + col) * 3;
+
+            // R, G, B order (RGB24)
+            rgb[rgb_index]     = clamp((yy + 26 * (v - 128)) >> 4);
+            rgb[rgb_index + 1] = clamp((yy - 13 * (v - 128) - 6 * (u - 128)) >> 4);
+            rgb[rgb_index + 2] = clamp((yy + 32 * (u - 128)) >> 4);
+        }
+    }
+}
