@@ -42,8 +42,13 @@
     #define SO_IMPORT
     #define SO_EXPORT
 #elif defined(_MSC_VER)
-    #define SO_IMPORT __declspec(dllimport)
-    #define SO_EXPORT __declspec(dllexport)
+    #ifndef OPENPNPCAPTURE_STATIC
+        #define SO_IMPORT __declspec(dllimport)
+        #define SO_EXPORT __declspec(dllexport)
+    #else
+        #define SO_IMPORT
+        #define SO_EXPORT
+    #endif
 #else
     #error("Unknown compiler")
 #endif
