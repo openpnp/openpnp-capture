@@ -34,5 +34,6 @@
 #include <stdint.h>
 
 void YUYV2RGB(const uint8_t *yuv, uint8_t *rgb, uint32_t bytes);
+void NV122RGB(const uint8_t *nv12, uint8_t *rgb, uint32_t width, uint32_t height);
 
 #endif
