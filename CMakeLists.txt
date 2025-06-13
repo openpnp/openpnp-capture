@@ -130,15 +130,15 @@ ELSEIF(UNIX)
     # add pthreads library 
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)    
-    target_link_libraries(openpnp-capture PUBLIC Threads::Threads)
+    target_link_libraries(openpnp-capture PRIVATE Threads::Threads)
 
     # add turbojpeg library
     find_package(PkgConfig REQUIRED)
     pkg_search_module(TurboJPEG libturbojpeg)
     if( TurboJPEG_FOUND )
-        link_directories(${TurboJPEG_LIBDIR})
-        target_include_directories(openpnp-capture PUBLIC ${TurboJPEG_INCLUDE_DIRS})
-        target_link_libraries(openpnp-capture PUBLIC ${TurboJPEG_LIBRARIES})
+        target_link_directories(openpnp-capture PRIVATE ${TurboJPEG_LIBDIR})
+        target_include_directories(openpnp-capture PRIVATE ${TurboJPEG_INCLUDE_DIRS})
+        target_link_libraries(openpnp-capture PRIVATE ${TurboJPEG_LIBRARIES})
     else()
         # compile libjpeg-turbo for MJPEG decoding support
         # right now, we need to disable SIMD because it
