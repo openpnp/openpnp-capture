@@ -1,3 +1,11 @@
+Fork from https://github.com/openpnp/openpnp-capture
+
+* Updated to latest libjpeg-turbo and re-enable SIMD. 
+* Add cmake flag to disabled tests being built.
+
+-------------------
+
+
 ![OpenPNP Logo](https://raw.githubusercontent.com/openpnp/openpnp-logo/develop/logo_small.png)
 
 # openpnp-capture
