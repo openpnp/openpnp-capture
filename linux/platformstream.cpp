@@ -771,7 +771,7 @@ bool PlatformStream::getPropertyLimits(uint32_t propID, int32_t *emin, int32_t *
 
     if (xioctl(m_deviceHandle, VIDIOC_QUERYCTRL, &ctrl) == -1)
     {
-        LOG(LOG_ERR,"getPropertyLimits (ID=%d) failed on VIDIOC_QUERYCTRL (errno %d)\n", propID, errno);
+        LOG(LOG_VERBOSE, "getPropertyLimits (ID=%d) failed on VIDIOC_QUERYCTRL (errno %d)\n", propID, errno);
         return false;
     }
     *emin = ctrl.minimum;
