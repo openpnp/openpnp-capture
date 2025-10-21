@@ -556,6 +556,15 @@ void PlatformStream::threadSubmitBuffer(void *ptr, size_t bytes)
             m_frames++;
             m_bufferMutex.unlock();
             break;
+        case V4L2_PIX_FMT_YUV420:
+            // YU12 to RGB conversion
+            // YU12 has 1.5 bytes per pixel (12 bits), RGB has 3 bytes per pixel
+            m_bufferMutex.lock();
+            YU122RGB((const uint8_t*)ptr, &m_frameBuffer[0], m_width, m_height);
+            m_newFrame = true;
+            m_frames++;
+            m_bufferMutex.unlock();
+            break;
         case 0x47504A4D:    // MJPG
             #ifdef FRAMEDUMP
             {
