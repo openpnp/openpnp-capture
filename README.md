@@ -53,8 +53,6 @@ Documentation for openpnp-capture needs improvement. We would love your [help!](
 ## Build instructions (Windows)
 Run the batch file 'bootstrap.bat' and choose the desired build system (VisualStudio/nmake or Ninja). Make sure the compiler (Visual Studio) is in the search path. 
 
-By default the MSVC runtime library are linked statically, aka `\MT` or "Multithreaded", and thus bundled with openpnp-capture. If instead the MSVC runtime library should be linked dynamically, aka `\MD` or "MultithreadedDLL", set the CMake variable `OPENPNP_CAPTURE_MSVC_MD` to `ON`.
-
 Go to the build directory and run nmake or ninja to build the library and the test application.
 
 ## Build instructions (OSX)

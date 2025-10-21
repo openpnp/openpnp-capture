@@ -18,6 +18,7 @@ set(OPENPNP_CAPTURE_LIB_SOVERSION "0" CACHE STRING "openpnp-capture library sove
 # Library type options
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(BUILD_STATIC_LIBS "Build static library" OFF)
+option(LINK_DYNAMIC_MSVC_RUNTIME "Link MSVC runtime statically" OFF)
 
 # Validate library type options
 if(BUILD_STATIC_LIBS AND BUILD_SHARED_LIBS)
@@ -93,7 +94,7 @@ set_target_properties(openpnp-capture PROPERTIES
 
 IF (WIN32)
     if(MSVC)
-        if(OPENPNP_CAPTURE_MSVC_MD)
+        if(LINK_DYNAMIC_MSVC_RUNTIME)
             set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
             set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
         else()
