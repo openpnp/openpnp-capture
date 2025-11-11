@@ -46,10 +46,9 @@ jobs:
         os: [macos-latest]
         arch: [arm64]
 
-    # Currently runs on Jason's Mac using a Github self hosted runner because
-    # Github doesn't yet support runners for Apple Silicon on macOS. 
+
+
     runs-on: ${{ matrix.os }}
-    # runs-on: [self-hosted, macOS, ARM64]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
