@@ -88,7 +88,18 @@ bool PlatformContext::enumerateDevices()
     LOG(LOG_DEBUG, "enumerateDevices called\n");
 
     m_devices.clear();
-    AVCaptureDeviceDiscoverySession *captureDeviceDiscoverySession = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:@[AVCaptureDeviceTypeBuiltInWideAngleCamera,AVCaptureDeviceTypeExternalUnknown]
+    
+    NSMutableArray *deviceTypes = [NSMutableArray array];
+    [deviceTypes addObject:AVCaptureDeviceTypeBuiltInWideAngleCamera];
+    
+    if (@available(macOS 14.0, *)) {
+        [deviceTypes addObject:AVCaptureDeviceTypeContinuityCamera];
+        [deviceTypes addObject:AVCaptureDeviceTypeExternal];
+    } else {
+        [deviceTypes addObject:AVCaptureDeviceTypeExternalUnknown];
+    }
+    
+    AVCaptureDeviceDiscoverySession *captureDeviceDiscoverySession = [AVCaptureDeviceDiscoverySession discoverySessionWithDeviceTypes:deviceTypes
                                           mediaType:AVMediaTypeVideo
                                            position:AVCaptureDevicePositionUnspecified];
     for (AVCaptureDevice* device in [captureDeviceDiscoverySession devices])
