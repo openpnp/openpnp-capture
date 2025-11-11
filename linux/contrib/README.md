@@ -1,5 +1,5 @@
-The libjpeg-turbo-dev was downloaded from GITHUB:
+The libjpeg-turbo source was downloaded from GITHUB:
 
-https://github.com/libjpeg-turbo/libjpeg-turbo/tree/dev
+https://github.com/libjpeg-turbo/libjpeg-turbo/
 
-on 28-9-2017.
+on 21-10-2025.
