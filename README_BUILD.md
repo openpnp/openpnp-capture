@@ -45,7 +45,8 @@ cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=OFF -DBUILD_STATIC_LIBS=ON -G
 
 - `BUILD_SHARED_LIBS`: Build shared library (default: ON)
 - `BUILD_STATIC_LIBS`: Build static library (default: OFF)
-- `LINK_DYNAMIC_MSVC_RUNTIME`: Link MSVC runtime statically, aka `\MD`. Otherwise `\MT`. (default: OFF)
+- `LINK_DYNAMIC_MSVC_RUNTIME`: Link MSVC runtime dynamically, aka `\MD`. Otherwise `\MT`. (default: OFF)
+
 
 **Note**: If both options are enabled, the build will default to static library with a warning.
 
